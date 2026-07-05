@@ -1,5 +1,10 @@
 # 개발 일지 (DIARY)
 
+## 2026-07-05
+
+### 학습 내용
+- 참고 문헌 (Full Stack Development with Spring Boot 3 and React) Chapter 6 학습 완료
+
 ## 2026-07-03
 
 ### 학습 내용
