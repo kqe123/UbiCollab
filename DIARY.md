@@ -1,5 +1,13 @@
 # 개발 일지 (DIARY)
 
+## 2026-07-07
+
+### 프로젝트 진행
+- issue #1 (프로젝트 초안 완성) 해결
+
+### 학습 내용
+- 참고 문헌 (Full Stack Development with Spring Boot 3 and React) Chapter 7 학습 완료
+
 ## 2026-07-05
 
 ### 학습 내용
