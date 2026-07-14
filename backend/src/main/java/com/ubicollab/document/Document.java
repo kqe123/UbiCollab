@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 public class Document {
 	// 기본키
 	@Id
-	@GeneratedValue(strategy=GenerationType.AUTO)
+	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	private Long id;
 	
 	// 필드들 (외래키 userId, folderId는 추후 개발할 때 만들 예정)
