@@ -30,16 +30,20 @@ public class Document {
 	@Column(nullable=false, length=20)
 	private String extension;
 	
+	@Column(nullable=false)
+	private Long fileSize;
+	
 	//생성자
 	public Document() {}
 	
 	public Document(String fileName, String content, LocalDateTime createdDate,
-					boolean isTrashCan, String extension) {
+					boolean isTrashCan, String extension, Long fileSize) {
 		this.fileName = fileName;
 		this.content = content;
 		this.createdDate = createdDate;
 		this.isTrashCan = isTrashCan;
 		this.extension = extension;
+		this.fileSize = fileSize;
 	}
 	
 	//접근자들, 설정자들
@@ -85,6 +89,14 @@ public class Document {
 	
 	public void setExtension(String extension) {
 		this.extension = extension;
+	}
+	
+	public Long getFileSize() {
+	    return fileSize;
+	}
+
+	public void setFileSize(Long fileSize) {
+	    this.fileSize = fileSize;
 	}
 }
 

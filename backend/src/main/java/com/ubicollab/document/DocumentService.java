@@ -1,4 +1,5 @@
 package com.ubicollab.document;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -28,7 +29,9 @@ public class DocumentService {
 				throw new IllegalArgumentException("fileName, content, extension은 필수입니다.");
 		}
 		
-		docRepository.save(new Document(fileName, content, LocalDateTime.now(), false, extension));
+		long fileSize = document.getContent().getBytes(StandardCharsets.UTF_8).length;
+		
+		docRepository.save(new Document(fileName, content, LocalDateTime.now(), false, extension, fileSize));
 	}
 	
 	

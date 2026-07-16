@@ -1,6 +1,8 @@
 import Header from "../components/common/Header.jsx";
 import SideBar from "../components/common/SideBar.jsx";
 import Directory from "../components/common/Directory.jsx";
+import DocumentList from "../components/documents/DocumentList.jsx"
+
 function DriverPage() {
 	return (
 		<>
@@ -10,6 +12,7 @@ function DriverPage() {
 					<SideBar />
 					<div className="min-w-0 flex-1 p-3">
 						<Directory />
+						
 					</div>
 				</div>
 			</div>
