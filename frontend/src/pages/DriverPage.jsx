@@ -1,7 +1,7 @@
-import Header from "../components/common/Header.jsx";
-import SideBar from "../components/common/SideBar.jsx";
-import Directory from "../components/common/Directory.jsx";
-import DocumentList from "../components/documents/DocumentList.jsx"
+import Header from "../components/driver/DriverHeader.jsx";
+import SideBar from "../components/driver/DriverSideBar.jsx";
+import Directory from "../components/driver/Directory.jsx";
+import DocumentList from "../components/driver/DocumentList.jsx"
 
 function DriverPage() {
 	return (

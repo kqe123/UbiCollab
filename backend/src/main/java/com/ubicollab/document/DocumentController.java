@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -28,9 +29,12 @@ public class DocumentController {
 	
 	// 문서 생성 API(POST '/api/documents')
 	@PostMapping
-	public ResponseEntity<String> createDocument(@RequestBody Document document) {
-		docService.createDocument(document);
-		return ResponseEntity.ok("문서 생성 완료");
+	public ResponseEntity<Document> createDocument(@RequestBody Document document) {
+		Document savedDocument =
+	            docService.createDocument(document);
+		return ResponseEntity
+	            .status(HttpStatus.CREATED)
+	            .body(savedDocument);
 	}
 	
 	// 문서 목록 조회 API(GET '/api/documents')

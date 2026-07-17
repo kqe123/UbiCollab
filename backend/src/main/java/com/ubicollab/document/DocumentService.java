@@ -18,20 +18,35 @@ public class DocumentService {
 	}
 	
 	// 한 Document를 생성하는 메서드
-	public void createDocument(Document document) {
+	public Document createDocument(Document document) {
 		String fileName = document.getFileName();
 		String content = document.getContent();
 		String extension = document.getExtension();
 		
-		if (fileName == null || fileName.isBlank() ||
-			content == null || content.isBlank() ||
-			extension == null || extension.isBlank()) {
-				throw new IllegalArgumentException("fileName, content, extension은 필수입니다.");
-		}
+		if (fileName == null || fileName.isBlank()) {
+	        throw new IllegalArgumentException("fileName은 필수입니다.");
+	    }
+
+	    if (extension == null || extension.isBlank()) {
+	        throw new IllegalArgumentException("extension은 필수입니다.");
+	    }
+
+	    if (content == null) {
+	        content = "";
+	    }
 		
-		long fileSize = document.getContent().getBytes(StandardCharsets.UTF_8).length;
+		long fileSize = content.getBytes(StandardCharsets.UTF_8).length;
 		
-		docRepository.save(new Document(fileName, content, LocalDateTime.now(), false, extension, fileSize));
+		Document newDocument = new Document(
+	            fileName,
+	            content,
+	            LocalDateTime.now(),
+	            false,
+	            extension,
+	            fileSize
+	    );
+
+	    return docRepository.save(newDocument);
 	}
 	
 	
@@ -58,6 +73,10 @@ public class DocumentService {
 			document.setContent(request.getContent());
 		if (request.getExtension() != null)
 			document.setExtension(request.getExtension());
+		
+		// 내용이 변경되므로 fileSize도 다시 계산
+		Long fileSize = (long) request.getContent().getBytes(StandardCharsets.UTF_8).length;
+		document.setFileSize(fileSize);
 		docRepository.save(document);
 	}
 	

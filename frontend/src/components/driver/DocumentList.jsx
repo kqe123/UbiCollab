@@ -1,5 +1,6 @@
 import axios from "axios";
 import { useQuery } from "@tanstack/react-query";
+import fileIcon from "../../assets/document.png";
 
 function DocumentList() {
     const getDocuments = async () => {
@@ -61,7 +62,10 @@ function DocumentList() {
             <tbody>
                 {documents.map((document) => (
                     <tr key={document.id} className="border-b border-[#DBDBDB]">
-                        <td className="py-3 text-sm font-medium">📄 {document.fileName}.{document.extension}</td>
+                        
+                        <td className="py-3 text-sm font-medium">
+                            <img src={fileIcon} alt="" className="inline-block h-[18px] w-[15px] mr-[5px] mb-[3px]" />
+                            {document.fileName}.{document.extension}</td>
                         <td className="py-3 text-sm font-light">{formatDate(document.createdDate)}</td>
                         <td className="py-3 text-sm font-light">{document.fileSize} B</td>
                     </tr>

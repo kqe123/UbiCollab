@@ -1,4 +1,4 @@
-import DocumentList from "../documents/DocumentList.jsx"
+import DocumentList from "./DocumentList.jsx"
 function Directory() {
 return (
     <>

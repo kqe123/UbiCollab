@@ -73,16 +73,28 @@ import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils"
 // --- Styles ---
 import "@/components/tiptap-templates/simple/simple-editor.scss"
 
-import content from "@/components/tiptap-templates/simple/data/content.json"
+// 사용자 정의 components
+import SaveButton from "@/components/editor/toolbar/SaveButton.jsx"
+import axios from "axios";
+import toast from "react-hot-toast";
 
 const MainToolbarContent = ({
   onHighlighterClick,
   onLinkClick,
+  onSave,
+  isSaving,
   isMobile
 }) => {
   return (
     <>
       <Spacer />
+      {/* 저장 버튼 추가 */}
+      <ToolbarGroup>
+        <SaveButton 
+          onSave={onSave}
+          isSaving={isSaving}/>
+      </ToolbarGroup>
+      <ToolbarSeparator />
       <ToolbarGroup>
         <UndoRedoButton action="undo" />
         <UndoRedoButton action="redo" />
@@ -126,9 +138,6 @@ const MainToolbarContent = ({
       </ToolbarGroup>
       <Spacer />
       {isMobile && <ToolbarSeparator />}
-      <ToolbarGroup>
-        <ThemeToggle />
-      </ToolbarGroup>
     </>
   );
 }
@@ -159,11 +168,13 @@ const MobileToolbarContent = ({
   </>
 )
 
-export function SimpleEditor() {
+export function SimpleEditor({fileName, documentId, initialContent} ) {
   const isMobile = useIsBreakpoint()
   const { height } = useWindowSize()
   const [mobileView, setMobileView] = useState("main")
+  const [isSaving, setIsSaving] = useState(false); // 저장 상태를 나타내는 isSaving 추가
   const toolbarRef = useRef(null)
+
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -205,6 +216,57 @@ export function SimpleEditor() {
     content: "",   // 에디터 첫 내용 초기화
   })
 
+  // handleSave() : fileName, content, extension을 보내서 DB에 Document를 저장하도록
+  //              API를 호출하는 함수
+  const handleSave = async () => {
+    if (!editor) {
+      console.error("에디터가 아직 준비되지 않았습니다.");
+      return;
+    }
+
+    // 문서명 앞뒤 공백 제거
+    const trimmedFileName = fileName.trim();
+
+    // backend api에 보낼 body
+    const documentData = {
+      fileName:
+        trimmedFileName === ""
+          ? "제목 없는 문서"
+          : trimmedFileName,
+
+      // 저장 버튼을 누른 순간의 최신 에디터 내용
+      content: editor.getHTML(),
+      extension: "uc",
+    };
+
+    try {
+      setIsSaving(true);
+      
+      // Backend API 호출
+      const response = await axios.put(
+            `http://localhost:8080/api/documents/${documentId}`,
+            documentData
+      );
+      
+      console.log("문서 저장 성공");
+      console.log(response.data);
+      toast.success("성공적으로 저장되었습니다.");
+    } catch (error) {
+      console.error("문서 저장 실패:", error);
+
+      if (error.response) {
+        console.error(
+          "백엔드 응답:",
+          error.response.data
+        );
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+
+
   const rect = useCursorVisibility({
     editor,
     overlayHeight: toolbarRef.current?.getBoundingClientRect().height ?? 0,
@@ -232,6 +294,8 @@ export function SimpleEditor() {
             <MainToolbarContent
               onHighlighterClick={() => setMobileView("highlighter")}
               onLinkClick={() => setMobileView("link")}
+              onSave={handleSave}   // MainToolbarContent에 onSave 이름으로 저장 로직 전달
+              isSaving={isSaving}   // MainToolbarContent에 isSaving도 전달
               isMobile={isMobile} />
           ) : (
             <MobileToolbarContent
