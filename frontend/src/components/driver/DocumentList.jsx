@@ -60,7 +60,8 @@ function DocumentList() {
             </thead>
 
             <tbody>
-                {documents.map((document) => (
+                {[...documents].sort((a, b) => new Date(b.createdDate) - new Date(a.createdDate)) // 생성 날짜 내림차순 정렬
+                .map((document) => (
                     <tr key={document.id} className="border-b border-[#DBDBDB]">
                         
                         <td className="py-3 text-sm font-medium">

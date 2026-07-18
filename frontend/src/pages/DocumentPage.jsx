@@ -1,4 +1,4 @@
-import EditorHeader from "../components/editor/EditorHeader.jsx";
+import EditorHeader from "../components/editor/header/EditorHeader.jsx";
 import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor.jsx";
 import { useEffect, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";

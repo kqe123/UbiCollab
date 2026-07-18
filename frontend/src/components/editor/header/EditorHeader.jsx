@@ -1,4 +1,4 @@
-import fileIcon from "../../assets/document.png";
+import fileIcon from "../../../assets/document.png";
 import DocumentName from "./DocumentName.jsx";
 function EditorHeader({ fileName, setFileName }) {
 return (

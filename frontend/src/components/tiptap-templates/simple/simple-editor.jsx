@@ -75,8 +75,10 @@ import "@/components/tiptap-templates/simple/simple-editor.scss"
 
 // 사용자 정의 components
 import SaveButton from "@/components/editor/toolbar/SaveButton.jsx"
+import LoadButton from "@/components/editor/toolbar/LoadButton.jsx"
 import axios from "axios";
 import toast from "react-hot-toast";
+import LoadDocumentModal from "@/components/editor/toolbar/LoadDocumentModal.jsx";
 
 const MainToolbarContent = ({
   onHighlighterClick,
@@ -85,11 +87,21 @@ const MainToolbarContent = ({
   isSaving,
   isMobile
 }) => {
+  const [isLoadModalOpen, setIsLoadModalOpen] = useState(false);
+
+  const openLoadModal = () => {
+        setIsLoadModalOpen(true);
+  };
+
+  const closeLoadModal = () => {
+        setIsLoadModalOpen(false);
+  };
   return (
     <>
       <Spacer />
       {/* 저장 버튼 추가 */}
       <ToolbarGroup>
+        <LoadButton onClick={openLoadModal} />
         <SaveButton 
           onSave={onSave}
           isSaving={isSaving}/>
@@ -138,6 +150,10 @@ const MainToolbarContent = ({
       </ToolbarGroup>
       <Spacer />
       {isMobile && <ToolbarSeparator />}
+      {/* 조건 && 화면에_표시할_JSX */}
+      {isLoadModalOpen && (
+        <LoadDocumentModal onClose={closeLoadModal} />
+      )}
     </>
   );
 }
@@ -213,7 +229,7 @@ export function SimpleEditor({fileName, documentId, initialContent} ) {
         onError: (error) => console.error("Upload failed:", error),
       }),
     ],
-    content: "",   // 에디터 첫 내용 초기화
+    content: initialContent,   // 에디터 첫 내용 초기화
   })
 
   // handleSave() : fileName, content, extension을 보내서 DB에 Document를 저장하도록
