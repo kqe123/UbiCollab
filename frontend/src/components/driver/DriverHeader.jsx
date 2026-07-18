@@ -22,11 +22,7 @@ function Header() {
             );
 
             console.log("문서 생성 성공:", response.data);
-            navigate(`/editor/${response.data.id}`, {
-                state: {
-                    document: response.data,
-                },
-            });
+            navigate(`/editor/${response.data.id}`); // editor에게 documentId만 전달
         } catch (error) {
             console.error("문서 저장 실패:", error);
         }
