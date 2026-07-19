@@ -1,8 +1,13 @@
 import axios from "axios";
 import { useQuery } from "@tanstack/react-query";
 import fileIcon from "../../assets/document.png";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function DocumentList() {
+    const [selectedDocumentId, setSelectedDocumentId] = useState(null); // 현재 선택된 문서 ID
+    const navigate = useNavigate();
+    
     const getDocuments = async () => {
         // axios로 백엔드 api 호출
         const response = await axios.get(
@@ -62,9 +67,13 @@ function DocumentList() {
             <tbody>
                 {[...documents].sort((a, b) => new Date(b.createdDate) - new Date(a.createdDate)) // 생성 날짜 내림차순 정렬
                 .map((document) => (
-                    <tr key={document.id} className="border-b border-[#DBDBDB]">
+                    <tr key={document.id}
+                        onClick= {() => setSelectedDocumentId(document.id)}
+                        onDoubleClick = {() => navigate(`editor/${selectedDocumentId}`)}
+                        className={`border-b border-[#DBDBDB]
+                            ${selectedDocumentId === document.id ? "bg-blue-100" : "hover:bg-gray-100"}`}>
                         
-                        <td className="py-3 text-sm font-medium">
+                        <td className="py-3 px-2 text-sm font-medium">
                             <img src={fileIcon} alt="" className="inline-block h-[18px] w-[15px] mr-[5px] mb-[3px]" />
                             {document.fileName}.{document.extension}</td>
                         <td className="py-3 text-sm font-light">{formatDate(document.createdDate)}</td>
