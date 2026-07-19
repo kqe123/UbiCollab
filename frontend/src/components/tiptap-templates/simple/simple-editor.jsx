@@ -150,7 +150,7 @@ const MainToolbarContent = ({
       </ToolbarGroup>
       <Spacer />
       {isMobile && <ToolbarSeparator />}
-      {/* 조건 && 화면에_표시할_JSX */}
+      {/* isLoadModalOpen이 true일때 LoadDocumentModal 컴포넌트 반환 */}
       {isLoadModalOpen && (
         <LoadDocumentModal onClose={closeLoadModal} />
       )}

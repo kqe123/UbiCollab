@@ -1,8 +1,14 @@
 import axios from "axios";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import fileIcon from "../../../assets/document.png";
+import { useNavigate } from "react-router-dom";
+
 
 function LoadDocumentModal({ onClose }) {
+    const [selectedDocumentId, setSelectedDocumentId] = useState(null); // 현재 선택된 문서 ID
+    const navigate = useNavigate(); // navigate 훅
+
     const getDocuments = async () => {
         // axios로 백엔드 api 호출
         const response = await axios.get(
@@ -28,6 +34,11 @@ function LoadDocumentModal({ onClose }) {
     const formatDate = (dateString) => {
         return new Date(dateString).toLocaleDateString("ko-KR");
     };
+
+    const loadDocument = async () => {
+        navigate(`/editor/${selectedDocumentId}`); // editor에게 documentId만 전달
+        onClose();
+    }
 
     return (
         // 오버레이 (배경)
@@ -58,7 +69,7 @@ function LoadDocumentModal({ onClose }) {
                 {/* 문서가 0건일 때 */}
                 {!isLoading && !isError && documents.length === 0 && (
                     <p className="mt-10">
-                        '+ 새 문서' 버튼을 사용하여 문서를 생성하세요.
+                        불러올 문서가 없습니다..
                     </p>
                 )}
 
@@ -75,8 +86,16 @@ function LoadDocumentModal({ onClose }) {
                     <tbody>
                         {[...documents].sort((a, b) => new Date(b.createdDate) - new Date(a.createdDate)) // 생성 날짜 내림차순 정렬
                             .map((document) => (
-                                <tr key={document.id} className="border-b border-[#DBDBDB]">
-                                        <td className="py-3 text-sm font-medium">
+                                <tr key={document.id} 
+                                    onClick={() => setSelectedDocumentId(document.id)}
+                                    onDoubleClick={() => loadDocument(document)}
+                                    className={
+                                        `cursor-pointer
+                                        ${ selectedDocumentId === document.id
+                                            ? "bg-blue-100"
+                                            : "hover:bg-gray-100"
+                                        }`}>
+                                    <td className="py-3 text-sm font-medium">
                                         <img src={fileIcon} alt="" className="inline-block h-[18px] w-[15px] mr-[5px] mb-[3px]" />
                                         {document.fileName}.{document.extension}</td>
                                     <td className="py-3 text-sm font-light">{formatDate(document.createdDate)}</td>
