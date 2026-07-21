@@ -1,5 +1,28 @@
 # 개발 일지 (DIARY)
 
+## 2026-07-21
+
+### 프로젝트 진행
+- Full request 완료
+
+### 학습 내용
+- 참고 문헌 (Full Stack Development with Spring Boot 3 and React) Chapter 9 학습 완료
+
+## 2026-07-20
+
+### 학습 내용
+- 참고 문헌 (Full Stack Development with Spring Boot 3 and React) Chapter 8 학습 완료
+
+## 2026-07-19
+
+### 프로젝트 진행
+- issue #6 (기본 문서 기능 (문서 편집기 구현)) 해결
+
+## 2026-07-16
+
+### 프로젝트 진행
+- issue #5 (기본 문서 기능 (메인화면 간단히 만들기)) 해결
+
 ## 2026-07-14
 
 ### 프로젝트 진행
