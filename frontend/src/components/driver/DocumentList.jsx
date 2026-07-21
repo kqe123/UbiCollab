@@ -3,11 +3,48 @@ import { useQuery } from "@tanstack/react-query";
 import fileIcon from "../../assets/document.png";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import DocumentMenuModal from "@/components/modal/DocumentMenuModal.jsx"
+import ChangeNameMenu from "@/components/modal/ChangeNameMenu.jsx";
 
 function DocumentList() {
-    const [selectedDocumentId, setSelectedDocumentId] = useState(null); // 현재 선택된 문서 ID
-    const navigate = useNavigate();
+    // 상태(state)들
+    const [selectedDocument, setSelectedDocument] = useState(null); // 선택된 파일 자체
+    const [documentMenu, setDocumentMenu] = useState({
+        isOpen: false,
+        x: 0,
+        y: 0,
+    }); 
+    const [renameMenu, setRenameMenu] = useState(false);
     
+    // React Hook
+    const navigate = useNavigate();
+
+    // formatDate() : 날짜 가독성을 높여주는 함수
+    const formatDate = (dateString) => {
+        return new Date(dateString).toLocaleDateString("ko-KR");
+    };
+
+    // 우클릭 시 수행할 이벤트 함수
+    const handleDocumentMenu = (e) => {
+        e.preventDefault();
+        setDocumentMenu({
+            isOpen: true,
+            x: e.clientX,
+            y: e.clientY,
+        })
+    }
+
+    // 메뉴를 닫는 함수
+    const closeDocumentMenu = () => {
+        setDocumentMenu({...documentMenu, isOpen: false});
+    }
+
+    // 파일명 변경 메뉴 닫는 함수
+    const closeRenameMenu = () => {
+        setRenameMenu(false);
+    }
+
+    // 백엔드 api를 호출하는 함수
     const getDocuments = async () => {
         // axios로 백엔드 api 호출
         const response = await axios.get(
@@ -19,6 +56,7 @@ function DocumentList() {
         return response.data;
     };
 
+    // useQuery 실행
     const {
         data: documents = [], // 백엔드에서 받아온 데이터
         isLoading,            // 현재 요청 중인지 여부
@@ -29,10 +67,8 @@ function DocumentList() {
         queryFn: getDocuments,   // getDocuments() 실행
     });
 
-    // formatDate() : 날짜 가독성을 높여주는 함수
-    const formatDate = (dateString) => {
-        return new Date(dateString).toLocaleDateString("ko-KR");
-    };
+
+    
 
     // 로딩 처리
     if (isLoading) {
@@ -55,6 +91,7 @@ function DocumentList() {
 
     // 문서 리스트를 정상적으로 받아왔을 때
     return (
+        <>
         <table className="mt-10 w-full table-fixed text-left">
             <thead>
                 <tr className="border-b border-[#DBDBDB]">
@@ -68,20 +105,43 @@ function DocumentList() {
                 {[...documents].sort((a, b) => new Date(b.createdDate) - new Date(a.createdDate)) // 생성 날짜 내림차순 정렬
                 .map((document) => (
                     <tr key={document.id}
-                        onClick= {() => setSelectedDocumentId(document.id)}
-                        onDoubleClick = {() => navigate(`editor/${selectedDocumentId}`)}
+                        onClick= {() => setSelectedDocument(document)}
+                        onContextMenu= {(e) => {
+                            setSelectedDocument(document);
+                            handleDocumentMenu(e); 
+                            }
+                        }
+                        onDoubleClick = {() => navigate(`editor/${document.id}`)}
                         className={`border-b border-[#DBDBDB]
-                            ${selectedDocumentId === document.id ? "bg-blue-100" : "hover:bg-gray-100"}`}>
+                            ${selectedDocument?.id === document.id ? "bg-blue-100" : "hover:bg-gray-100"}`}>
                         
                         <td className="py-3 px-2 text-sm font-medium">
                             <img src={fileIcon} alt="" className="inline-block h-[18px] w-[15px] mr-[5px] mb-[3px]" />
-                            {document.fileName}.{document.extension}</td>
+                            {document.fileName}{document.extension && `.${document.extension}`}</td>
                         <td className="py-3 text-sm font-light">{formatDate(document.createdDate)}</td>
                         <td className="py-3 text-sm font-light">{document.fileSize} B</td>
                     </tr>
                 ))}
             </tbody>
         </table>
+
+        {documentMenu.isOpen && (
+            <DocumentMenuModal
+            x={documentMenu.x}
+            y={documentMenu.y}
+            document={selectedDocument}
+            onClose={closeDocumentMenu}
+            openRenameMenu={() => setRenameMenu(true)}
+        />
+        )}
+
+        {renameMenu && (
+            <ChangeNameMenu 
+            onClose={closeRenameMenu}
+            document={selectedDocument}
+        />
+        )}
+    </>
     );
 }
 

@@ -78,7 +78,7 @@ import SaveButton from "@/components/editor/toolbar/SaveButton.jsx"
 import LoadButton from "@/components/editor/toolbar/LoadButton.jsx"
 import axios from "axios";
 import toast from "react-hot-toast";
-import LoadDocumentModal from "@/components/editor/toolbar/LoadDocumentModal.jsx";
+import LoadDocumentModal from "@/components/modal/LoadDocumentModal.jsx";
 
 const MainToolbarContent = ({
   onHighlighterClick,
@@ -252,7 +252,7 @@ export function SimpleEditor({fileName, documentId, initialContent} ) {
 
       // 저장 버튼을 누른 순간의 최신 에디터 내용
       content: editor.getHTML(),
-      extension: "uc",
+      extension: "",
     };
 
     try {

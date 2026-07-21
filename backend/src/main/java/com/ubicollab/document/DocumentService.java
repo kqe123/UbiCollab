@@ -27,7 +27,7 @@ public class DocumentService {
 	        throw new IllegalArgumentException("fileName은 필수입니다.");
 	    }
 
-	    if (extension == null || extension.isBlank()) {
+	    if (extension == null) {
 	        throw new IllegalArgumentException("extension은 필수입니다.");
 	    }
 
@@ -66,17 +66,18 @@ public class DocumentService {
 	public void updateDocument(Long id, Document request) {
 		Document document = docRepository.findById(id).orElseThrow(
 				() -> new RuntimeException("문서를 찾을 수 없습니다. id="+ id));
+		Long fileSize;
 		
 		if (request.getFileName() != null)
 			document.setFileName(request.getFileName());
-		if (request.getContent() != null)
+		if (request.getContent() != null) {
 			document.setContent(request.getContent());
+			// 내용이 변경되므로 fileSize도 다시 계산
+			fileSize = (long) request.getContent().getBytes(StandardCharsets.UTF_8).length;
+			document.setFileSize(fileSize);
+		}
 		if (request.getExtension() != null)
 			document.setExtension(request.getExtension());
-		
-		// 내용이 변경되므로 fileSize도 다시 계산
-		Long fileSize = (long) request.getContent().getBytes(StandardCharsets.UTF_8).length;
-		document.setFileSize(fileSize);
 		docRepository.save(document);
 	}
 	

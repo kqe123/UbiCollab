@@ -1,7 +1,7 @@
 import axios from "axios";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import fileIcon from "../../../assets/document.png";
+import fileIcon from "@/assets/document.png";
 import { useNavigate } from "react-router-dom";
 
 

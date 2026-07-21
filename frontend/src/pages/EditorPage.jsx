@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import axios from "axios";
 
-function DocumentPage() {
+function EditorPage() {
     // URL이 /editor/3이라면 documentId에는 "3"이 들어옴
     const { documentId } = useParams();
 
@@ -81,4 +81,4 @@ function DocumentPage() {
 	);
 }
 
-export default DocumentPage;
+export default EditorPage;

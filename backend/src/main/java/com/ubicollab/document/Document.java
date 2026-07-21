@@ -25,7 +25,7 @@ public class Document {
 	private LocalDateTime createdDate;
 	
 	@Column(nullable=false)
-	private boolean isTrashCan = false;
+	private boolean isInTrash = false;
 	
 	@Column(nullable=false, length=20)
 	private String extension;
@@ -37,11 +37,11 @@ public class Document {
 	public Document() {}
 	
 	public Document(String fileName, String content, LocalDateTime createdDate,
-					boolean isTrashCan, String extension, Long fileSize) {
+					boolean isInTrash, String extension, Long fileSize) {
 		this.fileName = fileName;
 		this.content = content;
 		this.createdDate = createdDate;
-		this.isTrashCan = isTrashCan;
+		this.isInTrash = isInTrash;
 		this.extension = extension;
 		this.fileSize = fileSize;
 	}
@@ -75,12 +75,12 @@ public class Document {
 		this.createdDate = createdDate;
 	}
 	
-	public boolean getIsTrashCan() {
-		return isTrashCan;
+	public boolean getIsInTrash() {
+		return isInTrash;
 	}
 	
-	public void setIsTrashCan(boolean isTrashCan) {
-		this.isTrashCan = isTrashCan;
+	public void setIsInTrash(boolean isInTrash) {
+		this.isInTrash = isInTrash;
 	}
 	
 	public String getExtension() {

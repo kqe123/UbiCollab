@@ -1,6 +1,6 @@
 import { Route, Routes } from "react-router-dom";
 import DriverPage from "./pages/DriverPage.jsx";
-import DocumentPage from "./pages/DocumentPage.jsx";
+import EditorPage from "./pages/EditorPage.jsx";
 import { Toaster } from "react-hot-toast";
 
 function App() {
@@ -9,7 +9,7 @@ function App() {
 		<Toaster />
 		<Routes>
 			<Route path='/' element={<DriverPage />} />
-            <Route path="/editor/:documentId" element={<DocumentPage />} />
+            <Route path="/editor/:documentId" element={<EditorPage />} />
 		</Routes>
 		</>
 	);
