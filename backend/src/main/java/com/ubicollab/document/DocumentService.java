@@ -70,14 +70,20 @@ public class DocumentService {
 		
 		if (request.getFileName() != null)
 			document.setFileName(request.getFileName());
+		
 		if (request.getContent() != null) {
 			document.setContent(request.getContent());
 			// 내용이 변경되므로 fileSize도 다시 계산
 			fileSize = (long) request.getContent().getBytes(StandardCharsets.UTF_8).length;
 			document.setFileSize(fileSize);
 		}
+		
 		if (request.getExtension() != null)
 			document.setExtension(request.getExtension());
+		
+		if (request.getIsInTrash() != null) 
+			document.setIsInTrash(request.getIsInTrash());
+		
 		docRepository.save(document);
 	}
 	

@@ -25,7 +25,7 @@ public class Document {
 	private LocalDateTime createdDate;
 	
 	@Column(nullable=false)
-	private boolean isInTrash = false;
+	private Boolean isInTrash = false;
 	
 	@Column(nullable=false, length=20)
 	private String extension;
@@ -75,11 +75,11 @@ public class Document {
 		this.createdDate = createdDate;
 	}
 	
-	public boolean getIsInTrash() {
+	public Boolean getIsInTrash() {
 		return isInTrash;
 	}
 	
-	public void setIsInTrash(boolean isInTrash) {
+	public void setIsInTrash(Boolean isInTrash) {
 		this.isInTrash = isInTrash;
 	}
 	

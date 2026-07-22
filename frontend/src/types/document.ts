@@ -5,4 +5,5 @@ export type Document = {
     extension: string;
     createdDate: string;
     fileSize: number;
+    isInTrash : boolean;
 };
