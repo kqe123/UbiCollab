@@ -97,4 +97,5 @@ public class User {
 	public void setProfileImageKey(String profileImageKey) {
 		this.profileImageKey = profileImageKey;
 	}
+	
 }
