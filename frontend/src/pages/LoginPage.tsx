@@ -8,6 +8,7 @@ function LoginPage () {
     const [username, setUsername] = useState<string>("");
     const [password, setPassword] = useState<string>("");
     const navigate = useNavigate();
+
     const changeUsername = (event : React.ChangeEvent<HTMLInputElement>) => {
         setUsername(event.target.value)
     }
@@ -58,35 +59,46 @@ function LoginPage () {
 
     return (
     <>
-        <div className="w-full h-screen bg-sky-100 flex
+        <div className="w-full h-screen bg-[#E6F8FE] flex
             items-center justify-center box-border px-6" >
             <div className="w-[600px] h-[600px] rounded-[24px] flex flex-col bg-white px-6 ">
                 {/* logo */}
-                <img src={logo} className="w-[250px] h-[60px] mx-auto mt-20"></img>
+                <img src={logo} className="w-[250px] h-[60px] mx-auto mt-10"></img>
 
                 {/* Login Panel */}
-                <form onSubmit={login} className="w-[350px] mt-10 flex mx-auto gap-3">
+                <form onSubmit={login} className="w-[350px] mt-8 flex mx-auto gap-3">
                     <div className="flex flex-1 flex-col gap-3">
                         {/* ID */}
                         <input type="text" 
                             className=" w-full h-[40px] border border-gray-300 rounded-md
-                                text-sm focus:outline-none focus:border-black-300"
+                                text-sm focus:outline-none focus:border-sky-500 pl-2"
                                 onChange={changeUsername}
                                 value={username}
                                 placeholder="아이디" />
                         {/* PW */}
                         <input type="password" 
                             className="w-full h-[40px] border border-gray-300 rounded-md
-                                text-sm focus:outline-none focus:border-black-300"
+                                text-sm focus:outline-none focus:border-sky-500 pl-2"
                                 onChange={changePassword}
                                 value={password}
                                 placeholder="비밀번호" />
+                        <input type="submit" className="w-full h-[40px] bg-[#104FCD] rounded-[6px]
+                        text-white text-sm border-0 cursor-pointer" value="로그인"/>
                     </div>
-                    {/* login Button */}
-                    <input type="submit" className="w-[80px] h-[92px] bg-[#104FCD] rounded-[12px]
-                        text-white text-sm border-0" value="로그인"/>
+                    
                 </form>
+                
+                <div className="w-[350px] mt-3 flex mx-auto gap-3">
+                    <p className="text-sm mx-auto text-gray-400 cursor-pointer hover:underline"
+                        onClick={() => navigate('/signup')}>회원가입</p>
+                </div>
 
+                <div className="flex items-center mt-15 gap-4 w-full">
+                    <hr className="flex-1 border-gray-300" />
+                    <span className="text-gray-500 text-sm font-medium whitespace-nowrap">또는</span>
+                    <hr className="flex-1 border-gray-300" />
+                </div>
+                <h1 className="mx-auto mt-5 font-semibold">다른 계정으로 로그인</h1>
             </div>
         </div>
     </>

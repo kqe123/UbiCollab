@@ -73,6 +73,7 @@ public class SecurityConfig {
 					.requestMatchers(HttpMethod.GET,"/api/documents").permitAll() // 개발을 위해 임시 개방
 					.requestMatchers(HttpMethod.GET, "/api/documents/*").permitAll() // 개발을 위해 임시 개방
 					.requestMatchers(HttpMethod.PUT, "/api/documents/*").permitAll() // 개발을 위해 임시 개방
+					.requestMatchers(HttpMethod.GET, "/api/user/check-username").permitAll() // 개발을 위해 임시 개방
 					.anyRequest().authenticated())
 			.addFilterBefore(authenticationFilter,
 					UsernamePasswordAuthenticationFilter.class);

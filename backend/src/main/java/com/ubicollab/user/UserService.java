@@ -49,4 +49,8 @@ public class UserService {
 		// 저장 + User 객체 반환
 		return repository.save(newUser);
 	}
+	
+	public Boolean checkSameUsername(String username) {
+	    return repository.findByUsername(username).isPresent();
+	}
 }
