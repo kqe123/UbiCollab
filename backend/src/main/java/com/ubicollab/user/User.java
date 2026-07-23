@@ -3,10 +3,12 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import jakarta.persistence.Column;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "users") // PostgreSQL에서 user는 예약어(reserved keyword)이므로 users로 변경
 public class User {
 	// 기본키
 	@Id

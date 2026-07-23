@@ -11,6 +11,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.HttpServletRequest;
 
+@Component
 public class JwtService {
 	static final long EXPIRATIONTIME = 86_400_000L;
 	static final String PREFIX = "Bearer ";

@@ -7,6 +7,9 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+
+
+// DB에서 해당 Username의 User 객체를 찾아 반환하는 서비스
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
 	private final UserRepository repository;
