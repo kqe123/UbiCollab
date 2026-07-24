@@ -3,7 +3,6 @@ import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
-import { useAuth } from "../auth/AuthContext";
 
 function EditorPage() {
     // URL이 /editor/3이라면 documentId에는 "3"이 들어옴 -> string | undefined
@@ -13,7 +12,7 @@ function EditorPage() {
     const [fileName, setFileName] = useState<string>("");
     const [content, setContent] = useState<string>("");
 
-    const { accessToken } = useAuth(); // accessToken (JWT)
+    const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
 
     // GET 요청이 끝나기 전 편집기가 빈 내용으로 먼저 생성되는 것을 방지
     const [isLoading, setIsLoading] = useState(true);

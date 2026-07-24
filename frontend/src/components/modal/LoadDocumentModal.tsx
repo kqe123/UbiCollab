@@ -3,12 +3,11 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import fileIcon from "@/assets/document.png";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../auth/AuthContext";
 
 function LoadDocumentModal({onClose} : {onClose : () => void}) {
     const [selectedDocumentId, setSelectedDocumentId] = useState(null); // 현재 선택된 문서 ID
     const navigate = useNavigate(); // navigate 훅
-    const { accessToken } = useAuth(); // accessToken (JWT)
+    const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
 
     const getDocuments = async () => {
         // 문서 목록 가져오는 백엔드 api 호출

@@ -2,13 +2,12 @@ import logo from '../../assets/logo.jpg'
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { useAuth } from "../../auth/AuthContext";
 
 function Header() {
 
     const navigate = useNavigate(); // navigate 훅
-    const { accessToken } = useAuth(); // accessToken (JWT)
-    
+    const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
+
     // [+ 새 문서] 버튼 클릭 시 이벤트
     const createDocument = async () => {
         const documentData = {

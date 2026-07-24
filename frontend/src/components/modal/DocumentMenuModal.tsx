@@ -2,7 +2,6 @@ import { useNavigate } from "react-router-dom";
 import type {Document} from "../../types/document";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { useAuth } from "../../auth/AuthContext";
 
 function DocumentMenuModal({
     x, y, document, onClose, openRenameMenu
@@ -15,7 +14,7 @@ function DocumentMenuModal({
 }) {
 
     const navigate = useNavigate();
-    const { accessToken } = useAuth(); // accessToken (JWT)
+    const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
     const throwTrash = async () => {
         try {
             // 문서 변경 Backend API 호출

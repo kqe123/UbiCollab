@@ -6,7 +6,6 @@ import { useNavigate } from "react-router-dom";
 import DocumentMenuModal from "../modal/DocumentMenuModal"
 import ChangeNameMenu from "../modal/ChangeNameMenu";
 import type {Document} from "../../types/document";
-import { useAuth } from "../../auth/AuthContext";
 
 function DocumentList() {
     // 상태(state)들
@@ -17,7 +16,7 @@ function DocumentList() {
         y: 0,
     }); 
     const [renameMenu, setRenameMenu] = useState<boolean>(false);
-    const { accessToken } = useAuth(); // accessToken (JWT)
+    const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
     
     // React Hook
     const navigate = useNavigate();

@@ -2,7 +2,6 @@ import { useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import type {Document} from "../../types/document";
-import { useAuth } from "../../auth/AuthContext";
 function ChangeNameMenu ({
     onClose,
     document
@@ -11,7 +10,7 @@ function ChangeNameMenu ({
     document : Document;
 }){
     const [fileName, setFileName] = useState(document.fileName);
-    const { accessToken } = useAuth(); // accessToken (JWT)
+    const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
     const changeName = async () => {
 
         // 문서명 앞뒤 공백 제거
