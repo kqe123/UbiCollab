@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import DocumentMenuModal from "../modal/DocumentMenuModal"
 import ChangeNameMenu from "../modal/ChangeNameMenu";
 import type {Document} from "../../types/document";
+import { useAuth } from "../../auth/AuthContext";
 
 function DocumentList() {
     // 상태(state)들
@@ -16,6 +17,7 @@ function DocumentList() {
         y: 0,
     }); 
     const [renameMenu, setRenameMenu] = useState<boolean>(false);
+    const { accessToken } = useAuth(); // accessToken (JWT)
     
     // React Hook
     const navigate = useNavigate();
@@ -54,7 +56,12 @@ function DocumentList() {
     const getDocuments = async () => {
         // axios로 백엔드 api 호출
         const response = await axios.get(
-            "http://localhost:8080/api/documents"
+            "http://localhost:8080/api/documents",
+            {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`
+                }
+            }
         );
             
         console.log("백엔드 응답:", response.data);

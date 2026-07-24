@@ -79,6 +79,7 @@ import LoadButton from "@/components/editor/toolbar/LoadButton"
 import axios from "axios";
 import toast from "react-hot-toast";
 import LoadDocumentModal from "@/components/modal/LoadDocumentModal";
+import { useAuth } from "../../../auth/AuthContext";
 
 const MainToolbarContent = ({
   onHighlighterClick,
@@ -215,6 +216,7 @@ export function SimpleEditor({
   )
   const [isSaving, setIsSaving] = useState<boolean>(false); // 저장 상태를 나타내는 isSaving 추가
   const toolbarRef = useRef<HTMLDivElement>(null)
+  const { accessToken } = useAuth(); // accessToken (JWT)
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -285,7 +287,13 @@ export function SimpleEditor({
       // Backend API 호출
       const response = await axios.put(
         `http://localhost:8080/api/documents/${documentId}`,
-        documentData
+        documentData,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        }
+
       );
         
       console.log("문서 저장 성공");

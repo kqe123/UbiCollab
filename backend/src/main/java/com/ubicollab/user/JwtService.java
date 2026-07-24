@@ -13,7 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 
 @Component
 public class JwtService {
-	static final long EXPIRATIONTIME = 86_400_000L;
+	static final long EXPIRATIONTIME = 3_600_000L;
 	static final String PREFIX = "Bearer ";
 	
 	private final SecretKey KEY;
@@ -25,6 +25,7 @@ public class JwtService {
     }
 		
 	// 사용자가 로그인에 성공했을 때 서명된 JWT를 만들고 반환
+    // (LoginController에서 사용)
 	public String getToken(String username) {
 		String token = Jwts.builder()
 		.subject(username) 
@@ -35,7 +36,8 @@ public class JwtService {
 		return token;
 	}
 		
-	// Authorization 헤더에서 JWT를 꺼내 사용자 이름 반환
+	// Authorization 헤더에서 JWT를 꺼내 사용자 이름 반환 
+	// (AuthenticationFilter에서 사용)
 	public String getAuthUser(HttpServletRequest request) {
 		// Http Request 중 Authorization 헤더를 가져옴.
 		String authorizationHeader =
@@ -47,7 +49,7 @@ public class JwtService {
 	        return null;
 	    }
 	    
-	    // authorization 헤더에서 PreFIX(Bearer) 제거
+	    // authorization 헤더에서 PREFIX(Bearer) 제거
 	    String token = authorizationHeader.substring(PREFIX.length());
 	    
 	    // JWT가 만료/위조/문자열이 깨짐 등이 발생하면 예외 처리

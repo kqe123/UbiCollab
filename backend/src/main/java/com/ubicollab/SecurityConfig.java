@@ -25,9 +25,12 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @EnableWebSecurity // 보안 설정을 커스터마이징함을 명시.
 public class SecurityConfig {
 	private final AuthenticationFilter authenticationFilter;
+	private final AuthEntryPoint exceptionHandler;
 	
-	public SecurityConfig(AuthenticationFilter authenticationFilter) {
+	public SecurityConfig(AuthenticationFilter authenticationFilter,
+		AuthEntryPoint exceptionHandler) {
 		this.authenticationFilter = authenticationFilter;
+		this.exceptionHandler = exceptionHandler;
 	}
 	
 	// 비밀번호를 암호화(Encoding) 하고, 로그인할 때 비교(Matching) 하는 객체
@@ -67,16 +70,14 @@ public class SecurityConfig {
 			.sessionManagement((sessionManagement) -> sessionManagement.
 					sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.authorizeHttpRequests((authorizeHttpRequests) -> authorizeHttpRequests
-					.requestMatchers(HttpMethod.POST,"/api/login").permitAll()
-					.requestMatchers(HttpMethod.POST,"/api/user").permitAll()
-					.requestMatchers(HttpMethod.POST,"/api/documents").permitAll() // 개발을 위해 임시 개방
-					.requestMatchers(HttpMethod.GET,"/api/documents").permitAll() // 개발을 위해 임시 개방
-					.requestMatchers(HttpMethod.GET, "/api/documents/*").permitAll() // 개발을 위해 임시 개방
-					.requestMatchers(HttpMethod.PUT, "/api/documents/*").permitAll() // 개발을 위해 임시 개방
-					.requestMatchers(HttpMethod.GET, "/api/user/check-username").permitAll() // 개발을 위해 임시 개방
+					.requestMatchers(HttpMethod.POST,"/api/login").permitAll() // 로그인 요청 API
+					.requestMatchers(HttpMethod.POST,"/api/user").permitAll() // 회원가입 API
+					.requestMatchers(HttpMethod.GET, "/api/user/check-username").permitAll() // 아이디 중복 검사 API
 					.anyRequest().authenticated())
 			.addFilterBefore(authenticationFilter,
-					UsernamePasswordAuthenticationFilter.class);
+					UsernamePasswordAuthenticationFilter.class)
+			.exceptionHandling((exceptionHandling) -> exceptionHandling.
+					authenticationEntryPoint(exceptionHandler));
 			return http.build();
 	}
 }

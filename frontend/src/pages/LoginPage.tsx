@@ -3,11 +3,14 @@ import { useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../auth/AuthContext";
 
 function LoginPage () {
     const [username, setUsername] = useState<string>("");
     const [password, setPassword] = useState<string>("");
     const navigate = useNavigate();
+    const { setAccessToken } = useAuth();
+    
 
     const changeUsername = (event : React.ChangeEvent<HTMLInputElement>) => {
         setUsername(event.target.value)
@@ -35,7 +38,18 @@ function LoginPage () {
             );
             
             console.log("로그인 성공");
-            console.log(response.data);
+            
+            // HTTP response에서 authorization 헤더 추출
+            const authorization = response.headers.authorization;
+            if (!authorization) {
+                throw new Error("Authorization 응답 헤더가 없습니다.");
+            }
+            
+            // PREFIX 제거한 JWT 토큰을 access
+            const accessToken = authorization.replace("Bearer ", "");
+            setAccessToken(accessToken);
+
+            // 메인 화면(드라이브)로 이동
             navigate('/');
             } catch (error: unknown) {
                 console.error("로그인 실패 :", error);

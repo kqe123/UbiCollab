@@ -2,6 +2,8 @@ import { useNavigate } from "react-router-dom";
 import type {Document} from "../../types/document";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { useAuth } from "../../auth/AuthContext";
+
 function DocumentMenuModal({
     x, y, document, onClose, openRenameMenu
 } : {
@@ -13,23 +15,28 @@ function DocumentMenuModal({
 }) {
 
     const navigate = useNavigate();
-    
+    const { accessToken } = useAuth(); // accessToken (JWT)
     const throwTrash = async () => {
         try {
-            // Backend API 호출
+            // 문서 변경 Backend API 호출
             const response = await axios.put(`http://localhost:8080/api/documents/${document.id}`,
-            { isInTrash : true, }
+            { isInTrash : true },
+            {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`
+                }
+            }
             );
         
-            console.log("문서 휴지통으로 보내기 성공", response.data);
+            console.log("문서를 휴지통으로 보내기 성공", response.data);
             toast.success("파일이 휴지통으로 이동되었습니다.");
         } catch (error: unknown) {
-            console.error("문서 저장 실패:", error);
+            console.error("문서를 휴지통으로 보내기 실패.. : ", error);
 
             // axios에서 발생한 오류인 경우
             if (axios.isAxiosError(error)) {
                 console.error("백엔드 응답:", error.response?.data);
-                toast.error(error.response?.data?.message ?? "문서 저장에 실패했습니다.");
+                toast.error(error.response?.data?.message ?? "문서를 휴지통으로 보내기에 실패했습니다.");
             } 
             // 일반 오류인 경우
             else if (error instanceof Error) {

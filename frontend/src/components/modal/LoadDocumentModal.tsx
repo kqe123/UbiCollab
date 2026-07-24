@@ -3,16 +3,22 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import fileIcon from "@/assets/document.png";
 import { useNavigate } from "react-router-dom";
-
+import { useAuth } from "../../auth/AuthContext";
 
 function LoadDocumentModal({onClose} : {onClose : () => void}) {
     const [selectedDocumentId, setSelectedDocumentId] = useState(null); // 현재 선택된 문서 ID
     const navigate = useNavigate(); // navigate 훅
+    const { accessToken } = useAuth(); // accessToken (JWT)
 
     const getDocuments = async () => {
-        // axios로 백엔드 api 호출
+        // 문서 목록 가져오는 백엔드 api 호출
         const response = await axios.get(
-            "http://localhost:8080/api/documents"
+            "http://localhost:8080/api/documents",
+            {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`
+                }
+            }
         );
             
         console.log("백엔드 응답:", response.data);

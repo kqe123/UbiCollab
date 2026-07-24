@@ -2,6 +2,7 @@ import { useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import type {Document} from "../../types/document";
+import { useAuth } from "../../auth/AuthContext";
 function ChangeNameMenu ({
     onClose,
     document
@@ -10,6 +11,7 @@ function ChangeNameMenu ({
     document : Document;
 }){
     const [fileName, setFileName] = useState(document.fileName);
+    const { accessToken } = useAuth(); // accessToken (JWT)
     const changeName = async () => {
 
         // 문서명 앞뒤 공백 제거
@@ -24,10 +26,15 @@ function ChangeNameMenu ({
         };
 
         try {
-            // Backend API 호출
+            // 문서 변경 Backend API 호출  
             const response = await axios.put(
-                    `http://localhost:8080/api/documents/${document.id}`,
-                    documentData
+                `http://localhost:8080/api/documents/${document.id}`,
+                documentData,
+                {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`
+                    }
+                }
             );
         
             console.log("파일명 변경 성공", response.data);
