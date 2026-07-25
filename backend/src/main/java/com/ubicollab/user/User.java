@@ -17,22 +17,19 @@ public class User {
 	private Long id;
 	
 	// 필드들
-	@NotBlank(message = "Username은 비어 있을 수 없습니다.")
 	@Column(nullable=false, unique=true, length=20)
 	private String username;
 	
-	@NotBlank(message = "Password는 비어 있을 수 없습니다.")
+
 	@Column(nullable=false)
 	private String password;
-	
-	@NotBlank(message = "nickname은 비어 있을 수 없습니다.")
+
 	@Column(nullable=false, length=15)
 	private String nickname;
 	
 	@Column(nullable=false)
 	private LocalDateTime createdDate;
 	
-	@NotBlank(message = "Role은 비어 있을 수 없습니다.")
 	@Column(nullable=false)
 	private String role;
 	

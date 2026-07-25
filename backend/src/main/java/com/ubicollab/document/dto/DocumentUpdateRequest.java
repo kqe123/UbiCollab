@@ -1,13 +1,5 @@
 package com.ubicollab.document.dto;
-
-import java.time.LocalDateTime;
-
 import com.ubicollab.document.enums.DocumentExtension;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.validation.constraints.Size;
 
 public class DocumentUpdateRequest {
