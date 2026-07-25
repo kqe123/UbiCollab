@@ -13,7 +13,7 @@ function Header() {
         const documentData = {
             fileName:"제목 없는 문서",
             content: "",
-            extension: "",
+            extension: "UC",
         };
         
         // DB에 새 문서 생성 후 response 받음

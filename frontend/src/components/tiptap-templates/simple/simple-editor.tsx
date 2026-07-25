@@ -79,6 +79,7 @@ import LoadButton from "@/components/editor/toolbar/LoadButton"
 import axios from "axios";
 import toast from "react-hot-toast";
 import LoadDocumentModal from "@/components/modal/LoadDocumentModal";
+import DOMPurify from "dompurify";
 
 const MainToolbarContent = ({
   onHighlighterClick,
@@ -254,7 +255,7 @@ export function SimpleEditor({
         onError: (error) => console.error("Upload failed:", error),
       }),
     ],
-    content: initialContent, // 에디터 내용 업데이트
+    content: DOMPurify.sanitize(initialContent), // 에디터 내용 업데이트
   })
 
   // handleSave() : fileName, content, extension을 보내서 DB에 Document를 저장하도록
@@ -276,8 +277,8 @@ export function SimpleEditor({
           : trimmedFileName,
   
     // 저장 버튼을 누른 순간의 최신 에디터 내용
-      content: editor.getHTML(),
-      extension: "",
+      content: DOMPurify.sanitize(editor.getHTML()),
+      extension: "UC",
     };
   
     try {

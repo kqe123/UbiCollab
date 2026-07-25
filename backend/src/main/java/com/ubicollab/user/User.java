@@ -6,6 +6,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Column;
 import java.time.LocalDateTime;
+import jakarta.validation.constraints.NotBlank;
 
 @Entity
 @Table(name = "users") // PostgreSQL에서 user는 예약어(reserved keyword)이므로 users로 변경
@@ -16,18 +17,22 @@ public class User {
 	private Long id;
 	
 	// 필드들
+	@NotBlank(message = "Username은 비어 있을 수 없습니다.")
 	@Column(nullable=false, unique=true, length=20)
 	private String username;
 	
+	@NotBlank(message = "Password는 비어 있을 수 없습니다.")
 	@Column(nullable=false)
 	private String password;
 	
+	@NotBlank(message = "nickname은 비어 있을 수 없습니다.")
 	@Column(nullable=false, length=15)
 	private String nickname;
 	
 	@Column(nullable=false)
 	private LocalDateTime createdDate;
 	
+	@NotBlank(message = "Role은 비어 있을 수 없습니다.")
 	@Column(nullable=false)
 	private String role;
 	

@@ -1,11 +1,15 @@
 package com.ubicollab.document;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Column;
 import java.time.LocalDateTime;
-
+import com.ubicollab.document.enums.DocumentExtension;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
 public class Document {
@@ -21,14 +25,15 @@ public class Document {
 	@Column(columnDefinition = "TEXT", nullable=false)
 	private String content;
 	
-	@Column(nullable=false)
+	@Column(nullable=false, updatable = false)
 	private LocalDateTime createdDate;
 	
 	@Column(nullable=false)
 	private Boolean isInTrash = false;
 	
-	@Column(nullable=false, length=20)
-	private String extension;
+	@Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private DocumentExtension extension;
 	
 	@Column(nullable=false)
 	private Long fileSize;
@@ -37,7 +42,7 @@ public class Document {
 	public Document() {}
 	
 	public Document(String fileName, String content, LocalDateTime createdDate,
-					boolean isInTrash, String extension, Long fileSize) {
+					boolean isInTrash, DocumentExtension extension, Long fileSize) {
 		this.fileName = fileName;
 		this.content = content;
 		this.createdDate = createdDate;
@@ -83,11 +88,11 @@ public class Document {
 		this.isInTrash = isInTrash;
 	}
 	
-	public String getExtension() {
+	public DocumentExtension getExtension() {
 		return extension;
 	}
 	
-	public void setExtension(String extension) {
+	public void setExtension(DocumentExtension extension) {
 		this.extension = extension;
 	}
 	

@@ -15,6 +15,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import com.ubicollab.document.Document;
 import com.ubicollab.document.DocumentRepository;
 import com.ubicollab.document.DocumentService;
+import com.ubicollab.document.dto.DocumentCreateRequest;
+import com.ubicollab.document.dto.DocumentUpdateRequest;
+
+import jakarta.validation.Valid;
 
 // React 요청을 허용함.
 @CrossOrigin(origins = "http://localhost:5173")
@@ -29,7 +33,7 @@ public class DocumentController {
 	
 	// 문서 생성 API(POST '/api/documents')
 	@PostMapping
-	public ResponseEntity<Document> createDocument(@RequestBody Document document) {
+	public ResponseEntity<Document> createDocument(@Valid @RequestBody DocumentCreateRequest document) {
 		Document savedDocument =
 	            docService.createDocument(document);
 		return ResponseEntity
@@ -52,7 +56,7 @@ public class DocumentController {
 	// 문서 수정 API (PUT '/api/documents/')
 	@PutMapping("/{id}")
 	public ResponseEntity<String> updateDocument(@PathVariable("id") Long id,
-							@RequestBody Document document ) {
+			@Valid @RequestBody DocumentUpdateRequest document ) {
 		docService.updateDocument(id, document);
 		return ResponseEntity.ok("업데이트 완료");
 	}

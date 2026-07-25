@@ -56,14 +56,14 @@ function DocumentMenuModal({
             <div className="fixed z-50 w-44 rounded-lg border border-gray-200 bg-white py-2 shadow-lg"
                 style={{ left: `${x}px`, top: `${y}px`,}}
                 onClick={(e) => e.stopPropagation()}>
-                <button type="button" className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100"
+                <button type="button" className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 cursor-pointer"
                     onClick={() => {
                         navigate(`editor/${document.id}`);
                         onClose();
                     }}>
                     열기
                 </button>
-                <button type="button" className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100"
+                <button type="button" className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 cursor-pointer"
                     onClick={() => {
                         onClose();
                         openRenameMenu();
@@ -71,7 +71,7 @@ function DocumentMenuModal({
                     이름 변경
                 </button>
                 <hr className="my-1 border-gray-200" />
-                <button type="button" className=" w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100"
+                <button type="button" className=" w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100 cursor-pointer"
                     onClick={() => {  
                         throwTrash()
                         navigate("/");
