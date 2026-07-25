@@ -7,6 +7,9 @@ import java.util.Optional;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import com.ubicollab.document.DocumentRepository;
+import com.ubicollab.document.dto.DocumentCreateRequest;
+import com.ubicollab.document.dto.DocumentUpdateRequest;
+import com.ubicollab.document.enums.DocumentExtension;
 import com.ubicollab.document.Document;
 
 @Service
@@ -18,19 +21,11 @@ public class DocumentService {
 	}
 	
 	// 한 Document를 생성하는 메서드
-	public Document createDocument(Document document) {
+	public Document createDocument(DocumentCreateRequest document) {
 		String fileName = document.getFileName();
 		String content = document.getContent();
-		String extension = document.getExtension();
+		DocumentExtension extension = document.getExtension();
 		
-		if (fileName == null || fileName.isBlank()) {
-	        throw new IllegalArgumentException("fileName은 필수입니다.");
-	    }
-
-	    if (extension == null) {
-	        throw new IllegalArgumentException("extension은 필수입니다.");
-	    }
-
 	    if (content == null) {
 	        content = "";
 	    }
@@ -63,21 +58,39 @@ public class DocumentService {
 	}
 	
 	// 한 Document를 수정하는 메서드 (filename 또는 content가 수정되야함.)
-	public void updateDocument(Long id, Document request) {
+	public void updateDocument(Long id, DocumentUpdateRequest request) {
 		Document document = docRepository.findById(id).orElseThrow(
 				() -> new RuntimeException("문서를 찾을 수 없습니다. id="+ id));
 		Long fileSize;
 		
-		if (request.getFileName() != null)
-			document.setFileName(request.getFileName());
+		if (request.getFileName() != null) {
+		    String fileName = request.getFileName().trim();
+
+		    if (fileName.isEmpty()) {
+		        throw new IllegalArgumentException("fileName은 비어 있을 수 없습니다.");
+		    }
+
+		    if (fileName.length() > 100) {
+		        throw new IllegalArgumentException("fileName은 100자 이하여야 합니다.");
+		    }
+
+		    document.setFileName(fileName);
+		}
+		
+		
 		if (request.getContent() != null) {
 			document.setContent(request.getContent());
 			// 내용이 변경되므로 fileSize도 다시 계산
 			fileSize = (long) request.getContent().getBytes(StandardCharsets.UTF_8).length;
 			document.setFileSize(fileSize);
 		}
+		
 		if (request.getExtension() != null)
 			document.setExtension(request.getExtension());
+		
+		if (request.getIsInTrash() != null) 
+			document.setIsInTrash(request.getIsInTrash());
+		
 		docRepository.save(document);
 	}
 	

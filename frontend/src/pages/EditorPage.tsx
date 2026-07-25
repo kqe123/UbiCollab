@@ -12,6 +12,8 @@ function EditorPage() {
     const [fileName, setFileName] = useState<string>("");
     const [content, setContent] = useState<string>("");
 
+    const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
+
     // GET 요청이 끝나기 전 편집기가 빈 내용으로 먼저 생성되는 것을 방지
     const [isLoading, setIsLoading] = useState(true);
 
@@ -26,7 +28,12 @@ function EditorPage() {
 
                 // documentId에 해당하는 문서 한 개 조회
                 const response = await axios.get(
-                    `http://localhost:8080/api/documents/${documentId}`
+                    `http://localhost:8080/api/documents/${documentId}`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${accessToken}`
+                        }
+                    }
                 );
 
                 console.log("문서 불러오기 성공:", response.data);

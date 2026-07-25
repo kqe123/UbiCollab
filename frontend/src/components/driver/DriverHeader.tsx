@@ -2,23 +2,30 @@ import logo from '../../assets/logo.jpg'
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+
 function Header() {
 
     const navigate = useNavigate(); // navigate 훅
+    const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
 
     // [+ 새 문서] 버튼 클릭 시 이벤트
     const createDocument = async () => {
         const documentData = {
             fileName:"제목 없는 문서",
             content: "",
-            extension: "",
+            extension: "UC",
         };
         
         // DB에 새 문서 생성 후 response 받음
         try {
             const response = await axios.post(
                 "http://localhost:8080/api/documents",
-                documentData
+                documentData,
+                {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                    },
+                }
             );
 
             console.log("문서 생성 성공:", response.data);

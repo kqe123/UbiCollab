@@ -16,6 +16,7 @@ function DocumentList() {
         y: 0,
     }); 
     const [renameMenu, setRenameMenu] = useState<boolean>(false);
+    const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
     
     // React Hook
     const navigate = useNavigate();
@@ -54,7 +55,12 @@ function DocumentList() {
     const getDocuments = async () => {
         // axios로 백엔드 api 호출
         const response = await axios.get(
-            "http://localhost:8080/api/documents"
+            "http://localhost:8080/api/documents",
+            {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`
+                }
+            }
         );
             
         console.log("백엔드 응답:", response.data);
