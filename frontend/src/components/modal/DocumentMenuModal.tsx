@@ -1,14 +1,14 @@
 import { useNavigate } from "react-router-dom";
-import type {Document} from "../../types/driveitem";
+import type {DriveItem} from "../../types/driveitem";
 import axios from "axios";
 import toast from "react-hot-toast";
 
 function DocumentMenuModal({
-    x, y, document, onClose, openRenameMenu
+    x, y, file, onClose, openRenameMenu
 } : {
     x : number;
     y : number;
-    document : Document;
+    file : DriveItem;
     onClose : () => void;
     openRenameMenu : () => void;
 }) {
@@ -18,7 +18,7 @@ function DocumentMenuModal({
     const throwTrash = async () => {
         try {
             // 문서 변경 Backend API 호출
-            const response = await axios.put(`http://localhost:8080/api/documents/${document.id}`,
+            const response = await axios.put(`http://localhost:8080/api/driveitem/${file.id}`,
             { isInTrash : true },
             {
                 headers: {
@@ -58,7 +58,7 @@ function DocumentMenuModal({
                 onClick={(e) => e.stopPropagation()}>
                 <button type="button" className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 cursor-pointer"
                     onClick={() => {
-                        navigate(`editor/${document.id}`);
+                        navigate(`editor/${file.id}`);
                         onClose();
                     }}>
                     열기

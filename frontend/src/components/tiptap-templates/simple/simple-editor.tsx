@@ -202,11 +202,11 @@ const MobileToolbarContent = ({
 
 export function SimpleEditor({
   fileName,
-  documentId,
+  fileId,
   initialContent
   } : { 
     fileName: string;
-    documentId : string | undefined;
+    fileId : string | undefined;
     initialContent: string;
   }) {
   const isMobile = useIsBreakpoint()
@@ -270,8 +270,8 @@ export function SimpleEditor({
     const trimmedFileName = fileName.trim();
   
     // backend api에 보낼 body
-    const documentData = {
-      fileName:
+    const fileData = {
+      itemName:
         trimmedFileName === ""
           ? "제목 없는 문서"
           : trimmedFileName,
@@ -286,8 +286,8 @@ export function SimpleEditor({
         
       // 문서 저장 Backend API 호출
       const response = await axios.put(
-        `http://localhost:8080/api/documents/${documentId}`,
-        documentData,
+        `http://localhost:8080/api/driveitem/${fileId}`,
+        fileData,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`

@@ -56,12 +56,12 @@ public class DriveItemController {
 	
 	// 파일 상세 조회 API(GET '/api/driveitem/files/{id}')
 	@GetMapping("/files/{id}")
-	public DriveItem getFile(@PathVariable("id") Long id) {
+	public DriveItemResponse getFile(@PathVariable("id") Long id) {
 		return driveService.getFile(id);
 	}
 	
-	// 폴더/파일 수정 API (PUT '/api/driveitem/files/{id}')
-	@PutMapping("/files/{id}")
+	// 폴더/파일 수정 API (PUT '/api/driveitem/{id}')
+	@PutMapping("/{id}")
 	public ResponseEntity<String> updateDriveItem(@PathVariable("id") Long id,
 			@Valid @RequestBody DriveItemUpdateRequest request,
 			Authentication authentication) {

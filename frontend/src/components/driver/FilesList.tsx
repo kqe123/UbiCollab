@@ -10,7 +10,7 @@ import type {DriveItem} from "../../types/driveitem";
 function FilesList() {
     // 상태(state)들
     const [selectedFile, setSelectedFile] = useState<DriveItem|null>(null); // 선택된 파일 자체
-    const [documentMenu, setDocumentMenu] = useState({
+    const [fileMenu, setFileMenu] = useState({
         isOpen: false,
         x: 0,
         y: 0,
@@ -27,9 +27,9 @@ function FilesList() {
     };
 
     // 우클릭 시 수행할 이벤트 함수
-    const handleDocumentMenu = (e : React.MouseEvent) => {
+    const handleFileMenu = (e : React.MouseEvent) => {
         e.preventDefault();
-        setDocumentMenu({
+        setFileMenu({
             isOpen: true,
             x: e.clientX,
             y: e.clientY,
@@ -37,8 +37,8 @@ function FilesList() {
     }
 
     // 메뉴를 닫는 함수
-    const closeDocumentMenu = () => {
-        setDocumentMenu({...documentMenu, isOpen: false});
+    const closeFileMenu = () => {
+        setFileMenu({...fileMenu, isOpen: false});
     }
 
     // 파일명 변경 메뉴 여는 함수
@@ -120,7 +120,7 @@ function FilesList() {
                         onClick= {() => setSelectedFile(file)}
                         onContextMenu= {(e) => {
                             setSelectedFile(file);
-                            handleDocumentMenu(e); 
+                            handleFileMenu(e); 
                             }
                         }
                         onDoubleClick = {() => navigate(`editor/${file.id}`)}
@@ -137,12 +137,12 @@ function FilesList() {
             </tbody>
         </table>
 
-        {documentMenu.isOpen && selectedFile && (
+        {fileMenu.isOpen && selectedFile && (
             <DocumentMenuModal
-            x={documentMenu.x}
-            y={documentMenu.y}
-            document={selectedFile}
-            onClose={closeDocumentMenu}
+            x={fileMenu.x}
+            y={fileMenu.y}
+            file={selectedFile}
+            onClose={closeFileMenu}
             openRenameMenu={openRenameMenu}
         />
         )}
@@ -150,7 +150,7 @@ function FilesList() {
         {renameMenu && selectedFile && (
             <ChangeNameMenu 
             onClose={closeRenameMenu}
-            document={selectedFile}
+            file={selectedFile}
         />
         )}
     </>

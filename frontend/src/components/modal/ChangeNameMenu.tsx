@@ -1,15 +1,15 @@
 import { useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
-import type {Document} from "../../types/driveitem";
+import type {DriveItem} from "../../types/driveitem";
 function ChangeNameMenu ({
     onClose,
-    document
+    file
 } : {
     onClose : () => void;
-    document : Document;
+    file : DriveItem;
 }){
-    const [fileName, setFileName] = useState(document.fileName);
+    const [fileName, setFileName] = useState(file.itemName);
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
     const changeName = async () => {
 
@@ -18,7 +18,7 @@ function ChangeNameMenu ({
 
         // backend api에 보낼 body
         const documentData = {
-        fileName:
+        itemName:
             trimmedFileName === ""
             ? "제목 없는 문서"
             : trimmedFileName,
@@ -27,7 +27,7 @@ function ChangeNameMenu ({
         try {
             // 문서 변경 Backend API 호출  
             const response = await axios.put(
-                `http://localhost:8080/api/documents/${document.id}`,
+                `http://localhost:8080/api/driveitem/${file.id}`,
                 documentData,
                 {
                     headers: {

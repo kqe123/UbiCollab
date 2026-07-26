@@ -9,8 +9,8 @@ function Header() {
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
 
     // [+ 새 문서] 버튼 클릭 시 이벤트
-    const createDocument = async () => {
-        const documentData = {
+    const createFile = async () => {
+        const fileData = {
             itemName: "제목 없는 문서",
             type : "FILE",
             content: "",
@@ -21,7 +21,7 @@ function Header() {
         try {
             const response = await axios.post(
                 "http://localhost:8080/api/driveitem/create",
-                documentData,
+                fileData,
                 {
                     headers: {
                         Authorization: `Bearer ${accessToken}`,
@@ -68,7 +68,7 @@ function Header() {
             {/* Buttons */}
             <div className="flex items-center gap-4 shrink-0">
                 <button type="button" 
-                        onClick={createDocument}
+                        onClick={createFile}
                         className="h-10 px-[18px] rounded-lg bg-[#ffffff]
                                 text-black text-sm font-semibold hover:bg-[#F6F6F6] cursor-pointer">
                     + 새 문서

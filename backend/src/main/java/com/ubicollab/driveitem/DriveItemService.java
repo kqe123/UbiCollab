@@ -124,7 +124,7 @@ public class DriveItemService {
 	}
 	
 	// 한 File를 반환하는 메서드
-	public DriveItem getFile(Long id) {
+	public DriveItemResponse getFile(Long id) {
 		DriveItem file = driveRepository.findById(id).orElseThrow(
 				() -> new RuntimeException("파일를 찾을 수 없습니다. id=" + id));
 		
@@ -132,7 +132,7 @@ public class DriveItemService {
 			throw new IllegalArgumentException("오류 : 해당 아이템은 파일이 아닙니다!");
 		}
 		
-		return file;
+		return new DriveItemResponse(file);
 	}
 	
 	
