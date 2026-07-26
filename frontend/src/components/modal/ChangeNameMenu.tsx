@@ -1,7 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
-import type {Document} from "../../types/document";
+import type {Document} from "../../types/driveitem";
 function ChangeNameMenu ({
     onClose,
     document

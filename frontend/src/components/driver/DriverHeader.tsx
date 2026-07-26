@@ -11,7 +11,8 @@ function Header() {
     // [+ 새 문서] 버튼 클릭 시 이벤트
     const createDocument = async () => {
         const documentData = {
-            fileName:"제목 없는 문서",
+            itemName: "제목 없는 문서",
+            type : "FILE",
             content: "",
             extension: "UC",
         };
@@ -19,7 +20,7 @@ function Header() {
         // DB에 새 문서 생성 후 response 받음
         try {
             const response = await axios.post(
-                "http://localhost:8080/api/documents",
+                "http://localhost:8080/api/driveitem/create",
                 documentData,
                 {
                     headers: {

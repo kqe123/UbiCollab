@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import type {Document} from "../../types/document";
+import type {Document} from "../../types/driveitem";
 import axios from "axios";
 import toast from "react-hot-toast";
 

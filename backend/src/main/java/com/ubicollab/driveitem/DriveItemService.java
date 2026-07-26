@@ -1,6 +1,7 @@
 package com.ubicollab.driveitem;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.http.ResponseEntity;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Service;
 import com.ubicollab.driveitem.DriveItem;
 import com.ubicollab.driveitem.DriveItemRepository;
 import com.ubicollab.driveitem.dto.DriveItemCreateRequest;
+import com.ubicollab.driveitem.dto.DriveItemResponse;
 import com.ubicollab.driveitem.dto.DriveItemUpdateRequest;
 import com.ubicollab.driveitem.enums.DriveItemExtension;
 import com.ubicollab.driveitem.enums.DriveItemType;
@@ -111,8 +113,14 @@ public class DriveItemService {
 	
 	
 	// 전체 File를 반환하는 메서드
-	public Iterable<DriveItem> getFiles() { 
-		return driveRepository.findByType(DriveItemType.FILE);
+	public Iterable<DriveItemResponse> getFiles() { 
+		 List<DriveItemResponse> result = new ArrayList<>();
+
+		 for (DriveItem driveItem : driveRepository.findByType(DriveItemType.FILE)) {
+		      result.add(new DriveItemResponse(driveItem));
+		 }
+
+		return result;
 	}
 	
 	// 한 File를 반환하는 메서드

@@ -17,6 +17,7 @@ import com.ubicollab.driveitem.DriveItem;
 import com.ubicollab.driveitem.DriveItemRepository;
 import com.ubicollab.driveitem.DriveItemService;
 import com.ubicollab.driveitem.dto.DriveItemCreateRequest;
+import com.ubicollab.driveitem.dto.DriveItemResponse;
 import com.ubicollab.driveitem.dto.DriveItemUpdateRequest;
 
 import jakarta.validation.Valid;
@@ -49,7 +50,7 @@ public class DriveItemController {
 	
 	// 파일 목록 조회 API (GET '/api/driveitem/files')
 	@GetMapping("/files")
-	public Iterable<DriveItem> getFiles() {
+	public Iterable<DriveItemResponse> getFiles() {
 		return driveService.getFiles();
 	}
 	
