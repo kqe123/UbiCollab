@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import com.ubicollab.driveitem.DriveItem;
 import com.ubicollab.driveitem.DriveItemRepository;
@@ -109,59 +110,111 @@ public class DriveItemService {
 	}
 	
 	
-	// 전체 Document를 반환하는 메서드
-	public Iterable<DriveItem> getDocuments() { 
-		return driveRepository.findAll();
+	// 전체 File를 반환하는 메서드
+	public Iterable<DriveItem> getFiles() { 
+		return driveRepository.findByType(DriveItemType.FILE);
 	}
 	
-	// 한 Document를 반환하는 메서드
-	public DriveItem getDocument(Long id) {
-		DriveItem document = docRepository.findById(id).orElseThrow(
-				() -> new RuntimeException("문서를 찾을 수 없습니다. id=" + id));
-		return document;
+	// 한 File를 반환하는 메서드
+	public DriveItem getFile(Long id) {
+		DriveItem file = driveRepository.findById(id).orElseThrow(
+				() -> new RuntimeException("파일를 찾을 수 없습니다. id=" + id));
+		
+		if (file.getType() != DriveItemType.FILE) {
+			throw new IllegalArgumentException("오류 : 해당 아이템은 파일이 아닙니다!");
+		}
+		
+		return file;
 	}
+	
 	
 	// 한 Document를 수정하는 메서드 (filename 또는 content가 수정되야함.)
-	public void updateDocument(Long id, DriveItemUpdateRequest request) {
-		DriveItem document = docRepository.findById(id).orElseThrow(
-				() -> new RuntimeException("문서를 찾을 수 없습니다. id="+ id));
-		Long fileSize;
+	public void updateDriveItem(Long id, DriveItemUpdateRequest request, String username) {
 		
-		if (request.getFileName() != null) {
-		    String fileName = request.getFileName().trim();
+		// 변경가능한 필드들 (4개)
+		String itemName = request.getItemName();
+	    DriveItem parent = null;
+	    String content = request.getContent();
+	    Boolean isInTrash = request.getIsInTrash();
+	    
+	    // 현재 로그인 사용자
+	    User user = userRepository.findByUsername(username)
+	            .orElseThrow(() ->
+	                new IllegalArgumentException(
+	                    "존재하지 않는 사용자입니다."
+	                )
+	            );
+	    
+	    // 수정 대상 driveItem
+		DriveItem driveItem = driveRepository.findById(id).orElseThrow(
+				() -> new RuntimeException("해당 아이템을 찾을 수 없습니다. id="+ id));
+		
+		// 수정 대상 driveItem의 type
+		DriveItemType type = driveItem.getType(); 
+		
+		// itemName이 있다면 변경 및 예외처리
+		if (itemName != null) {
+		    String trimmedItemName = itemName.trim();
 
-		    if (fileName.isEmpty()) {
-		        throw new IllegalArgumentException("fileName은 비어 있을 수 없습니다.");
+		    if (trimmedItemName.isEmpty()) {
+		        throw new IllegalArgumentException("itemName은 비어 있을 수 없습니다.");
 		    }
 
-		    if (fileName.length() > 100) {
+		    if (trimmedItemName.length() > 100) {
 		        throw new IllegalArgumentException("fileName은 100자 이하여야 합니다.");
 		    }
 
-		    document.setFileName(fileName);
+		    driveItem.setItemName(trimmedItemName);
 		}
 		
+		// 부모 폴더 변경
+	    if (request.getParentId() != null) {
+	        parent = driveRepository
+	            .findById(request.getParentId())
+	            .orElseThrow(() ->
+	                new IllegalArgumentException(
+	                    "이동할 부모 폴더가 존재하지 않습니다."
+	                )
+	            );
+
+	        if (parent.getType() != DriveItemType.FOLDER) {
+	            throw new IllegalArgumentException(
+	                "부모는 폴더여야 합니다."
+	            );
+	        }
+
+	        if (!parent.getUser().getId().equals(user.getId())) {
+	            throw new AccessDeniedException(
+	                "다른 사용자의 폴더로 이동할 수 없습니다."
+	            );
+	        }
+	        driveItem.setParent(parent);
+	    }
+
+	    // 파일만 content 수정 가능, 폴더라면 예외처리
+	    if (content != null) {
+	        if (type != DriveItemType.FILE) {
+	            throw new IllegalArgumentException(
+	                "폴더는 content를 수정할 수 없습니다."
+	            );
+	        }
+	        
+	        driveItem.setContent(content);
+	        long size = content.getBytes(StandardCharsets.UTF_8).length;
+	        driveItem.setSize(size);
+	    }
 		
-		if (request.getContent() != null) {
-			document.setContent(request.getContent());
-			// 내용이 변경되므로 fileSize도 다시 계산
-			fileSize = (long) request.getContent().getBytes(StandardCharsets.UTF_8).length;
-			document.setFileSize(fileSize);
-		}
+		// isinTrash가 있다면 변경 및 예외처리
+		if (isInTrash != null) 
+			driveItem.setIsInTrash(request.getIsInTrash());
 		
-		if (request.getExtension() != null)
-			document.setExtension(request.getExtension());
-		
-		if (request.getIsInTrash() != null) 
-			document.setIsInTrash(request.getIsInTrash());
-		
-		docRepository.save(document);
+		driveRepository.save(driveItem);
 	}
 	
 	// 한 Document를 제거하는 메서드
 	public void deleteDocument(Long id) {
-		DriveItem document = docRepository.findById(id).orElseThrow(
+		DriveItem document = driveRepository.findById(id).orElseThrow(
 				() -> new RuntimeException("문서를 찾을 수 없습니다. id="+ id));
-		docRepository.delete(document);
+		driveRepository.delete(document);
 	}
 }

@@ -32,7 +32,7 @@ public class DriveItemController {
 		this.driveService = driveService;
 	}
 	
-	// 폴더/파일 생성 API(POST '/api/driveitem/create')
+	// 폴더/파일 생성 API (POST '/api/driveitem/create')
 	@PostMapping("/create")
 	public ResponseEntity<DriveItem> createDriveItem(
 			@Valid @RequestBody DriveItemCreateRequest request,
@@ -47,23 +47,26 @@ public class DriveItemController {
 	            .body(savedDriveItem);
 	}
 	
-	// 파일 목록 조회 API(GET '/api/driveitem/documents')
-	@GetMapping("/documents")
-	public Iterable<DriveItem> getDocuments() {
-		return driveService.getDocuments();
+	// 파일 목록 조회 API (GET '/api/driveitem/files')
+	@GetMapping("/files")
+	public Iterable<DriveItem> getFiles() {
+		return driveService.getFiles();
 	}
 	
-	// 파일 상세 조회 API(GET '/api/driveitem/{id}')
-	@GetMapping("/{id}")
-	public DriveItem getDocument(@PathVariable("id") Long id) {
-		return driveService.getDocument(id);
+	// 파일 상세 조회 API(GET '/api/driveitem/files/{id}')
+	@GetMapping("/files/{id}")
+	public DriveItem getFile(@PathVariable("id") Long id) {
+		return driveService.getFile(id);
 	}
 	
-	// 문서 수정 API (PUT '/api/driveitem/')
-	@PutMapping("/{id}")
-	public ResponseEntity<String> updateDocument(@PathVariable("id") Long id,
-			@Valid @RequestBody DriveItemUpdateRequest document ) {
-		driveService.updateDocument(id, document);
+	// 폴더/파일 수정 API (PUT '/api/driveitem/files/{id}')
+	@PutMapping("/files/{id}")
+	public ResponseEntity<String> updateDriveItem(@PathVariable("id") Long id,
+			@Valid @RequestBody DriveItemUpdateRequest request,
+			Authentication authentication) {
+		
+		String username = authentication.getName(); // 현재 로그인 사용자
+		driveService.updateDriveItem(id, request, username);
 		return ResponseEntity.ok("업데이트 완료");
 	}
 	
@@ -76,6 +79,5 @@ public class DriveItemController {
 	}
 	
 	// 휴지통 비우기 API 
-	// 
 	
 }

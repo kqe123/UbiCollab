@@ -6,7 +6,7 @@ public class DriveItemUpdateRequest {
     @Size(max = 100, message = "아이템 이름은 100자 이하로 입력해주세요.")
     private String itemName;
     
-    private DriveItem parent;
+    private Long parentId;
 
     private String content;
 
@@ -28,12 +28,12 @@ public class DriveItemUpdateRequest {
 		this.itemName = itemName;
 	}
 
-	public DriveItem getParent() {
-		return parent;
+	public Long getParentId() {
+		return parentId;
 	}
 
-	public void setParent(DriveItem parent) {
-		this.parent = parent;
+	public void setParentId(Long parentId) {
+		this.parentId = parentId;
 	}
 
 	public String getContent() {
