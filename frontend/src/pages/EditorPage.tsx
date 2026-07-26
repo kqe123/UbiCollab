@@ -6,7 +6,7 @@ import axios from "axios";
 
 function EditorPage() {
     // URL이 /editor/3이라면 documentId에는 "3"이 들어옴 -> string | undefined
-    const { documentId } = useParams();
+    const { fileId } = useParams();
 
     // 백엔드에서 받아온 파일명과 문서 내용을 저장
     const [fileName, setFileName] = useState<string>("");
@@ -21,14 +21,14 @@ function EditorPage() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        const getDocument = async () => {
+        const getFile = async () => {
             try {
                 setIsLoading(true);
                 setError(null);
 
-                // documentId에 해당하는 문서 한 개 조회
+                // fileId에 해당하는 문서 한 개 조회
                 const response = await axios.get(
-                    `http://localhost:8080/api/documents/${documentId}`,
+                    `http://localhost:8080/api/driveitem/files/${fileId}`,
                     {
                         headers: {
                             Authorization: `Bearer ${accessToken}`
@@ -39,7 +39,7 @@ function EditorPage() {
                 console.log("문서 불러오기 성공:", response.data);
 
                 // 백엔드에서 받은 데이터로 state 변경
-                setFileName(response.data.fileName);
+                setFileName(response.data.itemName);
                 setContent(response.data.content);
             } catch (error: unknown) {
                 if (error instanceof Error) {
@@ -53,8 +53,8 @@ function EditorPage() {
             }
         };
 
-        getDocument();
-    }, [documentId]);
+        getFile();
+    }, [fileId]);
 
     // 문서를 받아오기 전에 편집기를 렌더링하지 않음
     if (isLoading) {
@@ -83,7 +83,7 @@ function EditorPage() {
 			fileName={fileName}
 			setFileName={setFileName}/>
 		<SimpleEditor 
-			documentId={documentId}
+			fileId={fileId}
             fileName={fileName}
             initialContent={content}
 		/>

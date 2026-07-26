@@ -18,7 +18,7 @@ function App() {
       {/* 로그인 필요 */}
       <Route element={<ProtectedRoute />}>
         <Route path='/' element={<DriverPage />} />
-        <Route path="/editor/:documentId" element={<EditorPage />} />
+        <Route path="/editor/:fileId" element={<EditorPage />} />
       </Route>
     </Routes>
     </>

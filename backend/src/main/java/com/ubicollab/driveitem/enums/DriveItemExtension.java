@@ -1,6 +1,6 @@
-package com.ubicollab.document.enums;
+package com.ubicollab.driveitem.enums;
 
-public enum DocumentExtension {
+public enum DriveItemExtension {
     UC("uc"),
     HTML("html"),
     TXT("txt"),
@@ -8,7 +8,7 @@ public enum DocumentExtension {
 
     private final String extension;
 
-    DocumentExtension(String extension) {
+    DriveItemExtension(String extension) {
         this.extension = extension;
     }
 

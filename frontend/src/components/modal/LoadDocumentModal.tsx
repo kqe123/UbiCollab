@@ -5,14 +5,14 @@ import fileIcon from "@/assets/document.png";
 import { useNavigate } from "react-router-dom";
 
 function LoadDocumentModal({onClose} : {onClose : () => void}) {
-    const [selectedDocumentId, setSelectedDocumentId] = useState(null); // 현재 선택된 문서 ID
+    const [selectedFileId, setSelectedFileId] = useState(null); // 현재 선택된 문서 ID
     const navigate = useNavigate(); // navigate 훅
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
 
-    const getDocuments = async () => {
+    const getFiles = async () => {
         // 문서 목록 가져오는 백엔드 api 호출
         const response = await axios.get(
-            "http://localhost:8080/api/documents",
+            "http://localhost:8080/api/driveitem/files",
             {
                 headers: {
                     Authorization: `Bearer ${accessToken}`
@@ -26,13 +26,13 @@ function LoadDocumentModal({onClose} : {onClose : () => void}) {
     };
 
     const {
-        data: documents = [], // 백엔드에서 받아온 데이터
+        data: files = [], // 백엔드에서 받아온 데이터
         isLoading,            // 현재 요청 중인지 여부
         isError,              // 요청이 실패했는지 여부
         error,                // 실패했을 때 오류 정보
     } = useQuery({
-        queryKey: ["documents"], // 서버 데이터를 해당 이름으로 관리
-        queryFn: getDocuments,   // getDocuments() 실행
+        queryKey: ["files"], // 서버 데이터를 해당 이름으로 관리
+        queryFn: getFiles,   // getDocuments() 실행
     });
 
     // formatDate() : 날짜 가독성을 높여주는 함수
@@ -41,7 +41,7 @@ function LoadDocumentModal({onClose} : {onClose : () => void}) {
     };
 
     const loadDocument = async () => {
-        navigate(`/editor/${selectedDocumentId}`); // editor에게 documentId만 전달
+        navigate(`/editor/${selectedFileId}`); // editor에게 FileId만 전달
         onClose();
     }
 
@@ -72,7 +72,7 @@ function LoadDocumentModal({onClose} : {onClose : () => void}) {
                 )}
 
                 {/* 문서가 0건일 때 */}
-                {!isLoading && !isError && documents.length === 0 && (
+                {!isLoading && !isError && files.length === 0 && (
                     <p className="mt-10">
                         불러올 문서가 없습니다..
                     </p>
@@ -89,22 +89,22 @@ function LoadDocumentModal({onClose} : {onClose : () => void}) {
                     </thead>
                 
                     <tbody>
-                        {[...documents].sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()) // 생성 날짜 내림차순 정렬
-                            .map((document) => (
-                                <tr key={document.id} 
-                                    onClick={() => setSelectedDocumentId(document.id)}
+                        {[...files].sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()) // 생성 날짜 내림차순 정렬
+                            .map((file) => (
+                                <tr key={file.id} 
+                                    onClick={() => setSelectedFileId(file.id)}
                                     onDoubleClick={loadDocument}
                                     className={
                                         `cursor-pointer
-                                        ${ selectedDocumentId === document.id
+                                        ${ selectedFileId === file.id
                                             ? "bg-blue-100"
                                             : "hover:bg-gray-100"
                                         }`}>
                                     <td className="py-3 text-sm font-medium">
                                         <img src={fileIcon} alt="" className="inline-block h-[18px] w-[15px] mr-[5px] mb-[3px]" />
-                                        {document.fileName}{document.extension && `.${document.extension}`}</td>
-                                    <td className="py-3 text-sm font-light">{formatDate(document.createdDate)}</td>
-                                    <td className="py-3 text-sm font-light">{document.fileSize} B</td>
+                                        {file.itemName}{file.extension && `.${file.extension}`}</td>
+                                    <td className="py-3 text-sm font-light">{formatDate(file.createdDate)}</td>
+                                    <td className="py-3 text-sm font-light">{file.size} B</td>
                                 </tr>
                         ))}
                     </tbody>

@@ -4,16 +4,17 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import java.time.LocalDateTime;
 import org.springframework.boot.CommandLineRunner;
-import com.ubicollab.document.Document;
-import com.ubicollab.document.DocumentRepository;
+
+import com.ubicollab.driveitem.DriveItem;
+import com.ubicollab.driveitem.DriveItemRepository;
 import com.ubicollab.user.User;
 import com.ubicollab.user.UserRepository;
 @SpringBootApplication
 public class UbicollabApplication implements CommandLineRunner {
-	private final DocumentRepository docRepository;
+	private final DriveItemRepository docRepository;
 	private final UserRepository urepository;
 	
-	public UbicollabApplication(DocumentRepository docRepository,
+	public UbicollabApplication(DriveItemRepository docRepository,
 			UserRepository urepository) {
 		this.docRepository = docRepository;
 		this.urepository = urepository;
