@@ -16,7 +16,7 @@ import com.ubicollab.driveitem.DriveItem;
 import com.ubicollab.driveitem.DriveItemRepository;
 import com.ubicollab.driveitem.DriveItemService;
 import com.ubicollab.driveitem.dto.DriveItemCreateRequest;
-import com.ubicollab.driveitem.dto.DriveItemRequest;
+import com.ubicollab.driveitem.dto.DriveItemUpdateRequest;
 
 import jakarta.validation.Valid;
 
@@ -56,7 +56,7 @@ public class DriveItemController {
 	// 문서 수정 API (PUT '/api/documents/')
 	@PutMapping("/{id}")
 	public ResponseEntity<String> updateDocument(@PathVariable("id") Long id,
-			@Valid @RequestBody DriveItemRequest document ) {
+			@Valid @RequestBody DriveItemUpdateRequest document ) {
 		docService.updateDocument(id, document);
 		return ResponseEntity.ok("업데이트 완료");
 	}

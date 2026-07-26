@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import com.ubicollab.driveitem.DriveItem;
 import com.ubicollab.driveitem.DriveItemRepository;
 import com.ubicollab.driveitem.dto.DriveItemCreateRequest;
-import com.ubicollab.driveitem.dto.DriveItemRequest;
+import com.ubicollab.driveitem.dto.DriveItemUpdateRequest;
 import com.ubicollab.driveitem.enums.DriveItemExtension;
 
 @Service
@@ -59,7 +59,7 @@ public class DriveItemService {
 	}
 	
 	// 한 Document를 수정하는 메서드 (filename 또는 content가 수정되야함.)
-	public void updateDocument(Long id, DriveItemRequest request) {
+	public void updateDocument(Long id, DriveItemUpdateRequest request) {
 		DriveItem document = docRepository.findById(id).orElseThrow(
 				() -> new RuntimeException("문서를 찾을 수 없습니다. id="+ id));
 		Long fileSize;

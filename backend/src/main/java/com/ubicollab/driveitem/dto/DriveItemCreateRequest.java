@@ -1,6 +1,20 @@
 package com.ubicollab.driveitem.dto;
-import com.ubicollab.driveitem.enums.DriveItemExtension;
+import java.time.LocalDateTime;
 
+import com.ubicollab.driveitem.DriveItem;
+import com.ubicollab.driveitem.enums.DriveItemExtension;
+import com.ubicollab.driveitem.enums.DriveItemType;
+import com.ubicollab.user.User;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -8,38 +22,77 @@ import jakarta.validation.constraints.Size;
 
 public class DriveItemCreateRequest {
 
-	@NotNull(message = "파일명은 필수입니다.")
-    @NotBlank(message = "파일명은 필수입니다.")
-    @Size(max = 100, message = "파일명은 100자 이하로 입력해주세요.")
-    private String fileName;
-    
+	@NotBlank(message = "아이템 이름은 필수입니다.")
+	@Size(max = 100, message = "아이템 이름은 100자 이하로 입력해주세요.")
+	private String itemName;
+
+	@NotNull(message = "타입은 필수입니다.")
+	private DriveItemType type;
+
+	// parent는 null일 수도 있으므로 검증 X
+	private DriveItem parent;
+
+	@NotNull(message = "유저는 필수입니다.")
+	private User user;
+	
+	// content도 null일 수도 있으므로 검증 X
     private String content;
     
-    @NotNull(message = "확장자는 필수입니다.")
-    private DriveItemExtension extension;
+    // extension도 null일 수도 있으므로 검증 X
+ 	private DriveItemExtension extension;
+ 	
+ 	// id : 자동 생성이니 필요 X
+ 	// createdDate : 현재 시간 기준으로 자동 생성이니 필요 X
+ 	// isInTrash : 기본값이 false이므로 필요 X
+ 	// size : 파일이라면 Service안에서 계산할 것이라 지금 필요 X
+ 	
+ 	// getter, setter들
+	public String getItemName() {
+		return itemName;
+	}
 
-    // getter, setter
-    public String getFileName() {
-        return fileName;
-    }
+	public void setItemName(String itemName) {
+		this.itemName = itemName;
+	}
 
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
-    }
+	public DriveItemType getType() {
+		return type;
+	}
 
-    public String getContent() {
-        return content;
-    }
+	public void setType(DriveItemType type) {
+		this.type = type;
+	}
 
-    public void setContent(String content) {
-        this.content = content;
-    }
+	public DriveItem getParent() {
+		return parent;
+	}
 
-    public DriveItemExtension getExtension() {
-        return extension;
-    }
+	public void setParent(DriveItem parent) {
+		this.parent = parent;
+	}
 
-    public void setExtension(DriveItemExtension extension) {
-        this.extension = extension;
-    }
+	public User getUser() {
+		return user;
+	}
+
+	public void setUser(User user) {
+		this.user = user;
+	}
+
+	public String getContent() {
+		return content;
+	}
+
+	public void setContent(String content) {
+		this.content = content;
+	}
+
+	public DriveItemExtension getExtension() {
+		return extension;
+	}
+
+	public void setExtension(DriveItemExtension extension) {
+		this.extension = extension;
+	}
+
 }
