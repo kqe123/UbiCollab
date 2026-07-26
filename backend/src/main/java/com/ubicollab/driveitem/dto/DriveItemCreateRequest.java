@@ -1,11 +1,12 @@
-package com.ubicollab.document.dto;
-import com.ubicollab.document.enums.DocumentExtension;
+package com.ubicollab.driveitem.dto;
+import com.ubicollab.driveitem.enums.DriveItemExtension;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 
-public class DocumentCreateRequest {
+public class DriveItemCreateRequest {
 
 	@NotNull(message = "파일명은 필수입니다.")
     @NotBlank(message = "파일명은 필수입니다.")
@@ -15,7 +16,7 @@ public class DocumentCreateRequest {
     private String content;
     
     @NotNull(message = "확장자는 필수입니다.")
-    private DocumentExtension extension;
+    private DriveItemExtension extension;
 
     // getter, setter
     public String getFileName() {
@@ -34,11 +35,11 @@ public class DocumentCreateRequest {
         this.content = content;
     }
 
-    public DocumentExtension getExtension() {
+    public DriveItemExtension getExtension() {
         return extension;
     }
 
-    public void setExtension(DocumentExtension extension) {
+    public void setExtension(DriveItemExtension extension) {
         this.extension = extension;
     }
 }

@@ -1,15 +1,16 @@
-package com.ubicollab.document.dto;
-import com.ubicollab.document.enums.DocumentExtension;
+package com.ubicollab.driveitem.dto;
+import com.ubicollab.driveitem.enums.DriveItemExtension;
+
 import jakarta.validation.constraints.Size;
 
-public class DocumentUpdateRequest {
+public class DriveItemRequest {
 
     @Size(max = 100, message = "파일명은 100자 이하로 입력해주세요.")
     private String fileName;
 
     private String content;
 
-    private DocumentExtension extension;
+    private DriveItemExtension extension;
 
     private Boolean isInTrash;
 
@@ -22,7 +23,7 @@ public class DocumentUpdateRequest {
         return content;
     }
 
-    public DocumentExtension getExtension() {
+    public DriveItemExtension getExtension() {
         return extension;
     }
 
@@ -39,7 +40,7 @@ public class DocumentUpdateRequest {
         this.content = content;
     }
 
-    public void setExtension(DocumentExtension extension) {
+    public void setExtension(DriveItemExtension extension) {
         this.extension = extension;
     }
 

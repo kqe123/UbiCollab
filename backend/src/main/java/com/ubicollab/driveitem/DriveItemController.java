@@ -1,4 +1,4 @@
-package com.ubicollab.document;
+package com.ubicollab.driveitem;
 import java.util.Optional;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,11 +12,11 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-import com.ubicollab.document.Document;
-import com.ubicollab.document.DocumentRepository;
-import com.ubicollab.document.DocumentService;
-import com.ubicollab.document.dto.DocumentCreateRequest;
-import com.ubicollab.document.dto.DocumentUpdateRequest;
+import com.ubicollab.driveitem.DriveItem;
+import com.ubicollab.driveitem.DriveItemRepository;
+import com.ubicollab.driveitem.DriveItemService;
+import com.ubicollab.driveitem.dto.DriveItemCreateRequest;
+import com.ubicollab.driveitem.dto.DriveItemRequest;
 
 import jakarta.validation.Valid;
 
@@ -24,17 +24,17 @@ import jakarta.validation.Valid;
 @CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/api/documents")
-public class DocumentController {
-	private final DocumentService docService;
+public class DriveItemController {
+	private final DriveItemService docService;
 	
-	public DocumentController(DocumentService docService) {
+	public DriveItemController(DriveItemService docService) {
 		this.docService = docService;
 	}
 	
 	// 문서 생성 API(POST '/api/documents')
 	@PostMapping
-	public ResponseEntity<Document> createDocument(@Valid @RequestBody DocumentCreateRequest document) {
-		Document savedDocument =
+	public ResponseEntity<DriveItem> createDriveItem(@Valid @RequestBody DriveItemCreateRequest document) {
+		DriveItem savedDocument =
 	            docService.createDocument(document);
 		return ResponseEntity
 	            .status(HttpStatus.CREATED)
@@ -43,20 +43,20 @@ public class DocumentController {
 	
 	// 문서 목록 조회 API(GET '/api/documents')
 	@GetMapping
-	public Iterable<Document> getDocuments() {
+	public Iterable<DriveItem> getDriveItems() {
 		return docService.getDocuments();
 	}
 	
 	// 문서 상세 조회 API(GET '/api/documents/{id}')
 	@GetMapping("/{id}")
-	public Document getDocument(@PathVariable("id") Long id) {
+	public DriveItem getDocument(@PathVariable("id") Long id) {
 		return docService.getDocument(id);
 	}
 	
 	// 문서 수정 API (PUT '/api/documents/')
 	@PutMapping("/{id}")
 	public ResponseEntity<String> updateDocument(@PathVariable("id") Long id,
-			@Valid @RequestBody DocumentUpdateRequest document ) {
+			@Valid @RequestBody DriveItemRequest document ) {
 		docService.updateDocument(id, document);
 		return ResponseEntity.ok("업데이트 완료");
 	}

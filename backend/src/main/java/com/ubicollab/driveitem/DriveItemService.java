@@ -1,4 +1,4 @@
-package com.ubicollab.document;
+package com.ubicollab.driveitem;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -6,25 +6,26 @@ import java.util.Optional;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import com.ubicollab.document.DocumentRepository;
-import com.ubicollab.document.dto.DocumentCreateRequest;
-import com.ubicollab.document.dto.DocumentUpdateRequest;
-import com.ubicollab.document.enums.DocumentExtension;
-import com.ubicollab.document.Document;
+
+import com.ubicollab.driveitem.DriveItem;
+import com.ubicollab.driveitem.DriveItemRepository;
+import com.ubicollab.driveitem.dto.DriveItemCreateRequest;
+import com.ubicollab.driveitem.dto.DriveItemRequest;
+import com.ubicollab.driveitem.enums.DriveItemExtension;
 
 @Service
-public class DocumentService {
-	private final DocumentRepository docRepository;
+public class DriveItemService {
+	private final DriveItemRepository docRepository;
 	
-	public DocumentService(DocumentRepository docRepository) {
+	public DriveItemService(DriveItemRepository docRepository) {
 		this.docRepository = docRepository;
 	}
 	
 	// 한 Document를 생성하는 메서드
-	public Document createDocument(DocumentCreateRequest document) {
+	public DriveItem createDocument(DriveItemCreateRequest document) {
 		String fileName = document.getFileName();
 		String content = document.getContent();
-		DocumentExtension extension = document.getExtension();
+		DriveItemExtension extension = document.getExtension();
 		
 	    if (content == null) {
 	        content = "";
@@ -32,7 +33,7 @@ public class DocumentService {
 		
 		long fileSize = content.getBytes(StandardCharsets.UTF_8).length;
 		
-		Document newDocument = new Document(
+		DriveItem newDocument = new DriveItem(
 	            fileName,
 	            content,
 	            LocalDateTime.now(),
@@ -46,20 +47,20 @@ public class DocumentService {
 	
 	
 	// 전체 Document를 반환하는 메서드
-	public Iterable<Document> getDocuments() { 
+	public Iterable<DriveItem> getDocuments() { 
 		return docRepository.findAll();
 	}
 	
 	// 한 Document를 반환하는 메서드
-	public Document getDocument(Long id) {
-		Document document = docRepository.findById(id).orElseThrow(
+	public DriveItem getDocument(Long id) {
+		DriveItem document = docRepository.findById(id).orElseThrow(
 				() -> new RuntimeException("문서를 찾을 수 없습니다. id=" + id));
 		return document;
 	}
 	
 	// 한 Document를 수정하는 메서드 (filename 또는 content가 수정되야함.)
-	public void updateDocument(Long id, DocumentUpdateRequest request) {
-		Document document = docRepository.findById(id).orElseThrow(
+	public void updateDocument(Long id, DriveItemRequest request) {
+		DriveItem document = docRepository.findById(id).orElseThrow(
 				() -> new RuntimeException("문서를 찾을 수 없습니다. id="+ id));
 		Long fileSize;
 		
@@ -96,7 +97,7 @@ public class DocumentService {
 	
 	// 한 Document를 제거하는 메서드
 	public void deleteDocument(Long id) {
-		Document document = docRepository.findById(id).orElseThrow(
+		DriveItem document = docRepository.findById(id).orElseThrow(
 				() -> new RuntimeException("문서를 찾을 수 없습니다. id="+ id));
 		docRepository.delete(document);
 	}
