@@ -1,8 +1,15 @@
 # 개발 일지 (DIARY)
 
+## 2026-07-25
+
+### 프로젝트 진행
+- issue #9 (회원가입/로그인 기능 구현) 해결
+- Full request 완료
+
 ## 2026-07-21
 
 ### 프로젝트 진행
+- issue #8 (프론트엔드 JavaScript → TypeScript 전환) 해결
 - Full request 완료
 
 ### 학습 내용
