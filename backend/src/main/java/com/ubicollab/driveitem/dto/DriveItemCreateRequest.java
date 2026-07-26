@@ -30,10 +30,7 @@ public class DriveItemCreateRequest {
 	private DriveItemType type;
 
 	// parent는 null일 수도 있으므로 검증 X
-	private DriveItem parent;
-
-	@NotNull(message = "유저는 필수입니다.")
-	private User user;
+	private Long parentId;
 	
 	// content도 null일 수도 있으므로 검증 X
     private String content;
@@ -45,6 +42,7 @@ public class DriveItemCreateRequest {
  	// createdDate : 현재 시간 기준으로 자동 생성이니 필요 X
  	// isInTrash : 기본값이 false이므로 필요 X
  	// size : 파일이라면 Service안에서 계산할 것이라 지금 필요 X
+ 	// user : 유저는 Authorization 헤더를 통해 받고, Json으로 받지 않음.
  	
  	// getter, setter들
 	public String getItemName() {
@@ -63,20 +61,12 @@ public class DriveItemCreateRequest {
 		this.type = type;
 	}
 
-	public DriveItem getParent() {
-		return parent;
+	public Long getParentId() {
+		return parentId;
 	}
 
-	public void setParent(DriveItem parent) {
-		this.parent = parent;
-	}
-
-	public User getUser() {
-		return user;
-	}
-
-	public void setUser(User user) {
-		this.user = user;
+	public void setParentId(Long parentId) {
+		this.parentId = parentId;
 	}
 
 	public String getContent() {

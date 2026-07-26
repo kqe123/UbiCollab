@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,41 +24,46 @@ import jakarta.validation.Valid;
 // React 요청을 허용함.
 @CrossOrigin(origins = "http://localhost:5173")
 @RestController
-@RequestMapping("/api/documents")
+@RequestMapping("/api/driveitem")
 public class DriveItemController {
-	private final DriveItemService docService;
+	private final DriveItemService driveService;
 	
-	public DriveItemController(DriveItemService docService) {
-		this.docService = docService;
+	public DriveItemController(DriveItemService driveService) {
+		this.driveService = driveService;
 	}
 	
-	// 문서 생성 API(POST '/api/documents')
-	@PostMapping
-	public ResponseEntity<DriveItem> createDriveItem(@Valid @RequestBody DriveItemCreateRequest document) {
-		DriveItem savedDocument =
-	            docService.createDocument(document);
+	// 폴더/파일 생성 API(POST '/api/driveitem/create')
+	@PostMapping("/create")
+	public ResponseEntity<DriveItem> createDriveItem(
+			@Valid @RequestBody DriveItemCreateRequest request,
+			Authentication authentication) {
+		
+		String username = authentication.getName();
+		
+		DriveItem savedDriveItem =
+				driveService.createDriveItem(request, username);
 		return ResponseEntity
 	            .status(HttpStatus.CREATED)
-	            .body(savedDocument);
+	            .body(savedDriveItem);
 	}
 	
-	// 문서 목록 조회 API(GET '/api/documents')
-	@GetMapping
-	public Iterable<DriveItem> getDriveItems() {
-		return docService.getDocuments();
+	// 파일 목록 조회 API(GET '/api/driveitem/documents')
+	@GetMapping("/documents")
+	public Iterable<DriveItem> getDocuments() {
+		return driveService.getDocuments();
 	}
 	
-	// 문서 상세 조회 API(GET '/api/documents/{id}')
+	// 파일 상세 조회 API(GET '/api/driveitem/{id}')
 	@GetMapping("/{id}")
 	public DriveItem getDocument(@PathVariable("id") Long id) {
-		return docService.getDocument(id);
+		return driveService.getDocument(id);
 	}
 	
-	// 문서 수정 API (PUT '/api/documents/')
+	// 문서 수정 API (PUT '/api/driveitem/')
 	@PutMapping("/{id}")
 	public ResponseEntity<String> updateDocument(@PathVariable("id") Long id,
 			@Valid @RequestBody DriveItemUpdateRequest document ) {
-		docService.updateDocument(id, document);
+		driveService.updateDocument(id, document);
 		return ResponseEntity.ok("업데이트 완료");
 	}
 	
@@ -65,9 +71,11 @@ public class DriveItemController {
 	// 문서 삭제 API (DELETE '/api/documents/{id}')
 	@DeleteMapping("/{id}")
 	public ResponseEntity<String> deleteDocument(@PathVariable("id") Long id) {
-	    docService.deleteDocument(id);
+		driveService.deleteDocument(id);
 	    return ResponseEntity.ok("삭제 완료");
 	}
 	
+	// 휴지통 비우기 API 
+	// 
 	
 }
