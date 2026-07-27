@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useQuery } from "@tanstack/react-query";
-import fileIcon from "../../../assets/document.png";
+import fileIcon from "../../../assets/file.png";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DocumentMenuModal from "../../modal/DocumentMenuModal"
@@ -22,9 +22,16 @@ function RecentList() {
     const navigate = useNavigate();
 
     // formatDate() : 날짜 가독성을 높여주는 함수
-    const formatDate = (dateString : string) => {
-        return new Date(dateString).toLocaleDateString("ko-KR");
-    };
+    const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString("ko-KR", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+    });
+};
 
     // 우클릭 시 수행할 이벤트 함수
     const handleFileMenu = (e : React.MouseEvent) => {
@@ -109,7 +116,7 @@ function RecentList() {
             <thead>
                 <tr className="border-b border-[#DBDBDB]">
                     <td className="w-[50%] pb-3 text-sm ">이름</td>
-                    <td className="w-[30%] pb-3 text-sm">생성 날짜</td>
+                    <td className="w-[30%] pb-3 text-sm">생성 시각</td>
                     <td className="w-[20%] pb-3 text-sm">파일 크기</td>
                 </tr>
             </thead>
@@ -124,7 +131,7 @@ function RecentList() {
                             handleFileMenu(e); 
                             }
                         }
-                        onDoubleClick = {() => navigate(`editor/${file.id}`)}
+                        onDoubleClick = {() => navigate(`/editor/${file.id}`)}
                         className={`border-b border-[#DBDBDB]
                             ${selectedFile?.id === file.id ? "bg-blue-100" : "hover:bg-gray-100"}`}>
                         

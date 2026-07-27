@@ -2,6 +2,7 @@ package com.ubicollab.driveitem;
 import java.util.Optional;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -51,7 +52,7 @@ public class DriveItemController {
 	// 사용자 파일 목록 조회 API (GET '/api/driveitem/files')
 	@GetMapping("/files")
 	public Iterable<DriveItemResponse> getFiles(Authentication authentication) {
-		String username = authentication.getName(); // 현재 사용자 ID
+		String username = authentication.getName(); // 현재 사용자 username
 		return driveService.getFiles(username); // 현재 사용자가 가진 파일 목록 반환
 	}
 	
@@ -59,6 +60,15 @@ public class DriveItemController {
 	@GetMapping("/files/{id}")
 	public DriveItemResponse getFile(@PathVariable("id") Long id) {
 		return driveService.getFile(id);
+	}
+	
+	// 내 드라이브 현재 디렉토리 가져오기 API(GET '/api/driveitem/driveitems')
+	@GetMapping("/driveitems")
+	public Iterable<DriveItemResponse> getDriveItems(
+			@RequestParam(value = "parentId", required = false) Long parentId,
+			Authentication authentication) {
+		String username = authentication.getName(); // 현재 사용자 username
+		return driveService.getDriveItems(parentId, username);
 	}
 	
 	// 폴더/파일 수정 API (PUT '/api/driveitem/{id}')

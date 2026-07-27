@@ -116,7 +116,8 @@ public class DriveItemService {
 	public Iterable<DriveItemResponse> getFiles(String username) { 
 		 List<DriveItemResponse> result = new ArrayList<>();
 
-		 for (DriveItem driveItem : driveRepository.findByTypeAndUserUsername(DriveItemType.FILE, username)) {
+		 for (DriveItem driveItem : 
+			 driveRepository.findByTypeAndUserUsername(DriveItemType.FILE, username)) {
 		      result.add(new DriveItemResponse(driveItem));
 		 }
 
@@ -135,6 +136,17 @@ public class DriveItemService {
 		return new DriveItemResponse(file);
 	}
 	
+	// 현재 디렉토리의 파일/폴더들을 반환하는 메서드
+	public Iterable<DriveItemResponse> getDriveItems(Long parentId, String username) {
+		List<DriveItemResponse> result = new ArrayList<>();
+		
+		 for (DriveItem driveItem : 
+			 driveRepository.findByUserUsernameAndParentId(username, parentId)) {
+			 System.out.println("아이템명 : " +driveItem.getItemName());
+		      result.add(new DriveItemResponse(driveItem));
+		 }
+		 return result;
+	}
 	
 	// 한 Document를 수정하는 메서드 (filename 또는 content가 수정되야함.)
 	public void updateDriveItem(Long id, DriveItemUpdateRequest request, String username) {

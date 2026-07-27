@@ -1,7 +1,7 @@
 import axios from "axios";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import fileIcon from "@/assets/document.png";
+import fileIcon from "@/assets/file.png";
 import { useNavigate } from "react-router-dom";
 
 function LoadDocumentModal({onClose} : {onClose : () => void}) {
@@ -36,9 +36,16 @@ function LoadDocumentModal({onClose} : {onClose : () => void}) {
     });
 
     // formatDate() : 날짜 가독성을 높여주는 함수
-    const formatDate = (date : string) => {
-        return new Date(date).toLocaleDateString("ko-KR");
-    };
+    const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString("ko-KR", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+    });
+};
 
     const loadDocument = async () => {
         navigate(`/editor/${selectedFileId}`); // editor에게 FileId만 전달

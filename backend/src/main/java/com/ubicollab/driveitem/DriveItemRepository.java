@@ -8,4 +8,5 @@ import com.ubicollab.user.User;
 public interface DriveItemRepository extends CrudRepository<DriveItem, Long>{
 	List<DriveItem> findByType(DriveItemType type);
 	List<DriveItem> findByTypeAndUserUsername(DriveItemType type, String username);
+	List<DriveItem> findByUserUsernameAndParentId(String username, Long id);
 }
