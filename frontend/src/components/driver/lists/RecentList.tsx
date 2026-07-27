@@ -1,13 +1,13 @@
 import axios from "axios";
 import { useQuery } from "@tanstack/react-query";
-import fileIcon from "../../assets/document.png";
+import fileIcon from "../../../assets/document.png";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import DocumentMenuModal from "../modal/DocumentMenuModal"
-import ChangeNameMenu from "../modal/ChangeNameMenu";
-import type {DriveItem} from "../../types/driveitem";
+import DocumentMenuModal from "../../modal/DocumentMenuModal"
+import ChangeNameMenu from "../../modal/ChangeNameMenu";
+import type {DriveItem} from "../../../types/driveitem";
 
-function FilesList() {
+function RecentList() {
     // 상태(state)들
     const [selectedFile, setSelectedFile] = useState<DriveItem|null>(null); // 선택된 파일 자체
     const [fileMenu, setFileMenu] = useState({
@@ -104,6 +104,7 @@ function FilesList() {
     // 문서 리스트를 정상적으로 받아왔을 때
     return (
         <>
+        <h1 className="text-2xl font-medium">최근 문서</h1>
         <table className="mt-10 w-full table-fixed text-left">
             <thead>
                 <tr className="border-b border-[#DBDBDB]">
@@ -157,4 +158,4 @@ function FilesList() {
     );
 }
 
-export default FilesList;
+export default RecentList;
