@@ -112,11 +112,11 @@ public class DriveItemService {
 	}
 	
 	
-	// 전체 File를 반환하는 메서드
-	public Iterable<DriveItemResponse> getFiles() { 
+	// 현재 사용자의 전체 File를 반환하는 메서드
+	public Iterable<DriveItemResponse> getFiles(String username) { 
 		 List<DriveItemResponse> result = new ArrayList<>();
 
-		 for (DriveItem driveItem : driveRepository.findByType(DriveItemType.FILE)) {
+		 for (DriveItem driveItem : driveRepository.findByTypeAndUserUsername(DriveItemType.FILE, username)) {
 		      result.add(new DriveItemResponse(driveItem));
 		 }
 

@@ -39,7 +39,7 @@ public class DriveItemController {
 			@Valid @RequestBody DriveItemCreateRequest request,
 			Authentication authentication) {
 		
-		String username = authentication.getName();
+		String username = authentication.getName(); // 현재 사용자 ID
 		
 		DriveItem savedDriveItem =
 				driveService.createDriveItem(request, username);
@@ -48,10 +48,11 @@ public class DriveItemController {
 	            .body(savedDriveItem);
 	}
 	
-	// 파일 목록 조회 API (GET '/api/driveitem/files')
+	// 사용자 파일 목록 조회 API (GET '/api/driveitem/files')
 	@GetMapping("/files")
-	public Iterable<DriveItemResponse> getFiles() {
-		return driveService.getFiles();
+	public Iterable<DriveItemResponse> getFiles(Authentication authentication) {
+		String username = authentication.getName(); // 현재 사용자 ID
+		return driveService.getFiles(username); // 현재 사용자가 가진 파일 목록 반환
 	}
 	
 	// 파일 상세 조회 API(GET '/api/driveitem/files/{id}')
