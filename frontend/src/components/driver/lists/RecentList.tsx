@@ -1,62 +1,35 @@
 import axios from "axios";
 import { useQuery } from "@tanstack/react-query";
 import fileIcon from "../../../assets/file.png";
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import DocumentMenuModal from "../../modal/DocumentMenuModal"
-import ChangeNameMenu from "../../modal/ChangeNameMenu";
-import type {DriveItem} from "../../../types/driveitem";
+import DocumentMenuModal from "../../modal/DriveItemMenuModal"
+import { useOutletContext } from "react-router-dom";
+import type { DirectoryOutletContext } from "../Directory";
+
 
 function RecentList() {
     // 상태(state)들
-    const [selectedFile, setSelectedFile] = useState<DriveItem|null>(null); // 선택된 파일 자체
-    const [fileMenu, setFileMenu] = useState({
-        isOpen: false,
-        x: 0,
-        y: 0,
-    }); 
-    const [renameMenu, setRenameMenu] = useState<boolean>(false);
+    const {
+        selectedDriveItem, 
+        setSelectedDriveItem,
+        driveItemMenu,
+        openDriveItemMenu,
+        closeDriveItemMenu,
+    } = useOutletContext<DirectoryOutletContext>();
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
-    
-    // React Hook
     const navigate = useNavigate();
 
     // formatDate() : 날짜 가독성을 높여주는 함수
     const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString("ko-KR", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-    });
-};
-
-    // 우클릭 시 수행할 이벤트 함수
-    const handleFileMenu = (e : React.MouseEvent) => {
-        e.preventDefault();
-        setFileMenu({
-            isOpen: true,
-            x: e.clientX,
-            y: e.clientY,
-        })
-    }
-
-    // 메뉴를 닫는 함수
-    const closeFileMenu = () => {
-        setFileMenu({...fileMenu, isOpen: false});
-    }
-
-    // 파일명 변경 메뉴 여는 함수
-    const openRenameMenu = () => {
-        setRenameMenu(true);
-    }
-
-    // 파일명 변경 메뉴 닫는 함수
-    const closeRenameMenu = () => {
-        setRenameMenu(false);
-    }
+        return new Date(dateString).toLocaleString("ko-KR", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+        });
+    };
 
     // 백엔드 api를 호출하는 함수
     const getFiles = async () => {
@@ -122,18 +95,19 @@ function RecentList() {
             </thead>
 
             <tbody>
-                {[...files].sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()) // 생성 날짜 내림차순 정렬
+                {[...files].filter((driveItem) => driveItem.isInTrash === false)
+                .sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()) // 생성 날짜 내림차순 정렬
                 .map((file) => (
                     <tr key={file.id}
-                        onClick= {() => setSelectedFile(file)}
+                        onClick= {() => setSelectedDriveItem(file)}
                         onContextMenu= {(e) => {
-                            setSelectedFile(file);
-                            handleFileMenu(e); 
+                            setSelectedDriveItem(file);
+                            openDriveItemMenu(e); 
                             }
                         }
                         onDoubleClick = {() => navigate(`/editor/${file.id}`)}
                         className={`border-b border-[#DBDBDB]
-                            ${selectedFile?.id === file.id ? "bg-blue-100" : "hover:bg-gray-100"}`}>
+                            ${selectedDriveItem?.id === file.id ? "bg-blue-100" : "hover:bg-gray-100"}`}>
                         
                         <td className="py-3 px-2 text-sm font-medium">
                             <img src={fileIcon} alt="" className="inline-block h-[18px] w-[15px] mr-[5px] mb-[3px]" />
@@ -145,21 +119,13 @@ function RecentList() {
             </tbody>
         </table>
 
-        {fileMenu.isOpen && selectedFile && (
+        {driveItemMenu.isOpen && selectedDriveItem && (
             <DocumentMenuModal
-            x={fileMenu.x}
-            y={fileMenu.y}
-            file={selectedFile}
-            onClose={closeFileMenu}
-            openRenameMenu={openRenameMenu}
-        />
-        )}
-
-        {renameMenu && selectedFile && (
-            <ChangeNameMenu 
-            onClose={closeRenameMenu}
-            file={selectedFile}
-        />
+            x={driveItemMenu.x}
+            y={driveItemMenu.y}
+            driveItem={selectedDriveItem}
+            onClose={closeDriveItemMenu}
+            />
         )}
     </>
     );
