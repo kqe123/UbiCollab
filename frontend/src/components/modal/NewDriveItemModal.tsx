@@ -5,11 +5,12 @@ import folderIcon from "../../assets/folder.png";
 import { useNavigate  } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 function NewDriveItemModal({
-    x, y, onClose
+    x, y, onClose, currentFolderId
 } : {
     x : number;
     y : number;
     onClose : () => void;
+    currentFolderId : number | null
 }) {
 
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
@@ -23,6 +24,7 @@ function NewDriveItemModal({
             type : "FILE",
             content: "",
             extension: "UC",
+            parentId : currentFolderId
         };
         
         // DB에 새 문서 생성 후 response 받음
@@ -43,6 +45,7 @@ function NewDriveItemModal({
             });
             navigate(`/drive/my-drive`); // 새로고침
             toast.success("새 파일을 생성하였습니다.")
+            onClose();
         } catch (error : unknown) {
             // axios에서 발생한 오류인 경우
             if (axios.isAxiosError(error)) {
@@ -66,7 +69,8 @@ function NewDriveItemModal({
     const createFolder = async () => {
         const folderData = {
             itemName: "새 폴더",
-            type : "FOLDER"
+            type : "FOLDER",
+            parentId : currentFolderId
         };
         
         // DB에 새 문서 생성 후 response 받음
@@ -85,8 +89,8 @@ function NewDriveItemModal({
             await queryClient.invalidateQueries({
                 queryKey: ["driveItems"]
             });
-            navigate(`/drive/my-drive`); // editor에게 documentId만 전달
-            toast.success("새 폴더를 생성하였습니다.")
+            toast.success("새 폴더를 생성하였습니다.");
+            onClose();
         } catch (error : unknown) {
             // axios에서 발생한 오류인 경우
             if (axios.isAxiosError(error)) {

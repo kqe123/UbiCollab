@@ -42,9 +42,6 @@ function RecentList() {
                 }
             }
         );
-            
-        console.log("백엔드 응답:", response.data);
-
         return response.data;
     };
 

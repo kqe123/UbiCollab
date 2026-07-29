@@ -11,8 +11,8 @@ export type MenuType = {
 
 // Outlet Context 타입 정의
 export type DirectoryOutletContext = {
-    selectedDriveItem: DriveItem | null; // 선택된 파일/폴더
-    setSelectedDriveItem : (driveItem : DriveItem) => void; // 파일/폴더 선택을 바꾸는 함수
+    selectedDriveItem : DriveItem | null; // 선택된 파일/폴더
+    setSelectedDriveItem : (driveItem : DriveItem | null) => void; // 파일/폴더 선택을 바꾸는 함수
     driveItemMenu : MenuType // 아이템 메뉴 상태
     openDriveItemMenu : (e : React.MouseEvent) => void; // 아이템 메뉴 열기 함수 (우클릭)
     closeDriveItemMenu : () => void; //아이템 메뉴 닫기 함수
@@ -38,7 +38,10 @@ function Directory() {
 
     // 아이템 메뉴를 Close하는 이벤트 함수 
     const closeDriveItemMenu = () => {
-        setDriveItemMenu({...driveItemMenu, isOpen: false});
+        setDriveItemMenu((prev) => ({
+        ...prev,
+        isOpen: false,
+        }));
     }
 
     const outletContext : DirectoryOutletContext = {

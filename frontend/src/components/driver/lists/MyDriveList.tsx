@@ -2,7 +2,9 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import fileIcon from "../../../assets/file.png";
 import folderIcon from "../../../assets/folder.png";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import homeIcon from "../../../assets/home.png";
+import noDriveImg from "../../../assets/empty-drive.png";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DriveItemMenuModal from "../../modal/DriveItemMenuModal"
@@ -14,7 +16,7 @@ import type { DirectoryOutletContext, MenuType} from "../Directory";
 function MyDriveList() {
     // 상태(state)들
     const [currentFolderId, setCurrentFolderId] = useState<number | null>(null); // 현재 부모 폴더
-    const queryClient = useQueryClient();
+    const [folderPath, setFolderPath] = useState<DriveItem[]>([]); // 현재 경로
     const [tableMenu, setTableMenu] = useState<MenuType>({
         isOpen: false,
         x: 0,
@@ -48,6 +50,10 @@ function MyDriveList() {
     const elementDoubleClick = (driveItem: DriveItem): void => {
         if (driveItem.type === "FOLDER") {
             setCurrentFolderId(driveItem.id);
+            setFolderPath((prev) => [
+            ...prev,
+            driveItem,
+            ]);
         }
         else if (driveItem.type === "FILE") {
             navigate(`/editor/${driveItem.id}`);
@@ -72,6 +78,30 @@ function MyDriveList() {
         setTableMenu({...tableMenu, isOpen: false});
     }
     
+    // 루트 디렉토리 이동 (홈버튼)
+    const moveToRoot = (): void => {
+        setCurrentFolderId(null);
+        setFolderPath([]);
+        setSelectedDriveItem(null);
+    };
+
+    const moveToBack = () : void => {
+        if (folderPath.length === 0) {
+            return; 
+        } 
+
+        const previousPath = folderPath.slice(0, -1);
+        setFolderPath(previousPath); // 이전 경로가 없다면 루트 디렉토리
+
+        if (previousPath.length === 0) 
+            setCurrentFolderId(null);
+        
+        else 
+            setCurrentFolderId(previousPath[previousPath.length - 1].id); 
+        
+        setSelectedDriveItem(null); 
+    };
+    
 
     // 백엔드 api(디렉토리 조회)를 호출하는 비동기 함수
     const getDriveItems = async () => {
@@ -90,8 +120,6 @@ function MyDriveList() {
                 }
             }
         );
-            
-        console.log("백엔드 응답:", response.data);
         return response.data;
     };
 
@@ -121,7 +149,7 @@ function MyDriveList() {
     if (isError) {
         return (
         <>
-            <h1 className="text-2xl font-medium">내 드라이브</h1>
+            <h1 className="text-2xl font-medium ">내 드라이브</h1>
             <p className="mt-10 text-red-500">문서를 불러오지 못했습니다: {error.message}</p>
         </>
         )
@@ -134,13 +162,38 @@ function MyDriveList() {
         <h1 className="text-2xl font-medium">내 드라이브</h1>
         <div className="w-full h-full" 
             onContextMenu= {(e) => {tableRightClick(e);}}>
+            <div className="flex mt-10">
+                <button type="button" onClick={moveToRoot}
+                    disabled={folderPath.length === 0}
+                    className={`w-8 h-8 flex items-center justify-center rounded-xl border border-gray-200
+                        transition-colors
+                        ${folderPath.length === 0
+                        ? "text-gray-300 cursor-not-allowed"
+                        : "text-gray-600 hover:bg-gray-100 cursor-pointer"
+                        }`} title="홈">
+                        <img src={homeIcon} alt="홈" className="w-8 h-8 rounded-xl"/>
+                </button>
+                <div className="w-[50%] h-8 p-[6px] bg-[#F9F9FA] flex rounded-xl">
+                    <span className="text-sm">
+                        {`내 드라이브${
+                            folderPath.length > 0
+                            ? ` / ${folderPath.map((folder) => folder.itemName).join(" / ")}`
+                            : ""
+                        }`}
+                    </span>
+                
+            </div>
+            </div>
             {/* 폴더/파일이 0건일때 예외처리 */}    
             {driveItems.length === 0 ? (
-                <p className="mt-10">
-                    파일/폴더가 존재하지 않습니다.
-                </p>
+                <>
+                    <img src={noDriveImg} className="w-[40%] h-[40%] mx-auto mt-10"></img>
+                    <h1 className="mt-5 text-center text-2xl">
+                        우클릭으로 폴더/파일을 생성해 보세요!
+                    </h1>
+                </>
             ) : (
-            <table className="mt-10 w-full table-fixed text-left">
+            <table className="mt-5 w-full table-fixed text-left">
                 <thead>
                     <tr className="border-b border-[#DBDBDB]">
                         <td className="w-[50%] pb-3 text-sm ">이름</td>
@@ -162,7 +215,10 @@ function MyDriveList() {
                                 openDriveItemMenu(e); 
                                 }
                             }
-                            onDoubleClick = {() => elementDoubleClick(driveItem)}
+                            onDoubleClick = {(e) => {
+                                e.stopPropagation();
+                                elementDoubleClick(driveItem);
+                            }}
                             className={`border-b border-[#DBDBDB]
                                 ${selectedDriveItem?.id === driveItem.id ? "bg-blue-100" : "hover:bg-gray-100"}`}>
                             
@@ -197,6 +253,7 @@ function MyDriveList() {
             x={tableMenu.x}
             y={tableMenu.y}
             onClose={closeTableMenu}
+            currentFolderId={currentFolderId}
             />
         )}
     </>

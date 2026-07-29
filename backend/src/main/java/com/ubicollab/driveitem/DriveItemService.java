@@ -29,7 +29,7 @@ public class DriveItemService {
 	}
 	
 	// 한 DriveItem를 생성하는 메서드
-	public DriveItem createDriveItem(DriveItemCreateRequest request, String username) {
+	public void createDriveItem(DriveItemCreateRequest request, String username) {
 		// 프론트에서 보내지 않은 값은 Jackson이 모두 null로 처리해준다.
 		String itemName = request.getItemName(); // 무조건 필수
 		DriveItemType type = request.getType(); // 무조건 필수
@@ -107,8 +107,8 @@ public class DriveItemService {
 	            false
 	        );
 	    
-	    // 저장 + DriveItem 반환
-	    return driveRepository.save(newDriveItem);
+	    // 저장
+	    driveRepository.save(newDriveItem);
 	}
 	
 	

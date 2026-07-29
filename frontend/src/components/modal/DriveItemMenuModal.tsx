@@ -15,7 +15,6 @@ function DriveItemMenuModal({
     onClose : () => void;
 }) {
 
-    const navigate = useNavigate();
     const queryClient = useQueryClient(); // QueryClient 가져옴
     // 메뉴 모드를 CONTEXT/RENAME으로 나눠서 CONTEXT일때는 CONTEXT 메뉴를,
     // RENAME일때는 CONTEXT 메뉴 대신 RENAME 메뉴를 출력한다.
@@ -32,6 +31,8 @@ function DriveItemMenuModal({
         onClose();
     }
 
+
+    // "휴지통으로 보내기" 함수
     const throwTrash = async () => {
         try {
             // 문서 변경 Backend API 호출
@@ -78,13 +79,6 @@ function DriveItemMenuModal({
                 <div className="fixed z-50 w-44 rounded-lg border border-gray-200 bg-white py-2 shadow-lg"
                     style={{ left: `${x}px`, top: `${y}px`,}}
                     onClick={(e) => e.stopPropagation()}>
-                    <button type="button" className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 cursor-pointer"
-                        onClick={() => {
-                            navigate(`/editor/${driveItem.id}`);
-                            onClose();
-                        }}>
-                        열기
-                    </button>
                     <button type="button" className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 cursor-pointer"
                         onClick={() => {
                             openRenameMenu();
