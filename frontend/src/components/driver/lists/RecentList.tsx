@@ -55,12 +55,11 @@ function RecentList() {
         isError,              // 요청이 실패했는지 여부
         error,                // 실패했을 때 오류 정보
     } = useQuery({
-        queryKey: ["files"], // 서버 데이터를 해당 이름으로 관리
+        queryKey: ["driveItems", "recent"], // 서버 데이터를 해당 이름으로 관리
         queryFn: getFiles,   // getDocuments() 실행
     });
 
 
-    
 
     // 로딩 처리
     if (isLoading) {
@@ -111,7 +110,8 @@ function RecentList() {
                         
                         <td className="py-3 px-2 text-sm font-medium">
                             <img src={fileIcon} alt="" className="inline-block h-[18px] w-[15px] mr-[5px] mb-[3px]" />
-                            {file.itemName}{file.extension && `.${file.extension}`}</td>
+                            {file.itemName}
+                            {file.extension === "UC" || file.extension === null ? "" : `.${file.extension}`}</td>
                         <td className="py-3 text-sm font-light">{formatDate(file.createdDate)}</td>
                         <td className="py-3 text-sm font-light">{file.size} B</td>
                     </tr>

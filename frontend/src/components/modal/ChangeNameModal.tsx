@@ -2,6 +2,7 @@ import { useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import type {DriveItem} from "../../types/driveitem";
+import { useQueryClient } from "@tanstack/react-query";
 function ChangeNameModal ({
     onClose,
     driveItem
@@ -11,6 +12,7 @@ function ChangeNameModal ({
 }) {
     const [driveItemName, setDriveItemName] = useState(driveItem.itemName);
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
+    const queryClient = useQueryClient(); // QueryClient 가져옴
     const changeName = async () => {
 
     // 문서명 앞뒤 공백 제거
@@ -37,6 +39,9 @@ function ChangeNameModal ({
             );
         
             console.log("파일명 변경 성공", response.data);
+            await queryClient.invalidateQueries({
+                queryKey: ["driveItems"]
+            });
             toast.success("파일명 변경이 완료되었습니다.");            
         } catch (error : unknown) {
             // axios에서 발생한 오류인 경우

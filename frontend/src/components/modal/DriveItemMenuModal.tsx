@@ -4,6 +4,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { useState } from "react";
 import ChangeNameModal from "./ChangeNameModal"
+import { useQueryClient } from "@tanstack/react-query";
 
 function DriveItemMenuModal({
     x, y, driveItem, onClose
@@ -15,7 +16,7 @@ function DriveItemMenuModal({
 }) {
 
     const navigate = useNavigate();
-
+    const queryClient = useQueryClient(); // QueryClient 가져옴
     // 메뉴 모드를 CONTEXT/RENAME으로 나눠서 CONTEXT일때는 CONTEXT 메뉴를,
     // RENAME일때는 CONTEXT 메뉴 대신 RENAME 메뉴를 출력한다.
     const [menuMode, setMenuMode] = useState<"CONTEXT" | "RENAME">("CONTEXT");
@@ -44,6 +45,9 @@ function DriveItemMenuModal({
             );
         
             console.log("문서를 휴지통으로 보내기 성공", response.data);
+            await queryClient.invalidateQueries({
+                queryKey: ["driveItems"]
+            });
             toast.success("파일이 휴지통으로 이동되었습니다.");
         } catch (error: unknown) {
             console.error("문서를 휴지통으로 보내기 실패.. : ", error);
@@ -91,7 +95,6 @@ function DriveItemMenuModal({
                     <button type="button" className=" w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100 cursor-pointer"
                         onClick={() => {  
                             throwTrash()
-                            navigate("/");
                             onClose();                    
                         }}>
                         휴지통으로 이동

@@ -2,7 +2,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import fileIcon from "../../../assets/file.png";
 import folderIcon from "../../../assets/folder.png";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DriveItemMenuModal from "../../modal/DriveItemMenuModal"
@@ -14,7 +14,7 @@ import type { DirectoryOutletContext, MenuType} from "../Directory";
 function MyDriveList() {
     // 상태(state)들
     const [currentFolderId, setCurrentFolderId] = useState<number | null>(null); // 현재 부모 폴더
-
+    const queryClient = useQueryClient();
     const [tableMenu, setTableMenu] = useState<MenuType>({
         isOpen: false,
         x: 0,
@@ -127,15 +127,6 @@ function MyDriveList() {
         )
     }
 
-    // 디렉토리에 폴더/파일이 0건일때 처리
-    if (driveItems.length === 0 ) {
-        return (
-            <>
-                <h1 className="text-2xl font-medium">내 드라이브</h1>
-                <p className="mt-10">파일/폴더가 존재하지 않습니다.</p>
-            </>
-        )
-    }
 
     // 문서 리스트를 정상적으로 받아왔을 때
     return (
@@ -143,6 +134,12 @@ function MyDriveList() {
         <h1 className="text-2xl font-medium">내 드라이브</h1>
         <div className="w-full h-full" 
             onContextMenu= {(e) => {tableRightClick(e);}}>
+            {/* 폴더/파일이 0건일때 예외처리 */}    
+            {driveItems.length === 0 ? (
+                <p className="mt-10">
+                    파일/폴더가 존재하지 않습니다.
+                </p>
+            ) : (
             <table className="mt-10 w-full table-fixed text-left">
                 <thead>
                     <tr className="border-b border-[#DBDBDB]">
@@ -183,6 +180,7 @@ function MyDriveList() {
                     ))}
                 </tbody>
             </table>
+            )}
         </div>
         
         {driveItemMenu.isOpen && selectedDriveItem && (
