@@ -10,7 +10,7 @@ function NewDriveItemModal({
     x : number;
     y : number;
     onClose : () => void;
-    currentFolderId : number | null
+    currentFolderId : string | null
 }) {
 
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
@@ -24,7 +24,7 @@ function NewDriveItemModal({
             type : "FILE",
             content: "",
             extension: "UC",
-            parentId : currentFolderId
+            parentPublicId : currentFolderId
         };
         
         // DB에 새 문서 생성 후 response 받음
@@ -43,7 +43,6 @@ function NewDriveItemModal({
             await queryClient.invalidateQueries({
                 queryKey: ["driveItems"]
             });
-            navigate(`/drive/my-drive`); // 새로고침
             toast.success("새 파일을 생성하였습니다.")
             onClose();
         } catch (error : unknown) {
@@ -70,7 +69,7 @@ function NewDriveItemModal({
         const folderData = {
             itemName: "새 폴더",
             type : "FOLDER",
-            parentId : currentFolderId
+            parentPublicId : currentFolderId
         };
         
         // DB에 새 문서 생성 후 response 받음

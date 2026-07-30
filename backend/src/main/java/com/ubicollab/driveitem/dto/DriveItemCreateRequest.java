@@ -29,8 +29,8 @@ public class DriveItemCreateRequest {
 	@NotNull(message = "타입은 필수입니다.")
 	private DriveItemType type;
 
-	// parent는 null일 수도 있으므로 검증 X
-	private Long parentId;
+	// parent는 string | null일 수도 있으므로 검증 X
+	private String parentPublicId;
 	
 	// content도 null일 수도 있으므로 검증 X
     private String content;
@@ -61,12 +61,12 @@ public class DriveItemCreateRequest {
 		this.type = type;
 	}
 
-	public Long getParentId() {
-		return parentId;
+	public String getParentPublicId() {
+		return parentPublicId;
 	}
 
-	public void setParentId(Long parentId) {
-		this.parentId = parentId;
+	public void setParentPublicId(String parentPublicId) {
+		this.parentPublicId = parentPublicId;
 	}
 
 	public String getContent() {

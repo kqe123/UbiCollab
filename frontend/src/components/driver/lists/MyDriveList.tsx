@@ -3,19 +3,19 @@ import toast from "react-hot-toast";
 import fileIcon from "../../../assets/file.png";
 import folderIcon from "../../../assets/folder.png";
 import homeIcon from "../../../assets/home.png";
+import backIcon from "../../../assets/back.png";
 import noDriveImg from "../../../assets/empty-drive.png";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams, useOutletContext } from "react-router-dom";
 import DriveItemMenuModal from "../../modal/DriveItemMenuModal"
 import NewDriveItemModal from "../../modal/NewDriveItemModal"
 import type {DriveItem} from "../../../types/driveitem";
-import { useOutletContext } from "react-router-dom";
 import type { DirectoryOutletContext, MenuType} from "../Directory";
 
 function MyDriveList() {
     // 상태(state)들
-    const [currentFolderId, setCurrentFolderId] = useState<number | null>(null); // 현재 부모 폴더
+    const currentFolderId = useParams().folderId ?? null; // useParams()로 조회되는 파라미터가 없다면 null 처리
     const [folderPath, setFolderPath] = useState<DriveItem[]>([]); // 현재 경로
     const [tableMenu, setTableMenu] = useState<MenuType>({
         isOpen: false,
@@ -49,14 +49,14 @@ function MyDriveList() {
     // 요소 더블클릭 시 발생하는 이벤트 함수
     const elementDoubleClick = (driveItem: DriveItem): void => {
         if (driveItem.type === "FOLDER") {
-            setCurrentFolderId(driveItem.id);
             setFolderPath((prev) => [
             ...prev,
             driveItem,
             ]);
+            navigate(`/drive/my-drive/${driveItem.publicId}`);
         }
         else if (driveItem.type === "FILE") {
-            navigate(`/editor/${driveItem.id}`);
+            navigate(`/editor/${driveItem.publicId}`);
         }
         else {
             toast.error("오류 : 해당 아이템의 타입을 알 수가 없습니다!")
@@ -80,9 +80,9 @@ function MyDriveList() {
     
     // 루트 디렉토리 이동 (홈버튼)
     const moveToRoot = (): void => {
-        setCurrentFolderId(null);
         setFolderPath([]);
         setSelectedDriveItem(null);
+        navigate('/drive/my-drive');
     };
 
     const moveToBack = () : void => {
@@ -90,14 +90,14 @@ function MyDriveList() {
             return; 
         } 
 
-        const previousPath = folderPath.slice(0, -1);
-        setFolderPath(previousPath); // 이전 경로가 없다면 루트 디렉토리
+        const previousPath = folderPath.slice(0, -1); // 맨 마지막 요소 제외하고 슬라이싱
+        setFolderPath(previousPath); // 맨 마지막 요소를 제외한 path를 folderPath로 설정
 
         if (previousPath.length === 0) 
-            setCurrentFolderId(null);
+            navigate('/drive/my-drive');
         
         else 
-            setCurrentFolderId(previousPath[previousPath.length - 1].id); 
+            navigate(`/drive/my-drive/${previousPath[previousPath.length - 1].publicId}`); 
         
         setSelectedDriveItem(null); 
     };
@@ -107,7 +107,7 @@ function MyDriveList() {
     const getDriveItems = async () => {
         // 백엔드에 보낼 폴더 ID
         const DriveItemData = {
-            parentId: currentFolderId
+            parentPublicId: currentFolderId
         }
 
         // axios로 백엔드 api 호출
@@ -173,7 +173,17 @@ function MyDriveList() {
                         }`} title="홈">
                         <img src={homeIcon} alt="홈" className="w-8 h-8 rounded-xl"/>
                 </button>
-                <div className="w-[50%] h-8 p-[6px] bg-[#F9F9FA] flex rounded-xl">
+                <button type="button" onClick={moveToBack}
+                    disabled={folderPath.length === 0}
+                    className={`w-8 h-8 flex items-center justify-center rounded-xl border border-gray-200 mx-3
+                        transition-colors
+                        ${folderPath.length === 0
+                        ? "text-gray-300 cursor-not-allowed"
+                        : "text-gray-600 hover:bg-gray-100 cursor-pointer"
+                        }`} title="뒤로가기">
+                        <img src={backIcon} alt="뒤로가기" className="w-8 h-8 rounded-xl"/>
+                </button>
+                <div className="w-[50%] h-8 p-[6px] bg-[#F0F2FA] flex rounded-xl">
                     <span className="text-sm">
                         {`내 드라이브${
                             folderPath.length > 0
@@ -231,7 +241,7 @@ function MyDriveList() {
                             <td className="py-3 text-sm font-light">{formatDate(driveItem.createdDate)}</td>
                             <td className="py-3 text-sm font-light">
                                 {driveItem.size === null ?
-                                "--" : `${driveItem.size} B`}</td>
+                                "--" : `${driveItem.size} Byte`}</td>
                         </tr>
                     ))}
                 </tbody>

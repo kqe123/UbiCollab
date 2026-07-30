@@ -10,6 +10,7 @@ import com.ubicollab.driveitem.enums.DriveItemType;
 // 성능이 느려지고, 불필요한 정보들까지 내려올수 있으므로 parentID, userId만 내려보낸다.
 public class DriveItemResponse {
     private Long id;
+    private String publicId;
     private String itemName;
     private DriveItemType type;
     private Long parentId;      
@@ -22,6 +23,7 @@ public class DriveItemResponse {
     
     public DriveItemResponse(DriveItem driveItem) {
         this.id = driveItem.getId();
+        this.publicId = driveItem.getPublicId();
         this.itemName = driveItem.getItemName();
         this.type = driveItem.getType();
         this.parentId = driveItem.getParent() == null ? null : driveItem.getParent().getId();
@@ -33,6 +35,14 @@ public class DriveItemResponse {
         this.isInTrash = driveItem.getIsInTrash();
     }
     
+	public String getPublicId() {
+		return publicId;
+	}
+
+	public void setPublicId(String publicId) {
+		this.publicId = publicId;
+	}
+
 	public Long getId() {
 		return id;
 	}

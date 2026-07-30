@@ -1,5 +1,6 @@
 export type DriveItem = {
     id: number;
+    publicId : string;
     itemName: string;
     type : "FILE" | "FOLDER";
 

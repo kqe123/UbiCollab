@@ -32,7 +32,8 @@ function App() {
         <Route path="/drive" element={<DriverPage />}>
           {/* /drive 접속 시 /drive/my-drive로 이동 */}
           <Route index element={<Navigate to="my-drive" replace />}/>
-          <Route path="my-drive" element={<MyDriveList />} /> 
+          <Route path="my-drive" element={<MyDriveList />} />  {/* folderId : null */}
+          <Route path="my-drive/:folderId" element={<MyDriveList />} /> {/* folderId : number */}
           <Route path="recent" element={<RecentList />} />
           <Route path="favorite" element={<FavoriteList />} /> 
           <Route path="shared" element={<SharedList />} /> 

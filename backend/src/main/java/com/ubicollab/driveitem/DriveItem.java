@@ -20,7 +20,11 @@ public class DriveItem {
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	private Long id;
-
+	
+	// URL에 노출할 랜덤 ID
+    @Column(nullable = false, unique = true, updatable = false, length = 21)
+    private String publicId;
+	
 	// 아이템 이름 (폴더명/파일명)
 	@Column(nullable=false,length=100)
 	private String itemName;
@@ -62,9 +66,11 @@ public class DriveItem {
 	//생성자
 	public DriveItem() {}
 	
-	public DriveItem(String itemName, DriveItemType type, DriveItem parent, User user,
+	public DriveItem(String publicId, String itemName,
+					DriveItemType type, DriveItem parent, User user,
 		    		String content, DriveItemExtension extension, Long size,
 		    		LocalDateTime createdDate, Boolean isInTrash) {
+		this.publicId = publicId;
 		this.itemName = itemName;
 		this.type = type;
 		this.parent = parent;
@@ -76,6 +82,14 @@ public class DriveItem {
 		this.isInTrash = isInTrash;
 	}
 	
+	public String getPublicId() {
+		return publicId;
+	}
+
+	public void setPublicId(String publicId) {
+		this.publicId = publicId;
+	}
+
 	public Long getId() {
 		return id;
 	}
