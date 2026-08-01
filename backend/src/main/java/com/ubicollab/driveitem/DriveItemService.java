@@ -2,6 +2,8 @@ package com.ubicollab.driveitem;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +18,7 @@ import com.ubicollab.driveitem.enums.DriveItemExtension;
 import com.ubicollab.driveitem.enums.DriveItemType;
 import com.ubicollab.user.User;
 import com.ubicollab.user.UserRepository;
+import static com.aventrix.jnanoid.jnanoid.NanoIdUtils.randomNanoId;
 
 @Service
 public class DriveItemService {
@@ -28,8 +31,8 @@ public class DriveItemService {
 		this.userRepository = userRepository;
 	}
 	
-	// 한 DriveItem를 생성하는 메서드
-	public DriveItem createDriveItem(DriveItemCreateRequest request, String username) {
+	// DriveItem 생성 메서드
+	public void createDriveItem(DriveItemCreateRequest request, String username) {
 		// 프론트에서 보내지 않은 값은 Jackson이 모두 null로 처리해준다.
 		String itemName = request.getItemName(); // 무조건 필수
 		DriveItemType type = request.getType(); // 무조건 필수
@@ -56,8 +59,8 @@ public class DriveItemService {
 		                "존재하지 않는 사용자입니다."));		
 		
 		// "ParentID가 존재한다면" Parent를 찾으면서 유효성 체크
-		if (request.getParentId() != null) {
-	        parent = driveRepository.findById(request.getParentId())
+		if (request.getParentPublicId() != null) {
+	        parent = driveRepository.findByPublicId(request.getParentPublicId())
 	            .orElseThrow(() ->
 	                new IllegalArgumentException("부모 폴더가 존재하지 않습니다."));
 
@@ -96,6 +99,7 @@ public class DriveItemService {
 	    
 	    // 새로운 DriveItem 객체 생성
 	    DriveItem newDriveItem = new DriveItem(
+	    		randomNanoId(),
 	            itemName.trim(),
 	            type,
 	            parent,
@@ -107,26 +111,27 @@ public class DriveItemService {
 	            false
 	        );
 	    
-	    // 저장 + DriveItem 반환
-	    return driveRepository.save(newDriveItem);
+	    // 저장
+	    driveRepository.save(newDriveItem);
 	}
 	
 	
-	// 전체 File를 반환하는 메서드
-	public Iterable<DriveItemResponse> getFiles() { 
+	// 현재 사용자의 전체 File를 조회하는 메서드
+	public Iterable<DriveItemResponse> getFiles(String username) { 
 		 List<DriveItemResponse> result = new ArrayList<>();
 
-		 for (DriveItem driveItem : driveRepository.findByType(DriveItemType.FILE)) {
+		 for (DriveItem driveItem : 
+			 driveRepository.findByTypeAndUserUsername(DriveItemType.FILE, username)) {
 		      result.add(new DriveItemResponse(driveItem));
 		 }
 
 		return result;
 	}
 	
-	// 한 File를 반환하는 메서드
-	public DriveItemResponse getFile(Long id) {
-		DriveItem file = driveRepository.findById(id).orElseThrow(
-				() -> new RuntimeException("파일를 찾을 수 없습니다. id=" + id));
+	// File 하나를 반환하는 메서드
+	public DriveItemResponse getFile(String publicId) {
+		DriveItem file = driveRepository.findByPublicId(publicId).orElseThrow(
+				() -> new RuntimeException("파일를 찾을 수 없습니다. publicId=" + publicId));
 		
 		if (file.getType() != DriveItemType.FILE) {
 			throw new IllegalArgumentException("오류 : 해당 아이템은 파일이 아닙니다!");
@@ -136,8 +141,47 @@ public class DriveItemService {
 	}
 	
 	
-	// 한 Document를 수정하는 메서드 (filename 또는 content가 수정되야함.)
-	public void updateDriveItem(Long id, DriveItemUpdateRequest request, String username) {
+	// 현재 디렉토리의 파일/폴더들을 반환하는 메서드
+	public Iterable<DriveItemResponse> getDriveItems(String parentPublicId, String username) {
+		List<DriveItemResponse> result = new ArrayList<>();
+		
+		 for (DriveItem driveItem : 
+			 driveRepository.findByUserUsernameAndParentPublicId(username, parentPublicId)) {
+			 System.out.println("아이템명 : " +driveItem.getItemName());
+		      result.add(new DriveItemResponse(driveItem));
+		 }
+		 return result;
+	}
+	
+	//
+	public Iterable<DriveItemResponse> getDrivePath(String publicId, String username) {
+		List<DriveItemResponse> path = new ArrayList<>();
+		
+		// 부모로 거슬러 올라가면서 path에 현재 DriveItem 객체를 DriveItemResponse로 바꿔서 저장한다.
+		// 이렇게 되면, 가장 하위 디렉토리부터 저장이 되게 된다. [자식(0), 부모(1), 조부모(2)...] 
+		while (true) {
+			Optional<DriveItem> driveItem = driveRepository.findByPublicId(publicId); 
+			 
+			if(!(driveItem.isPresent())) {
+				break;
+			}
+		 
+			path.add(new DriveItemResponse(driveItem.get()));
+			DriveItem parent = driveItem.get().getParent();
+			 
+			if(parent == null) 
+				publicId = null;
+			else 
+				publicId = parent.getPublicId(); 
+		}
+		
+		// 역순으로 정렬해서 리스트를 반환
+		Collections.reverse(path);
+		return path;
+	}
+	
+	// DriveItem를 수정하는 메서드 (filename 또는 content가 수정되야함.)
+	public void updateDriveItem(String publicId, DriveItemUpdateRequest request, String username) {
 		
 		// 변경가능한 필드들 (4개)
 		String itemName = request.getItemName();
@@ -154,8 +198,8 @@ public class DriveItemService {
 	            );
 	    
 	    // 수정 대상 driveItem
-		DriveItem driveItem = driveRepository.findById(id).orElseThrow(
-				() -> new RuntimeException("해당 아이템을 찾을 수 없습니다. id="+ id));
+		DriveItem driveItem = driveRepository.findByPublicId(publicId).orElseThrow(
+				() -> new RuntimeException("해당 아이템을 찾을 수 없습니다. publicId="+ publicId));
 		
 		// 수정 대상 driveItem의 type
 		DriveItemType type = driveItem.getType(); 
@@ -219,7 +263,7 @@ public class DriveItemService {
 		driveRepository.save(driveItem);
 	}
 	
-	// 한 Document를 제거하는 메서드
+	// DriveItem를 제거하는 메서드
 	public void deleteDocument(Long id) {
 		DriveItem document = driveRepository.findById(id).orElseThrow(
 				() -> new RuntimeException("문서를 찾을 수 없습니다. id="+ id));

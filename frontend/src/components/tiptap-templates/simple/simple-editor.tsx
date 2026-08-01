@@ -293,7 +293,6 @@ export function SimpleEditor({
             Authorization: `Bearer ${accessToken}`
           }
         }
-
       );
         
       console.log("문서 저장 성공");

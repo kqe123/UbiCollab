@@ -2,6 +2,7 @@ package com.ubicollab.driveitem;
 import java.util.Optional;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -33,46 +34,65 @@ public class DriveItemController {
 		this.driveService = driveService;
 	}
 	
-	// 폴더/파일 생성 API (POST '/api/driveitem/create')
+	// [테이블 메뉴] 폴더/파일 생성 API (POST '/api/driveitem/create')
 	@PostMapping("/create")
-	public ResponseEntity<DriveItem> createDriveItem(
+	public ResponseEntity createDriveItem(
 			@Valid @RequestBody DriveItemCreateRequest request,
 			Authentication authentication) {
 		
-		String username = authentication.getName();
+		String username = authentication.getName(); // 현재 사용자 ID
 		
-		DriveItem savedDriveItem =
-				driveService.createDriveItem(request, username);
+		
+		driveService.createDriveItem(request, username);
 		return ResponseEntity
-	            .status(HttpStatus.CREATED)
-	            .body(savedDriveItem);
+		        .status(HttpStatus.CREATED)
+		        .build();
 	}
 	
-	// 파일 목록 조회 API (GET '/api/driveitem/files')
+	// [최근 문서] 파일 목록 조회 API (GET '/api/driveitem/files')
 	@GetMapping("/files")
-	public Iterable<DriveItemResponse> getFiles() {
-		return driveService.getFiles();
+	public Iterable<DriveItemResponse> getFiles(Authentication authentication) {
+		String username = authentication.getName(); // 현재 사용자 username
+		return driveService.getFiles(username); // 현재 사용자가 가진 파일 목록 반환
 	}
 	
-	// 파일 상세 조회 API(GET '/api/driveitem/files/{id}')
+	// [편집기] 파일 상세 조회 API(GET '/api/driveitem/files/{id}')
 	@GetMapping("/files/{id}")
-	public DriveItemResponse getFile(@PathVariable("id") Long id) {
-		return driveService.getFile(id);
+	public DriveItemResponse getFile(@PathVariable("id") String publicId) {
+		return driveService.getFile(publicId);
 	}
+	
+	// [내 드라이브] 현재 디렉토리 가져오기 API(GET '/api/driveitem/driveitems')
+	@GetMapping("/driveitems")
+	public Iterable<DriveItemResponse> getDriveItems(
+			@RequestParam(value = "parentPublicId", required = false) String parentPublicId,
+			Authentication authentication) {
+		String username = authentication.getName(); // 현재 사용자 username
+		return driveService.getDriveItems(parentPublicId, username);
+	}
+	
+	// [내 드라이브] 현재 경로 가져오기 API (GET '/api/driveitem/path/{id}')
+	@GetMapping("/path/{id}")
+	public Iterable<DriveItemResponse> getDrivePath(@PathVariable("id") String publicId,
+			Authentication authentication) {
+		String username = authentication.getName();
+		return driveService.getDrivePath(publicId, username);
+	}
+	
 	
 	// 폴더/파일 수정 API (PUT '/api/driveitem/{id}')
 	@PutMapping("/{id}")
-	public ResponseEntity<String> updateDriveItem(@PathVariable("id") Long id,
+	public ResponseEntity<String> updateDriveItem(@PathVariable("id") String publicId,
 			@Valid @RequestBody DriveItemUpdateRequest request,
 			Authentication authentication) {
 		
 		String username = authentication.getName(); // 현재 로그인 사용자
-		driveService.updateDriveItem(id, request, username);
+		driveService.updateDriveItem(publicId, request, username);
 		return ResponseEntity.ok("업데이트 완료");
 	}
 	
 	
-	// 문서 삭제 API (DELETE '/api/documents/{id}')
+	// 문서 삭제 API (DELETE '/api/driveitem/{id}')
 	@DeleteMapping("/{id}")
 	public ResponseEntity<String> deleteDocument(@PathVariable("id") Long id) {
 		driveService.deleteDocument(id);
