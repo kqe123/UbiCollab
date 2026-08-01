@@ -16,13 +16,11 @@ import type { DirectoryOutletContext, MenuType} from "../Directory";
 function MyDriveList() {
     // 상태(state)들
     const currentFolderId = useParams().folderId ?? null; // useParams()로 조회되는 파라미터가 없다면 null 처리
-    const [folderPath, setFolderPath] = useState<DriveItem[]>([]); // 현재 경로
     const [tableMenu, setTableMenu] = useState<MenuType>({
         isOpen: false,
         x: 0,
         y: 0,
     });
-
     const {
         selectedDriveItem, 
         setSelectedDriveItem,
@@ -49,10 +47,6 @@ function MyDriveList() {
     // 요소 더블클릭 시 발생하는 이벤트 함수
     const elementDoubleClick = (driveItem: DriveItem): void => {
         if (driveItem.type === "FOLDER") {
-            setFolderPath((prev) => [
-            ...prev,
-            driveItem,
-            ]);
             navigate(`/drive/my-drive/${driveItem.publicId}`);
         }
         else if (driveItem.type === "FILE") {
@@ -80,28 +74,26 @@ function MyDriveList() {
     
     // 루트 디렉토리 이동 (홈버튼)
     const moveToRoot = (): void => {
-        setFolderPath([]);
         setSelectedDriveItem(null);
         navigate('/drive/my-drive');
     };
 
+    // 이전 디렉토리 이동 (뒤로가기 버튼)
     const moveToBack = () : void => {
-        if (folderPath.length === 0) {
+        // 이전 디렉토리가 없다면 동작 X
+        if (paths.length === 0) {
             return; 
         } 
-
-        const previousPath = folderPath.slice(0, -1); // 맨 마지막 요소 제외하고 슬라이싱
-        setFolderPath(previousPath); // 맨 마지막 요소를 제외한 path를 folderPath로 설정
-
-        if (previousPath.length === 0) 
+        // paths 길이가 1이면 루트로 이동
+        else if (paths.length === 1) 
             navigate('/drive/my-drive');
         
+        // paths 길이가 2이상일 때 이전 디렉토리로 이동
         else 
-            navigate(`/drive/my-drive/${previousPath[previousPath.length - 1].publicId}`); 
-        
+            navigate(`/drive/my-drive/${paths[paths.length - 2].publicId}`); 
+
         setSelectedDriveItem(null); 
     };
-    
 
     // 백엔드 api(디렉토리 조회)를 호출하는 비동기 함수
     const getDriveItems = async () => {
@@ -123,19 +115,46 @@ function MyDriveList() {
         return response.data;
     };
 
+    // 백엔드 api(현재 경로 조회)를 호출하는 비동기 함수
+    const getDrivePath = async ()  => {
+        const response = await axios.get(
+            `http://localhost:8080/api/driveitem/path/${currentFolderId}`,
+            {
+                headers : {
+                    Authorization: `Bearer ${accessToken}`
+                }
+            }
+        )
+        console.log(response.data)
+        return response.data;
+    };
+
     // useQuery 실행 (첫 렌더링 시, queryKey가 변경될 시에 실행한다.)
     const {
         data: driveItems = [], // 백엔드에서 받아온 데이터
-        isLoading,            // 현재 요청 중인지 여부
-        isError,              // 요청이 실패했는지 여부
-        error,                // 실패했을 때 오류 정보
+        isLoading : isDriveItemsLoading,    // 현재 요청 중인지 여부
+        isError : isDriveItemsError,        // 요청이 실패했는지 여부
+        error : driveItemsError,            // 실패했을 때 오류 정보
     } = useQuery({
         queryKey: ["driveItems", currentFolderId], // 서버 데이터를 해당 이름으로 관리
         queryFn: getDriveItems,   // getDriveItems() 실행
     });
 
+    // useQuery 실행 
+    const {
+        data: paths = [] , // 백엔드에서 받아온 데이터
+        isLoading : isPathLoading,            // 현재 요청 중인지 여부
+        isError : isPathError,              // 요청이 실패했는지 여부
+        error : pathError,                // 실패했을 때 오류 정보
+    } = useQuery({
+        queryKey: ["driveItems","path", currentFolderId], // 서버 데이터를 해당 이름으로 관리
+        queryFn: getDrivePath,   // getDrivePath() 실행
+        enabled: currentFolderId !== null, // 루트 디렉터리에서는 경로 API를 실행하지 않음
+    });
+    
+
     // 로딩 처리
-    if (isLoading) {
+    if (isDriveItemsLoading) {
         return (
         <>
             <h1 className="text-2xl font-medium">내 드라이브</h1>
@@ -146,11 +165,11 @@ function MyDriveList() {
 
 
     // 오류 처리
-    if (isError) {
+    if (isDriveItemsError) {
         return (
         <>
             <h1 className="text-2xl font-medium ">내 드라이브</h1>
-            <p className="mt-10 text-red-500">문서를 불러오지 못했습니다: {error.message}</p>
+            <p className="mt-10 text-red-500">문서를 불러오지 못했습니다: {driveItemsError.message}</p>
         </>
         )
     }
@@ -164,20 +183,20 @@ function MyDriveList() {
             onContextMenu= {(e) => {tableRightClick(e);}}>
             <div className="flex mt-10">
                 <button type="button" onClick={moveToRoot}
-                    disabled={folderPath.length === 0}
+                    disabled={paths.length === 0}
                     className={`w-8 h-8 flex items-center justify-center rounded-xl border border-gray-200
                         transition-colors
-                        ${folderPath.length === 0
+                        ${paths.length === 0
                         ? "text-gray-300 cursor-not-allowed"
                         : "text-gray-600 hover:bg-gray-100 cursor-pointer"
                         }`} title="홈">
                         <img src={homeIcon} alt="홈" className="w-8 h-8 rounded-xl"/>
                 </button>
                 <button type="button" onClick={moveToBack}
-                    disabled={folderPath.length === 0}
+                    disabled={paths.length === 0}
                     className={`w-8 h-8 flex items-center justify-center rounded-xl border border-gray-200 mx-3
                         transition-colors
-                        ${folderPath.length === 0
+                        ${paths.length === 0
                         ? "text-gray-300 cursor-not-allowed"
                         : "text-gray-600 hover:bg-gray-100 cursor-pointer"
                         }`} title="뒤로가기">
@@ -185,11 +204,7 @@ function MyDriveList() {
                 </button>
                 <div className="w-[50%] h-8 p-[6px] bg-[#F0F2FA] flex rounded-xl">
                     <span className="text-sm">
-                        {`내 드라이브${
-                            folderPath.length > 0
-                            ? ` / ${folderPath.map((folder) => folder.itemName).join(" / ")}`
-                            : ""
-                        }`}
+                        내 드라이브 / {[...paths].map((path) => path.itemName).join(" / ")}
                     </span>
                 
             </div>

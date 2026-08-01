@@ -72,6 +72,13 @@ public class DriveItemController {
 	}
 	
 	// [내 드라이브] 현재 경로 가져오기 API (GET '/api/driveitem/path/{id}')
+	@GetMapping("/path/{id}")
+	public Iterable<DriveItemResponse> getDrivePath(@PathVariable("id") String publicId,
+			Authentication authentication) {
+		String username = authentication.getName();
+		return driveService.getDrivePath(publicId, username);
+	}
+	
 	
 	// 폴더/파일 수정 API (PUT '/api/driveitem/{id}')
 	@PutMapping("/{id}")
