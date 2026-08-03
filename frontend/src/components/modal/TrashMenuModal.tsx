@@ -57,6 +57,44 @@ function TrashMenu({
         } 
     }
 
+    // "영구 삭제" 함수
+    const deleteTrash = async () => {
+        try {
+            // 문서 변경 Backend API 호출
+            const response = await axios.delete(`http://localhost:8080/api/driveitem/delete/${driveItem.publicId}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`
+                }
+            }
+            );
+        
+            console.log("영구 삭제 완료", response.data);
+            await queryClient.invalidateQueries({
+                queryKey: ["driveItems"]
+            });
+            toast.success("영구 삭제가 완료되었습니다.");
+        } catch (error: unknown) {
+            console.error("영구 삭제 실패... : ", error);
+
+            // axios에서 발생한 오류인 경우
+            if (axios.isAxiosError(error)) {
+                console.error("백엔드 응답:", error.response?.data);
+                toast.error(error.response?.data?.message ?? "폴더/파일을 영구 삭제 하는데 실패했습니다.");
+            } 
+            // 일반 오류인 경우
+            else if (error instanceof Error) {
+                console.error("일반 오류:", error.message);
+                toast.error(error.message);
+            } 
+            // 그 외의 오류인 경우
+            else {
+                console.error("알 수 없는 오류:", error);
+                toast.error("알 수 없는 오류가 발생했습니다.");
+            }
+        } 
+    }
+
     return (
         <>
         <div className="fixed inset-0 z-40" onClick={onClose}>
@@ -73,6 +111,7 @@ function TrashMenu({
                 <hr className="my-1 border-gray-200" />
                 <button type="button" className=" w-full px-4 py-2 text-left text-sm transition-colors text-red-600 hover:bg-blue-500 cursor-pointer"
                     onClick={() => {  
+                        deleteTrash();
                         onClose();                    
                     }}>
                     영구 삭제

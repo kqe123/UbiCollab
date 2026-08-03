@@ -141,7 +141,6 @@ function TrashList() {
                             }
                             onDoubleClick = {(e) => {
                                 e.stopPropagation();
-                                elementDoubleClick(driveItem);
                             }}
                             className={`border-b border-[#DBDBDB]
                                 ${selectedDriveItem?.id === driveItem.id ? "bg-blue-100" : "hover:bg-gray-100"}`}>

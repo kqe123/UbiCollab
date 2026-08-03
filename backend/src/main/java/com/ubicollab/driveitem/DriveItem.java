@@ -10,6 +10,10 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Column;
 import java.time.LocalDateTime;
+
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import com.ubicollab.driveitem.enums.DriveItemExtension;
 import com.ubicollab.driveitem.enums.DriveItemType;
 import com.ubicollab.user.User;
@@ -37,6 +41,7 @@ public class DriveItem {
 	// 부모 (상위 폴더 ID, 자기 참조)
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "parent_id")
+	@OnDelete(action = OnDeleteAction.SET_NULL)
     private DriveItem parent;
 	
 	// 만든 사람 (외래키)

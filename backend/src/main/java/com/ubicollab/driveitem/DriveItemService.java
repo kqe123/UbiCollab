@@ -316,9 +316,27 @@ public class DriveItemService {
 	}
 	
 	// DriveItem를 제거하는 메서드
-	public void deleteDocument(Long id) {
-		DriveItem document = driveRepository.findById(id).orElseThrow(
-				() -> new RuntimeException("문서를 찾을 수 없습니다. id="+ id));
-		driveRepository.delete(document);
+	@Transactional
+	public void deleteDriveItem(String publicId, String username) {
+		DriveItem root = driveRepository.findByPublicId(publicId).orElseThrow(
+				() -> new RuntimeException("문서를 찾을 수 없습니다. publicId="+ publicId));
+		RecursiveDelete(root, username, true);
 	}
+	
+	// DriveItem를 자식 -> 부모 순으로 제거하는 재귀 함수
+	public void RecursiveDelete(DriveItem driveItem, String username, Boolean isRoot) {
+		if (!isRoot && driveItem.getIsTrashRoot()) {
+			driveItem.setParent(null); // 남아있는 자식은 부모를 null로 설정
+			return;
+		}
+		
+		List<DriveItem> childDriveItems = driveRepository.findByUserUsernameAndParentPublicId(username, driveItem.getPublicId());
+		
+		for (DriveItem child : childDriveItems) {
+			RecursiveDelete(child, username, false);
+		}
+		
+		driveRepository.delete(driveItem);
+	}
+	
 }

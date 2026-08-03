@@ -117,10 +117,12 @@ public class DriveItemController {
 		return ResponseEntity.ok("업데이트 완료");
 	}
 	
-	// 문서 삭제 API (DELETE '/api/driveitem/{id}')
-	@DeleteMapping("/{id}")
-	public ResponseEntity<String> deleteDocument(@PathVariable("id") Long id) {
-		driveService.deleteDocument(id);
+	// 폴더/파일 영구 삭제 API (DELETE '/api/driveitem/{id}')
+	@DeleteMapping("/delete/{id}")
+	public ResponseEntity<String> deleteDriveItem(@PathVariable("id") String publicId,
+			Authentication authentication) {
+		String username = authentication.getName();
+		driveService.deleteDriveItem(publicId,username);
 	    return ResponseEntity.ok("삭제 완료");
 	}
 	
