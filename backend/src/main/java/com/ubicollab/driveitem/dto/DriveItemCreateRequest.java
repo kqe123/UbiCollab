@@ -40,9 +40,10 @@ public class DriveItemCreateRequest {
  	
  	// id : 자동 생성이니 필요 X
  	// createdDate : 현재 시간 기준으로 자동 생성이니 필요 X
- 	// isInTrash : 기본값이 false이므로 필요 X
  	// size : 파일이라면 Service안에서 계산할 것이라 지금 필요 X
  	// user : 유저는 Authorization 헤더를 통해 받고, Json으로 받지 않음.
+ 	// isInTrash : 기본값이 false이므로 필요 X
+ 	// isTrashRoot : 기본값이 false이므로 필요 X
  	
  	// getter, setter들
 	public String getItemName() {

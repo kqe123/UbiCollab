@@ -20,6 +20,7 @@ public class DriveItemResponse {
     private Long size;
     private LocalDateTime createdDate;
     private Boolean isInTrash;
+    // isTrashRoot는 API에서만 사용하므로 제외
     
     public DriveItemResponse(DriveItem driveItem) {
         this.id = driveItem.getId();

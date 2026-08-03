@@ -1,11 +1,11 @@
 import axios from "axios";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import fileIcon from "@/assets/file.png";
 import { useNavigate } from "react-router-dom";
+import fileIcon from "@/assets/file.png";
 
 function LoadDocumentModal({onClose} : {onClose : () => void}) {
-    const [selectedFileId, setSelectedFileId] = useState(null); // 현재 선택된 문서 ID
+    const [selectedFileId, setSelectedFileId] = useState<string|null>(null); // 현재 선택된 문서 ID
     const navigate = useNavigate(); // navigate 훅
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
 
@@ -31,7 +31,7 @@ function LoadDocumentModal({onClose} : {onClose : () => void}) {
         isError,              // 요청이 실패했는지 여부
         error,                // 실패했을 때 오류 정보
     } = useQuery({
-        queryKey: ["files"], // 서버 데이터를 해당 이름으로 관리
+        queryKey: ["driveItems", "recent"], // 서버 데이터를 해당 이름으로 관리
         queryFn: getFiles,   // getDocuments() 실행
     });
 
@@ -99,21 +99,23 @@ function LoadDocumentModal({onClose} : {onClose : () => void}) {
                         {[...files].sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()) // 생성 날짜 내림차순 정렬
                             .map((file) => (
                                 <tr key={file.id} 
-                                    onClick={() => setSelectedFileId(file.id)}
+                                    onClick={() => setSelectedFileId(file.publicId)}
                                     onDoubleClick={loadDocument}
                                     className={
                                         `cursor-pointer
-                                        ${ selectedFileId === file.id
+                                        ${ selectedFileId === file.publicId
                                             ? "bg-blue-100"
                                             : "hover:bg-gray-100"
                                         }`}>
                                     <td className="py-3 text-sm font-medium">
                                         <img src={fileIcon} alt="" className="inline-block h-[18px] w-[15px] mr-[5px] mb-[3px]" />
-                                        {file.itemName}{file.extension && `.${file.extension}`}</td>
+                                        {file.itemName}
+                                        {file.extension === "UC" || file.extension === null ? "" : `.${file.extension}`}</td>
                                     <td className="py-3 text-sm font-light">{formatDate(file.createdDate)}</td>
                                     <td className="py-3 text-sm font-light">{file.size} B</td>
                                 </tr>
-                        ))}
+                            ))
+                        }
                     </tbody>
                 </table>
             </div>

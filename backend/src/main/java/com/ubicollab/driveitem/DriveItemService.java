@@ -9,6 +9,8 @@ import java.util.Optional;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.ubicollab.driveitem.DriveItem;
 import com.ubicollab.driveitem.DriveItemRepository;
 import com.ubicollab.driveitem.dto.DriveItemCreateRequest;
@@ -31,7 +33,7 @@ public class DriveItemService {
 		this.userRepository = userRepository;
 	}
 	
-	// DriveItem 생성 메서드
+	// DriveItem(folder/file) 생성 메서드
 	public void createDriveItem(DriveItemCreateRequest request, String username) {
 		// 프론트에서 보내지 않은 값은 Jackson이 모두 null로 처리해준다.
 		String itemName = request.getItemName(); // 무조건 필수
@@ -108,6 +110,7 @@ public class DriveItemService {
 	            extension,
 	            size,
 	            LocalDateTime.now(),
+	            false,
 	            false
 	        );
 	    
@@ -116,7 +119,7 @@ public class DriveItemService {
 	}
 	
 	
-	// 현재 사용자의 전체 File를 조회하는 메서드
+	// 현재 사용자의 전체 file를 조회하는 메서드
 	public Iterable<DriveItemResponse> getFiles(String username) { 
 		 List<DriveItemResponse> result = new ArrayList<>();
 
@@ -128,7 +131,7 @@ public class DriveItemService {
 		return result;
 	}
 	
-	// File 하나를 반환하는 메서드
+	// file 하나를 반환하는 메서드
 	public DriveItemResponse getFile(String publicId) {
 		DriveItem file = driveRepository.findByPublicId(publicId).orElseThrow(
 				() -> new RuntimeException("파일를 찾을 수 없습니다. publicId=" + publicId));
@@ -141,7 +144,7 @@ public class DriveItemService {
 	}
 	
 	
-	// 현재 디렉토리의 파일/폴더들을 반환하는 메서드
+	// 현재 디렉토리의 DriveItem(folder/file)들을 반환하는 메서드
 	public Iterable<DriveItemResponse> getDriveItems(String parentPublicId, String username) {
 		List<DriveItemResponse> result = new ArrayList<>();
 		
@@ -153,7 +156,7 @@ public class DriveItemService {
 		 return result;
 	}
 	
-	//
+	// 현재 디렉토리의 경로(path)를 반환하는 메서드
 	public Iterable<DriveItemResponse> getDrivePath(String publicId, String username) {
 		List<DriveItemResponse> path = new ArrayList<>();
 		
@@ -180,14 +183,25 @@ public class DriveItemService {
 		return path;
 	}
 	
-	// DriveItem를 수정하는 메서드 (filename 또는 content가 수정되야함.)
+	// 휴지통 최상위 DriveItem(folder/file)를 가져오는 메서드
+	public Iterable<DriveItemResponse> getTrash(String username) {
+		List<DriveItemResponse> result = new ArrayList<>();
+		
+		// 휴지통 최상위 요소인지는 IsTrashRoot가 true인지로 판단한다.
+		for ( DriveItem driveItem : driveRepository.findByIsTrashRoot(true)) {
+			result.add(new DriveItemResponse(driveItem));
+		}
+		
+		return result;
+	}
+	
+	// DriveItem(folder/file)를 수정하는 메서드 (파일/폴더명 변경, 파일 내용 변경, 파일/폴더 이동)
 	public void updateDriveItem(String publicId, DriveItemUpdateRequest request, String username) {
 		
-		// 변경가능한 필드들 (4개)
+		// 변경가능한 필드들 (3개)
 		String itemName = request.getItemName();
 	    DriveItem parent = null;
 	    String content = request.getContent();
-	    Boolean isInTrash = request.getIsInTrash();
 	    
 	    // 현재 로그인 사용자
 	    User user = userRepository.findByUsername(username)
@@ -256,11 +270,49 @@ public class DriveItemService {
 	        driveItem.setSize(size);
 	    }
 		
-		// isinTrash가 있다면 변경 및 예외처리
-		if (isInTrash != null) 
-			driveItem.setIsInTrash(request.getIsInTrash());
-		
 		driveRepository.save(driveItem);
+	}
+	
+	// 해당 DriveItem(folder/file)과 모든 자식 요소들을 휴지통으로 보내는 메서드
+	@Transactional
+	public void moveToTrash(String publicId, String username) {
+		DriveItem root = driveRepository.findByPublicId(publicId).orElseThrow(
+				() -> new RuntimeException("해당 아이템을 찾을 수 없습니다. publicId="+ publicId));
+		root.setIsTrashRoot(true);
+		updateIsInTrash(root, true, username, true);
+	}
+	
+	// 해당 DriveItem(folder/file)과 모든 자식 요소들을 복원하는 메서드
+	@Transactional 
+	public void restoreTrash(String publicId, String username) {
+		DriveItem root = driveRepository.findByPublicId(publicId).orElseThrow(
+				() -> new RuntimeException("해당 아이템을 찾을 수 없습니다. publicId=" + publicId));
+		root.setIsTrashRoot(false);
+		
+		// 만약 root의 부모가 현재 휴지통에 있다면 루트에 복구를 한다.
+		if (root.getParent() != null && root.getParent().getIsInTrash() ) { 
+			root.setParent(null);
+		}
+		updateIsInTrash(root, false, username, true);
+	}
+	
+	// 해당 폴더/파일과 모든 자식 요소들을 복원하거나 휴지통으로 보내는 재귀 함수
+	public void updateIsInTrash(DriveItem driveItem, Boolean isInTrash,String username, Boolean isRoot) {
+		// 루트가 아니고, 자식 요소중에 이미 쓰레기통에 있는 요소들은 탐색을 종료한다.
+		if (!isRoot && driveItem.getIsTrashRoot()) 
+			return;
+		
+		driveItem.setIsInTrash(isInTrash); // 현재 요소 복원 또는 휴지통으로 보냄.
+		List<DriveItem> childDriveItems = driveRepository.
+				findByUserUsernameAndParentPublicId(username,driveItem.getPublicId());
+		
+		// 자식 요소를 탐색하면서 폴더면 함수를 재귀하고, 파일이면 바로 복원 또는 휴지통으로 보냄.
+		for (DriveItem child : childDriveItems) {
+			if (child.getType() == DriveItemType.FOLDER) 
+				updateIsInTrash(child, isInTrash, username, false);
+			else 
+				child.setIsInTrash(isInTrash);
+		}	
 	}
 	
 	// DriveItem를 제거하는 메서드

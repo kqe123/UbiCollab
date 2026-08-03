@@ -210,7 +210,7 @@ function MyDriveList() {
             </div>
             </div>
             {/* 폴더/파일이 0건일때 예외처리 */}    
-            {driveItems.length === 0 ? (
+            {[...driveItems].filter((driveItem) => driveItem.isInTrash === false).length === 0 ? (
                 <>
                     <img src={noDriveImg} className="w-[40%] h-[40%] mx-auto mt-10"></img>
                     <h1 className="mt-5 text-center text-2xl">

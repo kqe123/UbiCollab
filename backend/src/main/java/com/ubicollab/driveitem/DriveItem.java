@@ -63,13 +63,16 @@ public class DriveItem {
 	@Column(nullable=false)
 	private Boolean isInTrash = false;
 	
+	@Column(nullable=false)
+	private Boolean isTrashRoot = false;
+	
 	//생성자
 	public DriveItem() {}
 	
 	public DriveItem(String publicId, String itemName,
 					DriveItemType type, DriveItem parent, User user,
 		    		String content, DriveItemExtension extension, Long size,
-		    		LocalDateTime createdDate, Boolean isInTrash) {
+		    		LocalDateTime createdDate, Boolean isInTrash, Boolean isTrashRoot) {
 		this.publicId = publicId;
 		this.itemName = itemName;
 		this.type = type;
@@ -80,6 +83,11 @@ public class DriveItem {
 		this.size = size;
 		this.createdDate = createdDate;
 		this.isInTrash = isInTrash;
+		this.isTrashRoot = isTrashRoot;
+	}
+
+	public Long getId() {
+		return id;
 	}
 	
 	public String getPublicId() {
@@ -88,10 +96,6 @@ public class DriveItem {
 
 	public void setPublicId(String publicId) {
 		this.publicId = publicId;
-	}
-
-	public Long getId() {
-		return id;
 	}
 
 	public String getItemName() {
@@ -164,6 +168,14 @@ public class DriveItem {
 
 	public void setIsInTrash(Boolean isInTrash) {
 		this.isInTrash = isInTrash;
+	}
+	
+	public Boolean getIsTrashRoot() {
+		return isTrashRoot;
+	}
+
+	public void setIsTrashRoot(Boolean isTrashRoot) {
+		this.isTrashRoot = isTrashRoot;
 	}
 	
 }

@@ -35,9 +35,9 @@ function DriveItemMenuModal({
     // "휴지통으로 보내기" 함수
     const throwTrash = async () => {
         try {
-            // 문서 변경 Backend API 호출
-            const response = await axios.put(`http://localhost:8080/api/driveitem/${driveItem.id}`,
-            { isInTrash : true },
+            // Backend API 호출
+            const response = await axios.patch(`http://localhost:8080/api/driveitem/trash/${driveItem.publicId}`,
+            null,
             {
                 headers: {
                     Authorization: `Bearer ${accessToken}`
