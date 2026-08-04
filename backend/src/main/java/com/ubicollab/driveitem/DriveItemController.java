@@ -126,6 +126,5 @@ public class DriveItemController {
 	    return ResponseEntity.ok("삭제 완료");
 	}
 	
-	// 휴지통 비우기 API 
-	
+	// 휴지통 비우기 API 	
 }

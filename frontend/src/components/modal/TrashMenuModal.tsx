@@ -36,6 +36,7 @@ function TrashMenu({
                 queryKey: ["driveItems"]
             });
             toast.success("파일/폴더가 복원되었습니다.");
+            onClose();
         } catch (error: unknown) {
             console.error("복원 실패... : ", error);
 
@@ -95,6 +96,21 @@ function TrashMenu({
         } 
     }
 
+    const handlePermanentDelete = async () => {
+    const confirmed = window.confirm(
+        "이 항목을 영구 삭제하시겠습니까?\n삭제한 항목은 복구할 수 없습니다."
+    );
+
+    if (!confirmed) 
+        return;
+    
+
+    await deleteTrash();
+    onClose();
+    };
+
+
+
     return (
         <>
         <div className="fixed inset-0 z-40" onClick={onClose}>
@@ -102,18 +118,12 @@ function TrashMenu({
                 style={{ left: `${x}px`, top: `${y}px`,}}
                 onClick={(e) => e.stopPropagation()}>
                 <button type="button" className="w-full px-4 py-2 text-left text-sm transition-colors hover:bg-blue-500 cursor-pointer"
-                    onClick={() => {
-                        restoreTrash();
-                        onClose();
-                    }}>
+                    onClick={restoreTrash}>
                     복원
                 </button>
                 <hr className="my-1 border-gray-200" />
-                <button type="button" className=" w-full px-4 py-2 text-left text-sm transition-colors text-red-600 hover:bg-blue-500 cursor-pointer"
-                    onClick={() => {  
-                        deleteTrash();
-                        onClose();                    
-                    }}>
+                <button type="button" className=" w-full px-4 py-2 text-left text-sm font-bold transition-colors text-[#ED1C24] hover:bg-blue-500 cursor-pointer"
+                    onClick={handlePermanentDelete}>
                     영구 삭제
                 </button>
             </div>
