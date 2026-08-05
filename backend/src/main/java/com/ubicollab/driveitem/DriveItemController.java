@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -58,8 +59,10 @@ public class DriveItemController {
 	
 	// [편집기] 파일 상세 조회 API(GET '/api/driveitem/files/{id}')
 	@GetMapping("/files/{id}")
-	public DriveItemResponse getFile(@PathVariable("id") String publicId) {
-		return driveService.getFile(publicId);
+	public DriveItemResponse getFile(@PathVariable("id") String publicId,
+			Authentication authentication) {
+		String username = authentication.getName(); // 현재 사용자 username
+		return driveService.getFile(publicId, username);
 	}
 	
 	// [내 드라이브] 현재 디렉토리 가져오기 API(GET '/api/driveitem/driveitems')
@@ -79,9 +82,15 @@ public class DriveItemController {
 		return driveService.getDrivePath(publicId, username);
 	}
 	
+	// [휴지통] 최상위 폴더/파일들만 가져오기 API (GET '/api/driveitem/trash')
+	@GetMapping("/trash")
+	public Iterable<DriveItemResponse> getTrash(Authentication authentication) {
+		String username = authentication.getName();
+		return driveService.getTrash(username);
+	}
 	
 	// 폴더/파일 수정 API (PUT '/api/driveitem/{id}')
-	@PutMapping("/{id}")
+	@PatchMapping("/{id}")
 	public ResponseEntity<String> updateDriveItem(@PathVariable("id") String publicId,
 			@Valid @RequestBody DriveItemUpdateRequest request,
 			Authentication authentication) {
@@ -91,14 +100,33 @@ public class DriveItemController {
 		return ResponseEntity.ok("업데이트 완료");
 	}
 	
+	// 폴더/파일 휴지통으로 보내기 API (PUT '/api/driveitem/trash/{id}')
+	@PatchMapping("/trash/{id}")
+	public ResponseEntity<String> moveToTrash(@PathVariable("id") String publicId,
+			Authentication authentication) {
+			
+		String username = authentication.getName(); // 현재 로그인 사용자
+		driveService.moveToTrash(publicId,username);
+		return ResponseEntity.ok("업데이트 완료");
+	}
 	
-	// 문서 삭제 API (DELETE '/api/driveitem/{id}')
-	@DeleteMapping("/{id}")
-	public ResponseEntity<String> deleteDocument(@PathVariable("id") Long id) {
-		driveService.deleteDocument(id);
+	// 폴더/파일 복원 API (PUT '/api/driveitem/restore/{id}')
+	@PatchMapping("/restore/{id}")
+	public ResponseEntity<String> restoreTrash(@PathVariable("id") String publicId,
+			Authentication authentication) {
+		String username = authentication.getName();
+		driveService.restoreTrash(publicId,username);
+		return ResponseEntity.ok("업데이트 완료");
+	}
+	
+	// 폴더/파일 영구 삭제 API (DELETE '/api/driveitem/{id}')
+	@DeleteMapping("/delete/{id}")
+	public ResponseEntity<String> deleteDriveItem(@PathVariable("id") String publicId,
+			Authentication authentication) {
+		String username = authentication.getName();
+		driveService.deleteDriveItem(publicId,username);
 	    return ResponseEntity.ok("삭제 완료");
 	}
 	
-	// 휴지통 비우기 API 
-	
+	// 휴지통 비우기 API 	
 }

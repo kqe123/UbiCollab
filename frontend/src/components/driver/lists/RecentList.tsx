@@ -1,9 +1,9 @@
 import axios from "axios";
-import { useQuery } from "@tanstack/react-query";
 import fileIcon from "../../../assets/file.png";
-import { useNavigate } from "react-router-dom";
+import noFilesImg from "../../../assets/empty-files.png";
 import DocumentMenuModal from "../../modal/DriveItemMenuModal"
-import { useOutletContext } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import type { DirectoryOutletContext } from "../Directory";
 
 
@@ -15,21 +15,10 @@ function RecentList() {
         driveItemMenu,
         openDriveItemMenu,
         closeDriveItemMenu,
+        formatDate
     } = useOutletContext<DirectoryOutletContext>();
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
     const navigate = useNavigate();
-
-    // formatDate() : 날짜 가독성을 높여주는 함수
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleString("ko-KR", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-        });
-    };
 
     // 백엔드 api를 호출하는 함수
     const getFiles = async () => {
@@ -72,15 +61,23 @@ function RecentList() {
         );
     }
 
-    // 문서가 0건일때 처리
-    if (files.length === 0 ) {
-        return <p className="mt-10">'+ 새 문서' 버튼을 사용하여 업로드하세요.</p>;
-    }
-
     // 문서 리스트를 정상적으로 받아왔을 때
     return (
         <>
         <h1 className="text-2xl font-medium">최근 문서</h1>
+        {[...files].filter((file) => file.isInTrash === false).length === 0 ? (
+                <>
+                    <img src={noFilesImg} className="w-[40%] h-[40%] mx-auto mt-10"></img>
+                    <h1 className="mt-5 text-center text-2xl">
+                        최근에 생성한 파일이 없습니다!
+                    </h1>
+                    <h2 className="mt-5 text-center">
+                        내 드라이브에서 [우클릭] - [새 파일 만들기]를 누르거나 <br></br>
+                        우측 상단의 [+ 새 파일] 버튼을 눌러주세요.
+                    </h2>
+                </>
+        ) : (
+        <div>
         <table className="mt-10 w-full table-fixed text-left">
             <thead>
                 <tr className="border-b border-[#DBDBDB]">
@@ -108,14 +105,16 @@ function RecentList() {
                         <td className="py-3 px-2 text-sm font-medium">
                             <img src={fileIcon} alt="" className="inline-block h-[18px] w-[15px] mr-[5px] mb-[3px]" />
                             {file.itemName}
-                            {file.extension === "UC" || file.extension === null ? "" : `.${file.extension}`}</td>
+                            {file.extension === "UC" || file.extension === null ? "" : `.${file.extension}`}
+                            {file.isFavorite === true && " ★"}</td>
                         <td className="py-3 text-sm font-light">{formatDate(file.createdDate)}</td>
                         <td className="py-3 text-sm font-light">{file.size} B</td>
                     </tr>
                 ))}
             </tbody>
         </table>
-
+        </div>
+    )}
         {driveItemMenu.isOpen && selectedDriveItem && (
             <DocumentMenuModal
             x={driveItemMenu.x}

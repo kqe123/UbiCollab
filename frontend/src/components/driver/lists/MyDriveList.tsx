@@ -26,23 +26,12 @@ function MyDriveList() {
         setSelectedDriveItem,
         driveItemMenu,
         openDriveItemMenu,
-        closeDriveItemMenu
+        closeDriveItemMenu,
+        formatDate
     } = useOutletContext<DirectoryOutletContext>();
 
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
     const navigate = useNavigate();
-
-    // formatDate() : 날짜 가독성을 높여주는 함수
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleString("ko-KR", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-        });
-    };
 
     // 요소 더블클릭 시 발생하는 이벤트 함수
     const elementDoubleClick = (driveItem: DriveItem): void => {
@@ -97,16 +86,14 @@ function MyDriveList() {
 
     // 백엔드 api(디렉토리 조회)를 호출하는 비동기 함수
     const getDriveItems = async () => {
-        // 백엔드에 보낼 폴더 ID
-        const DriveItemData = {
-            parentPublicId: currentFolderId
-        }
 
         // axios로 백엔드 api 호출
         const response = await axios.get(
             "http://localhost:8080/api/driveitem/driveitems",
             {   
-                params: DriveItemData,
+                params: {
+                    parentPublicId: currentFolderId
+                },
                 headers: {
                     Authorization: `Bearer ${accessToken}`
                 }
@@ -210,7 +197,7 @@ function MyDriveList() {
             </div>
             </div>
             {/* 폴더/파일이 0건일때 예외처리 */}    
-            {driveItems.length === 0 ? (
+            {[...driveItems].filter((driveItem) => driveItem.isInTrash === false).length === 0 ? (
                 <>
                     <img src={noDriveImg} className="w-[40%] h-[40%] mx-auto mt-10"></img>
                     <h1 className="mt-5 text-center text-2xl">
@@ -252,7 +239,8 @@ function MyDriveList() {
                                     <img src={folderIcon} alt="" className="inline-block h-[15px] w-[15px] mr-[5px] mb-[3px]" />
                                     : <img src={fileIcon} alt="" className="inline-block h-[18px] w-[15px] mr-[5px] mb-[3px]" />}
                                 {driveItem.itemName}
-                                {driveItem.extension === "UC" || driveItem.extension === null ? "" : `.${driveItem.extension}`}</td>
+                                {driveItem.extension === "UC" || driveItem.extension === null ? "" : `.${driveItem.extension}`}
+                                {driveItem.isFavorite === true && " ★"}</td>
                             <td className="py-3 text-sm font-light">{formatDate(driveItem.createdDate)}</td>
                             <td className="py-3 text-sm font-light">
                                 {driveItem.size === null ?

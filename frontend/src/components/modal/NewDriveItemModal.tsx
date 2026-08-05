@@ -2,7 +2,6 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import fileIcon from "../../assets/file.png";
 import folderIcon from "../../assets/folder.png";
-import { useNavigate  } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 function NewDriveItemModal({
     x, y, onClose, currentFolderId
@@ -14,7 +13,6 @@ function NewDriveItemModal({
 }) {
 
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
-    const navigate = useNavigate();
     const queryClient = useQueryClient(); // QueryClient 가져옴
 
     // 새 파일 생성 버튼 클릭 시 이벤트
@@ -26,7 +24,6 @@ function NewDriveItemModal({
             extension: "UC",
             parentPublicId : currentFolderId
         };
-        
         // DB에 새 문서 생성 후 response 받음
         try {
             const response = await axios.post(

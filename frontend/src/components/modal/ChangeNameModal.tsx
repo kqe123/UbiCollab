@@ -28,8 +28,8 @@ function ChangeNameModal ({
 
         try {
             // 문서 변경 Backend API 호출  
-            const response = await axios.put(
-                `http://localhost:8080/api/driveitem/${driveItem.id}`,
+            const response = await axios.patch(
+                `http://localhost:8080/api/driveitem/${driveItem.publicId}`,
                 driveItemData,
                 {
                     headers: {
@@ -72,20 +72,40 @@ function ChangeNameModal ({
                     <div className="flex items-center justify-between">
                         <h1 className="text-2xl font-semibold">파일명 변경</h1>
                     </div>
-                    <input value={driveItemName} onChange={(e) => setDriveItemName(e.target.value)} 
-                    className="w-[300px] h-15
-                                border border-gray-300
-                                rounded
-                                px-2 py-1 mt-6
-                                outline-none
-                                focus:border-blue-500"/>
-                    <div className="flex items-center justify-between mt-6">
-                        <button type="button" onClick={onClose} className="text-2xl">취소</button>
-                        <button type="button" onClick={changeName} className="text-2xl">확인</button>
-                    </div>
-                </div>
+                {/* 입력창 */}
+                <input type="text" value={driveItemName}
+                    onChange={(e) => setDriveItemName(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                            changeName();
+                        }
+                    }}
+                    className="mt-8 h-14 w-full rounded-xl
+                    border border-gray-300 px-4 text-lg
+                    outline-none transition focus:border-blue-500
+                    focus:ring-4 focus:ring-blue-100"/>
+            {/* 버튼 */}
+            <div className="mt-8 flex justify-end gap-3">
+                <button
+                    type="button"
+                    onClick={onClose}
+                    className="rounded-lg px-5 py-2.5
+                        text-base font-medium text-gray-700
+                        transition hover:bg-gray-100">
+                    취소
+                </button>
+
+                <button
+                    type="button" onClick={changeName}
+                    className="rounded-lg bg-blue-600 px-5
+                    py-2.5 text-base font-medium text-white
+                    transition hover:bg-blue-700 active:scale-95">
+                    확인
+                </button>
             </div>
-        </>
+        </div>
+    </div>
+    </>
     )
 }
 

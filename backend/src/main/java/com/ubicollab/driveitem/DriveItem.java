@@ -10,6 +10,10 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Column;
 import java.time.LocalDateTime;
+
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import com.ubicollab.driveitem.enums.DriveItemExtension;
 import com.ubicollab.driveitem.enums.DriveItemType;
 import com.ubicollab.user.User;
@@ -37,6 +41,7 @@ public class DriveItem {
 	// 부모 (상위 폴더 ID, 자기 참조)
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "parent_id")
+	@OnDelete(action = OnDeleteAction.SET_NULL)
     private DriveItem parent;
 	
 	// 만든 사람 (외래키)
@@ -63,13 +68,16 @@ public class DriveItem {
 	@Column(nullable=false)
 	private Boolean isInTrash = false;
 	
+	@Column(nullable=false)
+	private Boolean isTrashRoot = false;
+	
 	//생성자
 	public DriveItem() {}
 	
 	public DriveItem(String publicId, String itemName,
 					DriveItemType type, DriveItem parent, User user,
 		    		String content, DriveItemExtension extension, Long size,
-		    		LocalDateTime createdDate, Boolean isInTrash) {
+		    		LocalDateTime createdDate, Boolean isInTrash, Boolean isTrashRoot) {
 		this.publicId = publicId;
 		this.itemName = itemName;
 		this.type = type;
@@ -80,6 +88,11 @@ public class DriveItem {
 		this.size = size;
 		this.createdDate = createdDate;
 		this.isInTrash = isInTrash;
+		this.isTrashRoot = isTrashRoot;
+	}
+
+	public Long getId() {
+		return id;
 	}
 	
 	public String getPublicId() {
@@ -88,10 +101,6 @@ public class DriveItem {
 
 	public void setPublicId(String publicId) {
 		this.publicId = publicId;
-	}
-
-	public Long getId() {
-		return id;
 	}
 
 	public String getItemName() {
@@ -164,6 +173,14 @@ public class DriveItem {
 
 	public void setIsInTrash(Boolean isInTrash) {
 		this.isInTrash = isInTrash;
+	}
+	
+	public Boolean getIsTrashRoot() {
+		return isTrashRoot;
+	}
+
+	public void setIsTrashRoot(Boolean isTrashRoot) {
+		this.isTrashRoot = isTrashRoot;
 	}
 	
 }

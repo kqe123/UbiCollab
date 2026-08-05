@@ -285,7 +285,7 @@ export function SimpleEditor({
       setIsSaving(true);
         
       // 문서 저장 Backend API 호출
-      const response = await axios.put(
+      const response = await axios.patch(
         `http://localhost:8080/api/driveitem/${fileId}`,
         fileData,
         {

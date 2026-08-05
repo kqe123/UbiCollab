@@ -71,7 +71,7 @@ function Header() {
                         onClick={createFile}
                         className="h-10 px-[18px] rounded-lg bg-[#ffffff]
                                 text-black text-sm font-semibold hover:bg-[#F6F6F6] cursor-pointer">
-                    + 새 문서
+                    + 새 파일
                 </button>
 
                 <button type="button" className="w-12 h-12 rounded-full bg-[#ffffff] text-[13px]

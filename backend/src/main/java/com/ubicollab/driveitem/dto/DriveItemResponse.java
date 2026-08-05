@@ -20,8 +20,10 @@ public class DriveItemResponse {
     private Long size;
     private LocalDateTime createdDate;
     private Boolean isInTrash;
+    private Boolean isFavorite; // DriveItem Entity에는 없지만, Response에는 필요한 값
+    // isTrashRoot는 API에서만 사용하므로 제외
     
-    public DriveItemResponse(DriveItem driveItem) {
+    public DriveItemResponse(DriveItem driveItem, Boolean isFavorite) {
         this.id = driveItem.getId();
         this.publicId = driveItem.getPublicId();
         this.itemName = driveItem.getItemName();
@@ -33,12 +35,13 @@ public class DriveItemResponse {
         this.size = driveItem.getSize();
         this.createdDate = driveItem.getCreatedDate();
         this.isInTrash = driveItem.getIsInTrash();
+        this.isFavorite = isFavorite;
     }
-    
+
 	public String getPublicId() {
 		return publicId;
 	}
-
+	
 	public void setPublicId(String publicId) {
 		this.publicId = publicId;
 	}
@@ -80,6 +83,14 @@ public class DriveItemResponse {
 
 	public Boolean getIsInTrash() {
 		return isInTrash;
+	}
+	
+	public Boolean getIsFavorite() {
+		return isFavorite;
+	}
+
+	public void setIsFavorite(Boolean isFavorite) {
+		this.isFavorite = isFavorite;
 	}
 
 }

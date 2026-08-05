@@ -13,5 +13,6 @@ export type DriveItem = {
 
     createdDate: string;
     isInTrash : boolean;
+    isFavorite : boolean;
 };
 
