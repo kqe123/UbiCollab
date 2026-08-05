@@ -59,8 +59,10 @@ public class DriveItemController {
 	
 	// [편집기] 파일 상세 조회 API(GET '/api/driveitem/files/{id}')
 	@GetMapping("/files/{id}")
-	public DriveItemResponse getFile(@PathVariable("id") String publicId) {
-		return driveService.getFile(publicId);
+	public DriveItemResponse getFile(@PathVariable("id") String publicId,
+			Authentication authentication) {
+		String username = authentication.getName(); // 현재 사용자 username
+		return driveService.getFile(publicId, username);
 	}
 	
 	// [내 드라이브] 현재 디렉토리 가져오기 API(GET '/api/driveitem/driveitems')

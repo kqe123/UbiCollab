@@ -4,13 +4,12 @@ import fileIcon from "../../../assets/file.png";
 import folderIcon from "../../../assets/folder.png";
 import homeIcon from "../../../assets/home.png";
 import backIcon from "../../../assets/back.png";
-import noDriveImg from "../../../assets/empty-drive.png";
+import noFavoriteImg from "../../../assets/empty-favorite.png";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
 import { useNavigate, useParams, useOutletContext } from "react-router-dom";
 import DriveItemMenuModal from "../../modal/DriveItemMenuModal"
 import type {DriveItem} from "../../../types/driveitem";
-import type { DirectoryOutletContext, MenuType} from "../Directory";
+import type { DirectoryOutletContext} from "../Directory";
 
 function FavoriteList() {
    // 상태(state)들
@@ -21,22 +20,11 @@ function FavoriteList() {
         setSelectedDriveItem,
         driveItemMenu,
         openDriveItemMenu,
-        closeDriveItemMenu
+        closeDriveItemMenu,
+        formatDate
     } = useOutletContext<DirectoryOutletContext>();
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
     const navigate = useNavigate();
-
-    // formatDate() : 날짜 가독성을 높여주는 함수
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleString("ko-KR", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-        });
-    };
 
     // 요소 더블클릭 시 발생하는 이벤트 함수
     const elementDoubleClick = (driveItem: DriveItem): void => {
@@ -190,7 +178,7 @@ function FavoriteList() {
             {/* 폴더/파일이 0건일때 예외처리 */}    
             {[...favorites].filter((favorite) => favorite.isInTrash === false).length === 0 ? (
                 <>
-                    <img src={noDriveImg} className="w-[40%] h-[40%] mx-auto mt-10"></img>
+                    <img src={noFavoriteImg} className="w-[40%] h-[40%] mx-auto mt-10"></img>
                     <h1 className="mt-5 text-center text-2xl">
                         즐겨찾기에 등록한 항목이 없습니다!
                     </h1>
@@ -230,7 +218,8 @@ function FavoriteList() {
                                     <img src={folderIcon} alt="" className="inline-block h-[15px] w-[15px] mr-[5px] mb-[3px]" />
                                     : <img src={fileIcon} alt="" className="inline-block h-[18px] w-[15px] mr-[5px] mb-[3px]" />}
                                 {favorite.itemName}
-                                {favorite.extension === "UC" || favorite.extension === null ? "" : `.${favorite.extension}`}</td>
+                                {favorite.extension === "UC" || favorite.extension === null ? "" : `.${favorite.extension}`}
+                                {favorite.isFavorite === true && " ★"}</td>
                             <td className="py-3 text-sm font-light">{formatDate(favorite.createdDate)}</td>
                             <td className="py-3 text-sm font-light">
                                 {favorite.size === null ?

@@ -16,6 +16,7 @@ export type DirectoryOutletContext = {
     driveItemMenu : MenuType // 아이템 메뉴 상태
     openDriveItemMenu : (e : React.MouseEvent) => void; // 아이템 메뉴 열기 함수 (우클릭)
     closeDriveItemMenu : () => void; //아이템 메뉴 닫기 함수
+    formatDate : (dateString: string) => string; // 날짜 포맷 변경 함수
 }
 
 function Directory() {
@@ -44,12 +45,25 @@ function Directory() {
         }));
     }
 
+    // formatDate() : 날짜 가독성을 높여주는 함수
+    const formatDate = (dateString: string) => {
+        return new Date(dateString).toLocaleString("ko-KR", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+        });
+    };
+
     const outletContext : DirectoryOutletContext = {
         selectedDriveItem,
         setSelectedDriveItem,
         driveItemMenu,
         openDriveItemMenu,
-        closeDriveItemMenu
+        closeDriveItemMenu,
+        formatDate
     };
 
     return (

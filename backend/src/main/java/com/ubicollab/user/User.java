@@ -6,7 +6,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Column;
 import java.time.LocalDateTime;
-import jakarta.validation.constraints.NotBlank;
 
 @Entity
 @Table(name = "users") // PostgreSQL에서 user는 예약어(reserved keyword)이므로 users로 변경

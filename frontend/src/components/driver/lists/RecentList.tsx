@@ -15,21 +15,10 @@ function RecentList() {
         driveItemMenu,
         openDriveItemMenu,
         closeDriveItemMenu,
+        formatDate
     } = useOutletContext<DirectoryOutletContext>();
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
     const navigate = useNavigate();
-
-    // formatDate() : 날짜 가독성을 높여주는 함수
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleString("ko-KR", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-        });
-    };
 
     // 백엔드 api를 호출하는 함수
     const getFiles = async () => {
@@ -116,7 +105,8 @@ function RecentList() {
                         <td className="py-3 px-2 text-sm font-medium">
                             <img src={fileIcon} alt="" className="inline-block h-[18px] w-[15px] mr-[5px] mb-[3px]" />
                             {file.itemName}
-                            {file.extension === "UC" || file.extension === null ? "" : `.${file.extension}`}</td>
+                            {file.extension === "UC" || file.extension === null ? "" : `.${file.extension}`}
+                            {file.isFavorite === true && " ★"}</td>
                         <td className="py-3 text-sm font-light">{formatDate(file.createdDate)}</td>
                         <td className="py-3 text-sm font-light">{file.size} B</td>
                     </tr>

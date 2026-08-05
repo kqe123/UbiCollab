@@ -117,12 +117,12 @@ function TrashMenu({
             <div className="fixed z-50 w-44 rounded-lg border border-gray-200 bg-white py-2 shadow-lg"
                 style={{ left: `${x}px`, top: `${y}px`,}}
                 onClick={(e) => e.stopPropagation()}>
-                <button type="button" className="w-full px-4 py-2 text-left text-sm transition-colors hover:bg-blue-500 cursor-pointer"
+                <button type="button" className="w-full px-4 py-2 text-left text-sm transition-colors hover:bg-gray-100 cursor-pointer"
                     onClick={restoreTrash}>
                     복원
                 </button>
                 <hr className="my-1 border-gray-200" />
-                <button type="button" className=" w-full px-4 py-2 text-left text-sm font-bold transition-colors text-[#ED1C24] hover:bg-blue-500 cursor-pointer"
+                <button type="button" className=" w-full px-4 py-2 text-left text-sm font-bold transition-colors text-[#ED1C24] hover:bg-red-300 cursor-pointer"
                     onClick={handlePermanentDelete}>
                     영구 삭제
                 </button>

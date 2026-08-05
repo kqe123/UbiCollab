@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -51,6 +52,15 @@ public class FavoriteController {
 		String username = authentication.getName(); // 현재 사용자 username
 		return favoriteService.getFavorites(parentPublicId, username);
 	}
+	
+	// [즐겨찾기] 즐겨찾기 삭제 API (DELETE '/api/favorite/delete/{id}')
+		@DeleteMapping("/delete/{id}")
+		public ResponseEntity<String> deleteFavorite(@PathVariable("id") String publicId,
+				Authentication authentication) {
+			String username = authentication.getName();
+			favoriteService.deleteFavorite(publicId,username);
+		    return ResponseEntity.ok("삭제 완료");
+		}
 	
 	
 }

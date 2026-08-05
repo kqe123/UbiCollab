@@ -18,6 +18,8 @@ import com.ubicollab.driveitem.dto.DriveItemResponse;
 import com.ubicollab.driveitem.dto.DriveItemUpdateRequest;
 import com.ubicollab.driveitem.enums.DriveItemExtension;
 import com.ubicollab.driveitem.enums.DriveItemType;
+import com.ubicollab.favorite.Favorite;
+import com.ubicollab.favorite.FavoriteRepository;
 import com.ubicollab.user.User;
 import com.ubicollab.user.UserRepository;
 import static com.aventrix.jnanoid.jnanoid.NanoIdUtils.randomNanoId;
@@ -26,11 +28,14 @@ import static com.aventrix.jnanoid.jnanoid.NanoIdUtils.randomNanoId;
 public class DriveItemService {
 	private final DriveItemRepository driveRepository;
 	private final UserRepository userRepository;
+	private final FavoriteRepository favoriteRepository;
 	
 	public DriveItemService(DriveItemRepository driveRepository,
-							UserRepository userRepository) {
+							UserRepository userRepository,
+							FavoriteRepository favoriteRepository) {
 		this.driveRepository = driveRepository;
 		this.userRepository = userRepository;
+		this.favoriteRepository = favoriteRepository;
 	}
 	
 	// DriveItem(folder/file) 생성 메서드
@@ -121,18 +126,20 @@ public class DriveItemService {
 	
 	// 현재 사용자의 전체 file를 조회하는 메서드
 	public Iterable<DriveItemResponse> getFiles(String username) { 
-		 List<DriveItemResponse> result = new ArrayList<>();
+		List<DriveItemResponse> result = new ArrayList<>();
 
-		 for (DriveItem driveItem : 
-			 driveRepository.findByTypeAndUserUsername(DriveItemType.FILE, username)) {
-		      result.add(new DriveItemResponse(driveItem));
-		 }
-
+		for (DriveItem driveItem : driveRepository.findByTypeAndUserUsername(DriveItemType.FILE, username)) {
+			// 해당 DriveItem이 즐겨찾기에 등록되어 있는지 확인
+			boolean isFavorite = (favoriteRepository.findByUserUsernameAndItem(username, driveItem)
+													.isPresent()) ? true : false; 
+		    result.add(new DriveItemResponse(driveItem, isFavorite));
+		}
+		
 		return result;
 	}
 	
 	// file 하나를 반환하는 메서드
-	public DriveItemResponse getFile(String publicId) {
+	public DriveItemResponse getFile(String publicId, String username) {
 		DriveItem file = driveRepository.findByPublicId(publicId).orElseThrow(
 				() -> new RuntimeException("파일를 찾을 수 없습니다. publicId=" + publicId));
 		
@@ -140,7 +147,9 @@ public class DriveItemService {
 			throw new IllegalArgumentException("오류 : 해당 아이템은 파일이 아닙니다!");
 		}
 		
-		return new DriveItemResponse(file);
+		boolean isFavorite = (favoriteRepository.findByUserUsernameAndItem(username, file)
+												.isPresent()) ? true : false; 
+		return new DriveItemResponse(file, isFavorite);
 	}
 	
 	
@@ -148,12 +157,14 @@ public class DriveItemService {
 	public Iterable<DriveItemResponse> getDriveItems(String parentPublicId, String username) {
 		List<DriveItemResponse> result = new ArrayList<>();
 		
-		 for (DriveItem driveItem : 
-			 driveRepository.findByUserUsernameAndParentPublicId(username, parentPublicId)) {
-			 System.out.println("아이템명 : " +driveItem.getItemName());
-		      result.add(new DriveItemResponse(driveItem));
-		 }
-		 return result;
+		for (DriveItem driveItem : driveRepository.findByUserUsernameAndParentPublicId(username, parentPublicId)) {
+			// 해당 DriveItem이 즐겨찾기에 등록되어 있는지 확인
+			boolean isFavorite = (favoriteRepository.findByUserUsernameAndItem(username, driveItem)
+													.isPresent()) ? true : false; 
+			result.add(new DriveItemResponse(driveItem, isFavorite));
+		}
+		
+		return result;
 	}
 	
 	// 현재 디렉토리의 경로(path)를 반환하는 메서드
@@ -164,18 +175,15 @@ public class DriveItemService {
 		// 이렇게 되면, 가장 하위 디렉토리부터 저장이 되게 된다. [자식(0), 부모(1), 조부모(2)...] 
 		while (true) {
 			Optional<DriveItem> driveItem = driveRepository.findByPublicId(publicId); 
-			 
-			if(!(driveItem.isPresent())) {
+			if(!(driveItem.isPresent())) 
 				break;
-			}
-		 
-			path.add(new DriveItemResponse(driveItem.get()));
+			
+			boolean isFavorite = (favoriteRepository.findByUserUsernameAndItem(username, driveItem.get())
+													.isPresent()) ? true : false; 
+			path.add(new DriveItemResponse(driveItem.get(), isFavorite));
 			DriveItem parent = driveItem.get().getParent();
-			 
-			if(parent == null) 
-				publicId = null;
-			else 
-				publicId = parent.getPublicId(); 
+			
+			publicId = (parent == null) ? null : parent.getPublicId();
 		}
 		
 		// 역순으로 정렬해서 리스트를 반환
@@ -189,7 +197,9 @@ public class DriveItemService {
 		
 		// 휴지통 최상위 요소인지는 IsTrashRoot가 true인지로 판단한다.
 		for ( DriveItem driveItem : driveRepository.findByIsTrashRoot(true)) {
-			result.add(new DriveItemResponse(driveItem));
+			boolean isFavorite = (favoriteRepository.findByUserUsernameAndItem(username, driveItem)
+													.isPresent()) ? true : false; 
+			result.add(new DriveItemResponse(driveItem, isFavorite));
 		}
 		
 		return result;

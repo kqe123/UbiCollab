@@ -4,7 +4,6 @@ import fileIcon from "../../../assets/file.png";
 import folderIcon from "../../../assets/folder.png";
 import noTrashImg from "../../../assets/empty-trash.png";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
 import { useNavigate, useParams, useOutletContext } from "react-router-dom";
 import TrashMenuModal from "../../modal/TrashMenuModal"
 import type {DriveItem} from "../../../types/driveitem";
@@ -18,23 +17,12 @@ function TrashList() {
         setSelectedDriveItem,
         driveItemMenu,
         openDriveItemMenu,
-        closeDriveItemMenu
+        closeDriveItemMenu,
+        formatDate
     } = useOutletContext<DirectoryOutletContext>();
 
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
     const navigate = useNavigate();
-
-    // formatDate() : 날짜 가독성을 높여주는 함수
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleString("ko-KR", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-        });
-    };
 
     // 요소 더블클릭 시 발생하는 이벤트 함수
     const elementDoubleClick = (driveItem: DriveItem): void => {
@@ -150,7 +138,8 @@ function TrashList() {
                                     <img src={folderIcon} alt="" className="inline-block h-[15px] w-[15px] mr-[5px] mb-[3px]" />
                                     : <img src={fileIcon} alt="" className="inline-block h-[18px] w-[15px] mr-[5px] mb-[3px]" />}
                                 {driveItem.itemName}
-                                {driveItem.extension === "UC" || driveItem.extension === null ? "" : `.${driveItem.extension}`}</td>
+                                {driveItem.extension === "UC" || driveItem.extension === null ? "" : `.${driveItem.extension}`}
+                                {driveItem.isFavorite === true && " ★"}</td>
                             <td className="py-3 text-sm font-light">{formatDate(driveItem.createdDate)}</td>
                             <td className="py-3 text-sm font-light">
                                 {driveItem.size === null ?

@@ -1,13 +1,9 @@
 package com.ubicollab.user;
 
-import java.io.Console;
 import java.time.LocalDateTime;
-
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.ubicollab.driveitem.DriveItem;
 
 @Service
 public class UserService {

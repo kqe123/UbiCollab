@@ -71,6 +71,45 @@ function DriveItemMenuModal({
         } 
     }
 
+    // "즐겨찾기 해제" 함수
+    const deleteFavorite = async () => {
+        try {
+            // Backend API 호출
+            const response = await axios.delete(`http://localhost:8080/api/favorite/delete/${driveItem.publicId}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`
+                }
+            }
+            );
+        
+            console.log("즐겨찾기 해제 성공", response.data);
+            await queryClient.invalidateQueries({
+                queryKey: ["driveItems"]
+            });
+            toast.success("해당 폴더/파일을 즐겨찾기 해제했습니다.");
+            onClose();
+        } catch (error: unknown) {
+            console.error("즐겨찾기 해제 실패.. : ", error);
+
+            // axios에서 발생한 오류인 경우
+            if (axios.isAxiosError(error)) {
+                console.error("백엔드 응답:", error.response?.data);
+                toast.error(error.response?.data?.message ?? "폴더/파일을 즐겨찾기를 해제하는데 실패했습니다.");
+            } 
+            // 일반 오류인 경우
+            else if (error instanceof Error) {
+                console.error("일반 오류:", error.message);
+                toast.error(error.message);
+            } 
+            // 그 외의 오류인 경우
+            else {
+                console.error("알 수 없는 오류:", error);
+                toast.error("알 수 없는 오류가 발생했습니다.");
+            }
+        } 
+    }
+
     // "휴지통으로 보내기" 함수
     const throwTrash = async () => {
         try {
@@ -123,10 +162,17 @@ function DriveItemMenuModal({
                         onClick={openRenameMenu}>
                         ✍ 이름 변경
                     </button>
-                    <button type="button" className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 cursor-pointer"
+                    {driveItem.isFavorite === true ? (
+                        <button type="button" className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 cursor-pointer"
+                        onClick={deleteFavorite}>
+                        ⭐ 즐겨찾기 해제
+                        </button>
+                    ) : 
+                        <button type="button" className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 cursor-pointer"
                         onClick={addFavorite}>
                         ⭐ 즐겨찾기 추가
-                    </button>
+                        </button>
+                    }
                     <hr className="my-1 border-gray-200" />
                     <button type="button" className=" w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-[#FFA6AA] cursor-pointer"
                         onClick={throwTrash}>
