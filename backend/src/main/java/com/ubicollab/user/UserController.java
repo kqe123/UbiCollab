@@ -2,6 +2,7 @@ package com.ubicollab.user;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -9,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.ubicollab.user.dto.UserResponse;
 
 
 @CrossOrigin(origins = "http://localhost:5173")
@@ -21,6 +24,7 @@ public class UserController {
 		this.userService = userService;
 	}
 	
+	// 회원가입 API (POST 'api/user')
 	@PostMapping
 	public ResponseEntity<User> createUser(@RequestBody User user) {
 		User savedUser =
@@ -30,11 +34,30 @@ public class UserController {
 	            .body(savedUser);
 	}
 	
+	// 중복 username 체크 API (GET 'api/user/check-username')
 	@GetMapping("/check-username")
 	public ResponseEntity<Boolean> checkUsername(
 	        @RequestParam("username") String username) {
 	    Boolean exists = userService.checkSameUsername(username);
 	    return ResponseEntity.ok(exists);
+	}
+	
+	// 실시간 username 검색 결과 API (GET 'api/user/search')
+	@GetMapping("/search")
+	public Iterable<UserResponse> searchUsers(
+			@RequestParam("keyword") String keyword,
+			Authentication authentication) {
+		String username = authentication.getName(); // 현재 로그인 username
+		return userService.searchUsers(username, keyword);
+	}
+	
+	// 공유된 사용자들 목록 조회 API (GET 'api/user/shared')
+	@GetMapping("/shared")
+	public Iterable<UserResponse> getSharedUsers(
+			@RequestParam("publicId") String publicId,
+			Authentication authentication) {
+		String username = authentication.getName();
+		return userService.getSharedUsers(username, publicId);
 	}
 	
 }
