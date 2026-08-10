@@ -73,7 +73,7 @@ function LoginPage () {
     <>
         <div className="w-full h-screen bg-[#E6F8FE] flex
             items-center justify-center box-border px-6" >
-            <div className="w-[600px] h-[600px] rounded-[24px] flex flex-col bg-white px-6 ">
+            <div className="w-[600px] h-[600px] rounded-[24px] flex flex-col bg-white px-6">
                 {/* logo */}
                 <img src={logo} className="w-[250px] h-[60px] mx-auto mt-10"></img>
 

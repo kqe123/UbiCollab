@@ -50,7 +50,7 @@ public class Permission {
  	@OnDelete(action = OnDeleteAction.CASCADE)
  	private DriveItem item;
  	
- 	// 권한 타입(Viewer, Commentor, Editor, Manager)
+ 	// 권한 타입(Viewer, Commentor, Editor, Manager, Owner)
  	@Enumerated(EnumType.STRING)
  	@Column(nullable=false)
  	private PermissionType type;

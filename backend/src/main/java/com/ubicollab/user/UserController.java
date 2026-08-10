@@ -46,18 +46,11 @@ public class UserController {
 	@GetMapping("/search")
 	public Iterable<UserResponse> searchUsers(
 			@RequestParam("keyword") String keyword,
-			Authentication authentication) {
-		String username = authentication.getName(); // 현재 로그인 username
-		return userService.searchUsers(username, keyword);
-	}
-	
-	// 공유된 사용자들 목록 조회 API (GET 'api/user/shared')
-	@GetMapping("/shared")
-	public Iterable<UserResponse> getSharedUsers(
 			@RequestParam("publicId") String publicId,
 			Authentication authentication) {
-		String username = authentication.getName();
-		return userService.getSharedUsers(username, publicId);
+		String username = authentication.getName(); // 현재 로그인 username
+		return userService.searchUsers(username, keyword, publicId);
 	}
+
 	
 }

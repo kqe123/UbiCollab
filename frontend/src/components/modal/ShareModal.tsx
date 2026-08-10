@@ -2,6 +2,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import type {DriveItem} from "../../types/driveitem";
 import type {User} from "../../types/user";
+import type {sharedUser} from "../../types/sharedUser";
 import fileIcon from "../../assets/file.png";
 import folderIcon from "../../assets/folder.png";
 import defaultProfileIcon from "../../assets/profile-default.png";
@@ -18,7 +19,8 @@ function  ShareModal ({
 
     const [text, setText] = useState<string>(""); // 입력값
     const [users, setUsers] = useState<User[]>([]); // 검색 결과 유저들
-    const [isUserListOpen, setIsUserListOpen] = useState(false);
+    const [sharedUsers, setSharedUsers] = useState<sharedUser[]>([]); // 공유 대상에 추가한 유저들
+    const [isUserListOpen, setIsUserListOpen] = useState(false); // 자동완성 열림/닫힘
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
 
     useEffect(() => {
@@ -37,6 +39,7 @@ function  ShareModal ({
                     {
                         params: {
                             keyword: keyword,
+                            publicId : driveItem.publicId
                         },
                         headers: {
                             Authorization: `Bearer ${accessToken}`,
@@ -54,50 +57,6 @@ function  ShareModal ({
         // cleanup 함수
         return () => clearTimeout(timer);
     }, [text]);
-    
-    const getSharedUser = async () => {
-        try {
-            const response = await axios.get("http://localhost:8080/api/user/shared",
-                {   
-                    params: {
-                        publicId: driveItem.publicId
-                    },
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`
-                    }
-                }
-            )
-            console.log("공유 사용자 불러오기 성공");
-            return response.data;
-        } catch (error: unknown) {
-            console.error("공유 사용자 불러오기 실패 : ", error);
-            // axios에서 발생한 오류인 경우
-            if (axios.isAxiosError(error)) {
-                console.error("백엔드 응답:", error.response?.data);
-                toast.error(error.response?.data?.message ?? "공유 사용자 불러오기에 실패했습니다.");
-            } 
-            // 일반 오류인 경우
-            else if (error instanceof Error) {
-                console.error("일반 오류:", error.message);
-                toast.error(error.message);
-            } 
-            // 그 외의 오류인 경우
-            else {
-                console.error("알 수 없는 오류:", error);
-                toast.error("알 수 없는 오류가 발생했습니다.");
-            }
-        } 
-    }
-
-    const {
-        data : sharedUsers = [],
-        isLoading : isLoading,            // 현재 요청 중인지 여부
-        isError : isError,              // 요청이 실패했는지 여부
-        error : Error,                // 실패했을 때 오류 정보
-    } = useQuery({
-        queryKey : ["users"],
-        queryFn : getSharedUser,
-    })
     
     return ( 
     <>  
@@ -136,13 +95,39 @@ function  ShareModal ({
                         className="h-11 w-full mt-1 rounded-xl
                         border-[1.5px] border-sky-400 px-4 text-lg
                         outline-none transition focus:border-blue-500" />
-                    {/* 사용자 목록 */}
+                    {/* 자동완성 사용자 목록 */}
                     {isUserListOpen && text !== "" &&  users.length > 0 && (
                         <div className="absolute left-0 top-full z-50 
                             w-full max-h-[180px] rounded-2xl bg-white shadow-xl overflow-y-auto">
                             {users.map((user) => (
                                 <div key={user.id}
-                                    className="h-15 hover:bg-gray-100 flex items-center text-sm p-4 cursor-pointer">
+                                    className="h-15 hover:bg-gray-100 flex items-center text-sm p-4 cursor-pointer"
+                                    onClick={() => {
+                                        // 선택한 사용자가 이미 중복 선택된 경우 예외처리
+                                        const isDuplicate = sharedUsers.some(
+                                            (sharedUser) => sharedUser.id === user.id
+                                        );
+
+                                        if (isDuplicate) {
+                                            toast.error("이미 공유할 사용자 목록에 추가된 사용자입니다.");
+                                            return;
+                                        }
+
+                                        // 중복 선택이 아니면 sharedUsers에 추가
+                                        setSharedUsers((prev) => [
+                                            ...prev,
+                                            {
+                                                id: user.id,
+                                                username: user.username,
+                                                nickname: user.nickname,
+                                                profileImageKey: user.profileImageKey,
+                                                type: "VIEWER",
+                                            }
+                                        ])
+
+                                        setIsUserListOpen(false);
+                                        }
+                                    }>
                                     {user.profileImageKey === null ? 
                                     (<img src={defaultProfileIcon} className="w-8 h-8 rounded-full bg-[#ffffff] overflow-hidden"></img>)
                                     : (<img src={user.profileImageKey} className="w-8 h-8 rounded-full bg-[#ffffff] overflow-hidden"></img>)
@@ -156,12 +141,13 @@ function  ShareModal ({
                         </div>
                     )}
                 </div>
-
+                
+                {/* 추가된 공유 사용자들 목록 */}
                 <div className="mt-4">
-                    <h1 className="font-medium">현재 공유된 사용자</h1>
+                    <h1 className="font-medium">추가된 공유 사용자</h1>
                     {sharedUsers.length > 0 && (
-                        <div className="w-full max-h-[180px] bg-white overflow-y-auto mt-2">
-                            {sharedUsers.map((sharedUser : User) => (
+                        <div className="w-full max-h-[300px] bg-white overflow-y-auto mt-2">
+                            {sharedUsers.map((sharedUser : sharedUser) => (
                                 <div key={sharedUser.id}
                                     className="h-12 hover:bg-gray-100 flex items-center text-sm">
                                     {sharedUser.profileImageKey === null ? 
@@ -173,20 +159,34 @@ function  ShareModal ({
                                         <p className="text-gray-500">{sharedUser.username}</p>
                                     </div>
                                     <div className="ml-auto">
-                                        {(sharedUser.id === driveItem.userId) ? (
-                                            <p className="text-gray-400 mr-2">소유자</p>
-                                        ) : (
-                                            <p className="text-gray-400 mr-2">소유자</p>
-                                        )
-                                        }
+                                        <select value={sharedUser.type}
+                                            className="rounded-lg border border-gray-300 bg-white px-1 py-1 text-sm
+                                            outline-none transition
+                                            hover:border-blue-400
+                                            focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                                            onChange={(e) => {
+                                                setSharedUsers((prev) =>
+                                                    prev.map((user) =>
+                                                        user.id === sharedUser.id
+                                                            ? {
+                                                                ...user,
+                                                                type: e.target.value,
+                                                            }
+                                                            : user
+                                                    )
+                                                );
+                                            }}>
+                                            <option value="VIEWER">뷰어</option>
+                                            <option value="COMMENTOR">댓글 작성자</option>
+                                            <option value="EDITOR">편집자</option>
+                                            <option value="MANAGER">관리자</option>
+                                        </select>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     )}
                 </div>
-
-
 
                 {/* 버튼 */}
                 <div className="mt-8 flex justify-end gap-3">

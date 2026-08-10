@@ -98,7 +98,7 @@ function RecentList() {
                             openDriveItemMenu(e); 
                             }
                         }
-                        onDoubleClick = {() => navigate(`/editor/${file.id}`)}
+                        onDoubleClick = {() => navigate(`/editor/${file.publicId}`)}
                         className={`border-b border-[#DBDBDB]
                             ${selectedDriveItem?.id === file.id ? "bg-blue-100" : "hover:bg-gray-100"}`}>
                         

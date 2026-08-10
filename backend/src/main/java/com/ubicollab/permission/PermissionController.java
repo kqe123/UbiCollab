@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ubicollab.permission.dto.SharedUserResponse;
 import com.ubicollab.user.dto.UserResponse;
 
 @CrossOrigin(origins = "http://localhost:5173")
@@ -19,9 +20,9 @@ public class PermissionController {
 		this.permissionService = permissionService;
 	}
 	
-	// 공유된 사용자들 목록 조회 API (GET 'api/user/shared')
+	// 공유된 사용자들 목록 조회 API (GET 'api/permission/shared')
 	@GetMapping("/shared")
-	public Iterable<UserResponse> getSharedUsers(
+	public Iterable<SharedUserResponse> getSharedUsers(
 			@RequestParam("publicId") String publicId,
 			Authentication authentication) {
 		String username = authentication.getName();

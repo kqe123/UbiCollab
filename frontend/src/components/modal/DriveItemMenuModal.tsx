@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import ChangeNameModal from "./ChangeNameModal"
 import ShareModal from "./ShareModal"
+import PermissionModal from "./PermissionModal"
 
 function DriveItemMenuModal({
     x, y, driveItem, onClose
@@ -18,11 +19,11 @@ function DriveItemMenuModal({
     const queryClient = useQueryClient(); // QueryClient 가져옴
     // 메뉴 모드를 CONTEXT/RENAME으로 나눠서 CONTEXT일때는 CONTEXT 메뉴를,
     // RENAME일때는 CONTEXT 메뉴 대신 RENAME 메뉴를 출력한다.
-    const [menuMode, setMenuMode] = useState<"CONTEXT" | "RENAME" | "SHARE">("CONTEXT");
+    const [menuMode, setMenuMode] = useState<"CONTEXT" | "RENAME" | "SHARE" | "PERMISSION">("CONTEXT");
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
 
-    // 파일명 변경 메뉴 닫는 함수
-    const closeRenameMenu = () => {
+    // 메뉴 닫는 함수
+    const closeMenu = () => {
         onClose();
     }
 
@@ -170,7 +171,11 @@ function DriveItemMenuModal({
                     }
                     <button type="button" className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 cursor-pointer"
                         onClick={() => {setMenuMode("SHARE")}}>
-                        🔗 공유
+                        🔗 공유 추가
+                    </button>
+                    <button type="button" className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 cursor-pointer"
+                        onClick={() => {setMenuMode("PERMISSION")}}>
+                        👥 권한 관리
                     </button>
                     <hr className="my-1 border-gray-200" />
                     <button type="button" className=" w-full px-4 py-2 text-left text-sm font-bold text-[#ED1C24] hover:bg-red-200 cursor-pointer"
@@ -185,7 +190,7 @@ function DriveItemMenuModal({
         {menuMode === "RENAME" && (
             <ChangeNameModal
                 driveItem={driveItem}
-                onClose={closeRenameMenu}
+                onClose={closeMenu}
             />
         )}
 
@@ -193,7 +198,15 @@ function DriveItemMenuModal({
         {menuMode === "SHARE" && (
             <ShareModal
                 driveItem={driveItem}
-                onClose={closeRenameMenu}
+                onClose={closeMenu}
+            />
+        )}
+
+        {/* menuMode = PERMISSION일때 */}
+        {menuMode === "PERMISSION" && (
+            <PermissionModal
+                driveItem={driveItem}
+                onClose={closeMenu}
             />
         )}
         </>

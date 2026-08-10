@@ -63,29 +63,21 @@ public class UserService {
 	}
 	
 	// username 검색 엔진 메서드
-	public Iterable<UserResponse> searchUsers(String username, String keyword) {
+	public Iterable<UserResponse> searchUsers(String username, String keyword, String publicId) {
 		List<UserResponse> result = new ArrayList<>();
-		List<User> users = userRepository.searchByUsername(keyword);
+		
+		// 현재 DriveItem
+		DriveItem driveItem = driveRepository.findByPublicId(publicId).orElseThrow(
+				() -> new RuntimeException("해당 아이템을 찾을 수 없습니다. publicId="+ publicId));
+		
+		// 해당 키워드를 기반으로 검색 결과 반환 (소유자(Owner), 이미 공유중인 사용자들 제외)
+		List<User> users = userRepository.searchByUsername(keyword, driveItem.getUser().getUsername(), publicId);
 		for (User user : users) {
 			result.add(new UserResponse(user));
 			System.out.println("유저명 : " + user.getUsername());
 		}
 		return result;
 	}
-	
-	// 공유 사용자 목록 조회 메서드
-	public Iterable<UserResponse> getSharedUsers(String username, String publicId) {
-		List<UserResponse> result = new ArrayList<>();
-		
-		// result에 소유자 추가
-		DriveItem driveItem = driveRepository.findByPublicId(publicId).orElseThrow(
-				() -> new RuntimeException("문서를 찾을 수 없습니다. publicId="+ publicId));
-		User owner = driveItem.getUser(); // 파일/폴더 소유자
-		result.add(new UserResponse(owner));
-		
-		// result에 권한 소유자 추가
-		
-		return result;
-	}
+
 	
 }
