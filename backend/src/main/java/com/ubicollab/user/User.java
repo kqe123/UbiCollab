@@ -16,7 +16,7 @@ public class User {
 	private Long id;
 	
 	// 필드들
-	@Column(nullable=false, unique=true, length=20)
+	@Column(nullable=false, unique=true, length=50)
 	private String username;
 	
 	@Column(nullable=false)

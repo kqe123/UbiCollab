@@ -196,7 +196,7 @@ public class DriveItemService {
 		List<DriveItemResponse> result = new ArrayList<>();
 		
 		// 휴지통 최상위 요소인지는 IsTrashRoot가 true인지로 판단한다.
-		for ( DriveItem driveItem : driveRepository.findByIsTrashRoot(true)) {
+		for ( DriveItem driveItem : driveRepository.findByUserUsernameAndIsTrashRoot(username, true)) {
 			boolean isFavorite = (favoriteRepository.findByUserUsernameAndItem(username, driveItem)
 													.isPresent()) ? true : false; 
 			result.add(new DriveItemResponse(driveItem, isFavorite));

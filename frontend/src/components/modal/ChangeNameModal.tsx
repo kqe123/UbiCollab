@@ -10,21 +10,21 @@ function ChangeNameModal ({
     onClose : () => void;
     driveItem : DriveItem;
 }) {
-    const [driveItemName, setDriveItemName] = useState(driveItem.itemName);
+    const [driveItemName, setDriveItemName] = useState(driveItem.itemName); // 현재 DriveItem 이름
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
     const queryClient = useQueryClient(); // QueryClient 가져옴
     const changeName = async () => {
 
-    // 문서명 앞뒤 공백 제거
-    const trimmedFileName = driveItemName.trim();
+        // 문서명 앞뒤 공백 제거
+        const trimmedFileName = driveItemName.trim();
 
-    // backend api에 보낼 body
-    const driveItemData = {
-        itemName:
-            trimmedFileName === ""
-            ? "제목 없는 문서"
-            : trimmedFileName,
-        };
+        // backend api에 보낼 body
+        const driveItemData = {
+            itemName:
+                trimmedFileName === ""
+                ? "제목 없는 문서"
+                : trimmedFileName,
+            };
 
         try {
             // 문서 변경 Backend API 호출  
@@ -42,7 +42,8 @@ function ChangeNameModal ({
             await queryClient.invalidateQueries({
                 queryKey: ["driveItems"]
             });
-            toast.success("파일명 변경이 완료되었습니다.");            
+            toast.success("파일명 변경이 완료되었습니다.");     
+            onClose();       
         } catch (error : unknown) {
             // axios에서 발생한 오류인 경우
             if (axios.isAxiosError(error)) {

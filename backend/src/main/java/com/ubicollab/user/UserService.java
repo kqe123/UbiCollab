@@ -1,20 +1,31 @@
 package com.ubicollab.user;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import com.ubicollab.driveitem.DriveItem;
+import com.ubicollab.driveitem.DriveItemRepository;
+import com.ubicollab.user.dto.UserResponse;
 
 
 @Service
 public class UserService {
-	private final UserRepository repository;
+	private final UserRepository userRepository;
+	private final DriveItemRepository driveRepository;
 	private final PasswordEncoder passwordEncoder;
 
 	
-	public UserService (UserRepository repository,
+	public UserService (UserRepository userRepository,
+			DriveItemRepository driveRepository,
 			PasswordEncoder passwordEncoder) {
-		this.repository = repository;
+		this.userRepository = userRepository;
+		this.driveRepository = driveRepository;
 		this.passwordEncoder = passwordEncoder;
+		
 	}
 	
 	// User를 생성하는 메서드
@@ -43,10 +54,30 @@ public class UserService {
 								LocalDateTime.now(),"USER", profileImageKey);
 		
 		// 저장 + User 객체 반환
-		return repository.save(newUser);
+		return userRepository.save(newUser);
 	}
 	
+	// 중복 username 검사 메서드
 	public Boolean checkSameUsername(String username) {
-	    return repository.findByUsername(username).isPresent();
+	    return userRepository.findByUsername(username).isPresent();
 	}
+	
+	// username 검색 엔진 메서드
+	public Iterable<UserResponse> searchUsers(String username, String keyword, String publicId) {
+		List<UserResponse> result = new ArrayList<>();
+		
+		// 현재 DriveItem
+		DriveItem driveItem = driveRepository.findByPublicId(publicId).orElseThrow(
+				() -> new RuntimeException("해당 아이템을 찾을 수 없습니다. publicId="+ publicId));
+		
+		// 해당 키워드를 기반으로 검색 결과 반환 (소유자(Owner), 이미 공유중인 사용자들 제외)
+		List<User> users = userRepository.searchByUsername(keyword, driveItem.getUser().getUsername(), publicId);
+		for (User user : users) {
+			result.add(new UserResponse(user));
+			System.out.println("유저명 : " + user.getUsername());
+		}
+		return result;
+	}
+
+	
 }

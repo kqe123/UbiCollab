@@ -14,5 +14,5 @@ public interface DriveItemRepository extends CrudRepository<DriveItem, Long>{
 	List<DriveItem> findByType(DriveItemType type);
 	List<DriveItem> findByTypeAndUserUsername(DriveItemType type, String username);
 	List<DriveItem> findByUserUsernameAndParentPublicId(String username,String parentPublicId);
-	List<DriveItem> findByIsTrashRoot(Boolean isTrashRoot);
+	List<DriveItem> findByUserUsernameAndIsTrashRoot(String username, Boolean isTrashRoot);
 }

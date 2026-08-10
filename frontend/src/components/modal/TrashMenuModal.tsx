@@ -109,8 +109,6 @@ function TrashMenu({
     onClose();
     };
 
-
-
     return (
         <>
         <div className="fixed inset-0 z-40" onClick={onClose}>
@@ -122,7 +120,7 @@ function TrashMenu({
                     복원
                 </button>
                 <hr className="my-1 border-gray-200" />
-                <button type="button" className=" w-full px-4 py-2 text-left text-sm font-bold transition-colors text-[#ED1C24] hover:bg-red-300 cursor-pointer"
+                <button type="button" className=" w-full px-4 py-2 text-left text-sm font-bold transition-colors text-[#ED1C24] hover:bg-red-200 cursor-pointer"
                     onClick={handlePermanentDelete}>
                     영구 삭제
                 </button>
