@@ -108,7 +108,7 @@ function LoginPage () {
                         size="small"
                         onChange={changeUsername}
                         value={username}
-                        placeholder="아이디"
+                        label="아이디"
                     />
                     {/* PW */}
                     <TextField 
@@ -116,7 +116,7 @@ function LoginPage () {
                         size="small"
                         onChange={changePassword}
                         value={password}
-                        placeholder="비밀번호"
+                        label="비밀번호"
                     />
                     {/* Login Button */}
                     <Button 
@@ -128,7 +128,7 @@ function LoginPage () {
                         로그인
                     </Button>
                 </Box>
-            
+                        
                 <Typography
                     variant="body2"
                     sx={{ mx: 'auto', mt : 1, color: 'grey.500', cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
