@@ -97,18 +97,9 @@ function Header() {
                         bgcolor : 'white',
                         borderRadius: '9px',
                     }}
-                >
-                    + 새 파일
+                > + 새 파일
                 </Button>
-                    
-                <Avatar 
-                    alt="프로필사진"
-                    sx={{
-                        width: 50,
-                        height: 50,
-                        cursor : 'pointer'
-                        }}
-                 />
+                <Avatar alt="프로필사진" sx={{ width: 50, height: 50, cursor : 'pointer'}} />
             </Box>
         </Box>
     );
