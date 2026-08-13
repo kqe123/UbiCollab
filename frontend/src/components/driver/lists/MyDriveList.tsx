@@ -163,7 +163,7 @@ function MyDriveList() {
     if (isDriveItemsError) {
         return (
             <Box sx={{ minHeight: '100vh', alignItems: 'center', justifyContent: 'center'}}>
-                <Typography sx={{ color: 'error.main' }}>문서를 불러오지 못했습니다.</Typography>
+                <Typography sx={{ color: 'error.main' }}>문서를 불러오지 못했습니다 : {driveItemsError.message}</Typography>
             </Box>
         )
     }
@@ -179,18 +179,15 @@ function MyDriveList() {
         >
             <Box sx={{ display: 'flex', width: '50%', alignItems: 'center' , 
                 gap : 0.5, mt : 4, bgcolor: '#eaeefc', borderRadius: '10px'}}>
+
+                {/* Home Button */}
                 <IconButton
                     type="button"
                     onClick={moveToRoot}
                     disabled={paths.length === 0}
                     size="large"
-                    sx={{
-                        width: 30,
-                        height: 30,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderRadius: '10px', // 사각형 배경 (이미지 속 파란 박스 스타일)
+                    sx={{ width: 30, height: 30, display: 'flex', alignItems: 'center',
+                        justifyContent: 'center', borderRadius: '10px',
                         '&:hover': {
                             bgcolor: '#b2c9f8',
                         },
@@ -202,18 +199,15 @@ function MyDriveList() {
                 >
                     <HomeIcon color="primary" />
                 </IconButton>
+
+                {/* Back Button */}
                 <IconButton
                     type="button"
                     onClick={moveToBack}
                     disabled={paths.length === 0}
                     size="large"
-                    sx={{
-                        width: 30,
-                        height: 30,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderRadius: '10px', // 사각형 배경 (이미지 속 파란 박스 스타일)
+                    sx={{ width: 30, height: 30, display: 'flex', alignItems: 'center',
+                        justifyContent: 'center', borderRadius: '10px',
                         '&:hover': {
                             bgcolor: '#b2c9f8',
                         },
@@ -225,6 +219,8 @@ function MyDriveList() {
                 >
                     <ReplyIcon color="primary" />
                 </IconButton>
+                
+                {/* Path */}
                 <Typography variant="body2" sx={{ fontWeight: 500}}>
                     내 드라이브 / {[...paths].map((path) => path.itemName).join(" / ")}
                 </Typography>

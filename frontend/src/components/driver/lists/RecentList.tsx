@@ -6,9 +6,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import type { DirectoryOutletContext } from "../Directory";
 import Box from '@mui/material/Box';
-import IconButton from  '@mui/material/IconButton';
-import HomeIcon from '@mui/icons-material/Home';
-import ReplyIcon from '@mui/icons-material/Reply';
 import Typography from '@mui/material/Typography';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -70,7 +67,7 @@ function RecentList() {
     if (isError) {
         return (
             <Box sx={{ minHeight: '100vh', alignItems: 'center', justifyContent: 'center'}}>
-                <Typography sx={{ color: 'error.main' }}>문서를 불러오지 못했습니다.</Typography>
+                <Typography sx={{ color: 'error.main' }}>문서를 불러오지 못했습니다 : {error.message}</Typography>
             </Box>
         );
     }
@@ -103,36 +100,34 @@ function RecentList() {
                     {[...files].filter((driveItem) => driveItem.isInTrash === false)
                     .sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()) // 생성 날짜 내림차순 정렬
                     .map((file) => (
-                        <TableRow key={file.id}
-                            onClick= {() => setSelectedDriveItem(file)}
-                            onContextMenu= {(e) => {
-                                setSelectedDriveItem(file);
-                                openDriveItemMenu(e); 
-                                }
+                    <TableRow key={file.id}
+                        onClick= {() => setSelectedDriveItem(file)}
+                        onContextMenu= {(e) => {
+                            setSelectedDriveItem(file);
+                            openDriveItemMenu(e); 
                             }
-                            onDoubleClick = {() => navigate(`/editor/${file.publicId}`)}
-                            sx={{
-                                borderBottom: '1px solid #DBDBDB',
-                                bgcolor: selectedDriveItem?.id === file.id ? '#e8f2fd' : 'transparent', // bg-blue-100
-                                '&:hover': {
-                                    bgcolor: selectedDriveItem?.id === file.id ? '#e8f2fd' : '#f3f4f6', // hover:bg-gray-100
-                                },
-                            }}
-                        >
-
-                            
-                            <TableCell sx={{ py: 1.5, px: 1, fontWeight: 500 }}>
-                                <Box
-                                    component="img"
-                                    src={fileIcon}
-                                    sx={{ display: 'inline-block', height: '18px', width: '15px', mr: '5px', mb: '3px'}}
-                                />
-                                {file.itemName}
-                                {file.extension === "UC" || file.extension === null ? "" : `.${file.extension}`}
-                                {file.isFavorite === true && " ★"}</TableCell>
-                            <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666'}}>{formatDate(file.createdDate)}</TableCell>
-                            <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666'}}>{file.size} B</TableCell>
-                        </TableRow>
+                        }
+                        onDoubleClick = {() => navigate(`/editor/${file.publicId}`)}
+                        sx={{
+                            borderBottom: '1px solid #DBDBDB',
+                            bgcolor: selectedDriveItem?.id === file.id ? '#e8f2fd' : 'transparent', // bg-blue-100
+                            '&:hover': {
+                                bgcolor: selectedDriveItem?.id === file.id ? '#e8f2fd' : '#f3f4f6', // hover:bg-gray-100
+                            },
+                        }}
+                    >
+                        <TableCell sx={{ py: 1.5, px: 1, fontWeight: 500 }}>
+                            <Box
+                                component="img"
+                                src={fileIcon}
+                                sx={{ display: 'inline-block', height: '18px', width: '15px', mr: '5px', mb: '3px'}}
+                            />
+                            {file.itemName}
+                            {file.extension === "UC" || file.extension === null ? "" : `.${file.extension}`}
+                            {file.isFavorite === true && " ★"}</TableCell>
+                        <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666'}}>{formatDate(file.createdDate)}</TableCell>
+                        <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666'}}>{file.size} B</TableCell>
+                    </TableRow>
                     ))}
                 </TableBody>
             </Table>
