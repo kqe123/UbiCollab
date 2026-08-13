@@ -2,8 +2,6 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import fileIcon from "../../../assets/file.png";
 import folderIcon from "../../../assets/folder.png";
-import homeIcon from "../../../assets/home.png";
-import backIcon from "../../../assets/back.png";
 import noDriveImg from "../../../assets/empty-drive.png";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
@@ -167,7 +165,6 @@ function MyDriveList() {
             <Box sx={{ minHeight: '100vh', alignItems: 'center', justifyContent: 'center'}}>
                 <Typography sx={{ color: 'error.main' }}>문서를 불러오지 못했습니다.</Typography>
             </Box>
-        
         )
     }
 
