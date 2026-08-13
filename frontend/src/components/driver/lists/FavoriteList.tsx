@@ -2,8 +2,6 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import fileIcon from "../../../assets/file.png";
 import folderIcon from "../../../assets/folder.png";
-import homeIcon from "../../../assets/home.png";
-import backIcon from "../../../assets/back.png";
 import noFavoriteImg from "../../../assets/empty-favorite.png";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams, useOutletContext } from "react-router-dom";
@@ -144,11 +142,9 @@ function FavoriteList() {
     // 오류 처리
     if (isFavoritesError) {
         return (
-        <>
             <Box sx={{ minHeight: '100vh', alignItems: 'center', justifyContent: 'center'}}>
                 <Typography sx={{ color: 'error.main' }}>문서를 불러오지 못했습니다 : {favoritesError.message}</Typography>
             </Box>
-        </>
         )
     }
 
@@ -227,48 +223,48 @@ function FavoriteList() {
                         {[...favorites].filter((favorite) => favorite.isInTrash === false)
                         .sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()) // 생성 날짜 내림차순 정렬
                         .map((favorite) => (
-                            <TableRow key={favorite.id}
-                                onClick= {() => setSelectedDriveItem(favorite)}
-                                onContextMenu= {(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    setSelectedDriveItem(favorite);
-                                    openDriveItemMenu(e); 
-                                    }
+                        <TableRow key={favorite.id}
+                            onClick= {() => setSelectedDriveItem(favorite)}
+                            onContextMenu= {(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setSelectedDriveItem(favorite);
+                                openDriveItemMenu(e); 
                                 }
-                                onDoubleClick = {(e) => {
-                                    e.stopPropagation();
-                                    elementDoubleClick(favorite);
-                                }}
-                                sx={{
-                                    borderBottom: '1px solid #DBDBDB',
-                                    bgcolor: selectedDriveItem?.id === favorite.id ? '#e8f2fd' : 'transparent', // bg-blue-100
-                                    '&:hover': {
-                                        bgcolor: selectedDriveItem?.id === favorite.id ? '#e8f2fd' : '#f3f4f6', // hover:bg-gray-100
-                                    },
-                                }}
-                            >
+                            }
+                            onDoubleClick = {(e) => {
+                                e.stopPropagation();
+                                elementDoubleClick(favorite);
+                            }}
+                            sx={{
+                                borderBottom: '1px solid #DBDBDB',
+                                bgcolor: selectedDriveItem?.id === favorite.id ? '#e8f2fd' : 'transparent', // bg-blue-100
+                                '&:hover': {
+                                    bgcolor: selectedDriveItem?.id === favorite.id ? '#e8f2fd' : '#f3f4f6', // hover:bg-gray-100
+                                },
+                            }}
+                        >
                                 
-                                <TableCell sx={{ py: 1.5, px: 1, fontWeight: 500 }}>
-                                    <Box
-                                        component="img"
-                                        src={favorite.type === "FOLDER" ? folderIcon : fileIcon}
-                                        sx={{ display: 'inline-block',
-                                            height: favorite.type === "FOLDER" ? '15px' : '18px',
-                                            width: '15px',
-                                            mr: '5px',
-                                            mb: '3px',
-                                        }}
-                                    />
-                                    {favorite.itemName}
-                                    {favorite.extension === "UC" || favorite.extension === null ? "" : `.${favorite.extension}`}
-                                    {favorite.isFavorite === true && " ★"}</TableCell>
-                                <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666'}}>{formatDate(favorite.createdDate)}</TableCell>
-                                <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666'}}>
-                                    {favorite.size === null ?
-                                    "--" : `${favorite.size} Byte`}</TableCell>
-                            </TableRow>
-                        ))}
+                            <TableCell sx={{ py: 1.5, px: 1, fontWeight: 500 }}>
+                                <Box
+                                    component="img"
+                                    src={favorite.type === "FOLDER" ? folderIcon : fileIcon}
+                                    sx={{ display: 'inline-block',
+                                        height: favorite.type === "FOLDER" ? '15px' : '18px',
+                                        width: '15px',
+                                        mr: '5px',
+                                        mb: '3px',
+                                    }}
+                                />
+                                {favorite.itemName}
+                                {favorite.extension === "UC" || favorite.extension === null ? "" : `.${favorite.extension}`}
+                                {favorite.isFavorite === true && " ★"}</TableCell>
+                            <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666'}}>{formatDate(favorite.createdDate)}</TableCell>
+                            <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666'}}>
+                                {favorite.size === null ?
+                                "--" : `${favorite.size} Byte`}</TableCell>
+                        </TableRow>
+                    ))}
                     </TableBody>
                 </Table>
             </TableContainer>

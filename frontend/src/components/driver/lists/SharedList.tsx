@@ -1,8 +1,9 @@
+import Typography from '@mui/material/Typography';
 
 function SharedList() {
   return (
     <>
-      <h1 className="text-2xl font-medium">공유 문서</h1>
+      <Typography variant="h5" sx={{ fontWeight: 500, mt: 1}}>공유 문서</Typography>
     </>
   );
 }

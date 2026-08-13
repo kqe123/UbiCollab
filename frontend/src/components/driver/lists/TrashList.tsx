@@ -1,13 +1,19 @@
 import axios from "axios";
-import toast from "react-hot-toast";
 import fileIcon from "../../../assets/file.png";
 import folderIcon from "../../../assets/folder.png";
 import noTrashImg from "../../../assets/empty-trash.png";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate, useParams, useOutletContext } from "react-router-dom";
+import { useParams, useOutletContext } from "react-router-dom";
 import TrashMenuModal from "../../modal/TrashMenuModal"
-import type {DriveItem} from "../../../types/driveitem";
 import type { DirectoryOutletContext} from "../Directory";
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
 
 function TrashList() {
   // 상태(state)들
@@ -22,21 +28,6 @@ function TrashList() {
     } = useOutletContext<DirectoryOutletContext>();
 
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
-    const navigate = useNavigate();
-
-    // 요소 더블클릭 시 발생하는 이벤트 함수
-    const elementDoubleClick = (driveItem: DriveItem): void => {
-        if (driveItem.type === "FOLDER") {
-            navigate(`/drive/my-drive/${driveItem.publicId}`);
-        }
-        else if (driveItem.type === "FILE") {
-            navigate(`/editor/${driveItem.publicId}`);
-        }
-        else {
-            toast.error("오류 : 해당 아이템의 타입을 알 수가 없습니다!")
-        }
-    }
-
 
     // 백엔드 api(휴지통 조회)를 호출하는 비동기 함수
     const getDriveItems = async () => {
@@ -72,10 +63,9 @@ function TrashList() {
     // 로딩 처리
     if (isDriveItemsLoading) {
         return (
-        <>
-            <h1 className="text-2xl font-medium">내 드라이브</h1>
-            <p className="mt-10">문서를 불러오는 중입니다...</p>
-        </>
+            <Box sx={{ minHeight: '100vh', alignItems: 'center', justifyContent: 'center'}}>
+                <Typography>문서를 불러오는 중입니다...</Typography>
+            </Box>
         )
     }
 
@@ -83,10 +73,9 @@ function TrashList() {
     // 오류 처리
     if (isDriveItemsError) {
         return (
-        <>
-            <h1 className="text-2xl font-medium ">내 드라이브</h1>
-            <p className="mt-10 text-red-500">문서를 불러오지 못했습니다: {driveItemsError.message}</p>
-        </>
+            <Box sx={{ minHeight: '100vh', alignItems: 'center', justifyContent: 'center'}}>
+                <Typography sx={{ color: 'error.main' }}>문서를 불러오지 못했습니다 : {driveItemsError.message}</Typography>
+            </Box>
         )
     }
 
@@ -94,62 +83,72 @@ function TrashList() {
     // 문서 리스트를 정상적으로 받아왔을 때
     return (
         <>
-        <h1 className="text-2xl font-medium">휴지통</h1>
-        <div className="w-full h-full" >
+        <Typography variant="h5" sx={{ fontWeight: 500, mt: 1}}>휴지통</Typography>
+        <Box sx={{ width : '100%', height : '100%'}}>
             {/* 폴더/파일이 0건일때 예외처리 */}    
             {[...driveItems].filter((driveItem) => driveItem.isInTrash === true).length === 0 ? (
                 <>
-                    <img src={noTrashImg} className="w-[40%] h-[40%] mx-auto mt-10"></img>
-                    <h1 className="mt-5 text-center text-2xl">
-                        휴지통이 비어 있음
-                    </h1>
+                    <Box component="img" src={noTrashImg} sx={{ width: '40%', height: '35%', mx: 'auto', mt: 5}}/>
+                    <Typography variant="h5" sx={{ mt : 2.5, textAlign: 'center', }}>휴지통이 비어 있음</Typography>
                 </>
             ) : (
-            <table className="mt-10 w-full table-fixed text-left">
-                <thead>
-                    <tr className="border-b border-[#DBDBDB]">
-                        <td className="w-[50%] pb-3 text-sm ">이름</td>
-                        <td className="w-[30%] pb-3 text-sm">생성 일자</td>
-                        <td className="w-[20%] pb-3 text-sm">파일 크기</td>
-                    </tr>
-                </thead>
+            <TableContainer>
+                <Table sx={{ mt: 2.5, width: '100%', tableLayout: 'fixed', textAlign: 'left'}}>
+                    <TableHead>
+                        <TableRow sx={{ borderBottom: '1px solid #DBDBDB'}}>
+                            <TableCell sx={{ width : '50%', py: 1}}>이름</TableCell>
+                            <TableCell sx={{ width : '30%', py: 1}}>생성 일자</TableCell>
+                            <TableCell sx={{ width : '20%', py: 1}}>파일 크기</TableCell>
+                        </TableRow>
+                    </TableHead>
 
-                <tbody>
-                    {[...driveItems].filter((driveItem) => driveItem.isInTrash === true)
-                    .sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()) // 생성 날짜 내림차순 정렬
-                    .map((driveItem) => (
-                        <tr key={driveItem.id}
-                            onClick= {() => setSelectedDriveItem(driveItem)}
-                            onContextMenu= {(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                setSelectedDriveItem(driveItem);
-                                openDriveItemMenu(e); 
+                    <TableBody>
+                        {[...driveItems].filter((driveItem) => driveItem.isInTrash === true)
+                        .sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()) // 생성 날짜 내림차순 정렬
+                        .map((driveItem) => (
+                            <TableRow key={driveItem.id}
+                                onClick= {() => setSelectedDriveItem(driveItem)}
+                                onContextMenu= {(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setSelectedDriveItem(driveItem);
+                                    openDriveItemMenu(e); 
+                                    }
                                 }
-                            }
-                            onDoubleClick = {(e) => {
-                                e.stopPropagation();
-                            }}
-                            className={`border-b border-[#DBDBDB]
-                                ${selectedDriveItem?.id === driveItem.id ? "bg-blue-100" : "hover:bg-gray-100"}`}>
-                            
-                            <td className="py-3 px-2 text-sm font-medium">
-                                {driveItem.type === "FOLDER" ? 
-                                    <img src={folderIcon} alt="" className="inline-block h-[15px] w-[15px] mr-[5px] mb-[3px]" />
-                                    : <img src={fileIcon} alt="" className="inline-block h-[18px] w-[15px] mr-[5px] mb-[3px]" />}
-                                {driveItem.itemName}
-                                {driveItem.extension === "UC" || driveItem.extension === null ? "" : `.${driveItem.extension}`}
-                                {driveItem.isFavorite === true && " ★"}</td>
-                            <td className="py-3 text-sm font-light">{formatDate(driveItem.createdDate)}</td>
-                            <td className="py-3 text-sm font-light">
-                                {driveItem.size === null ?
-                                "--" : `${driveItem.size} Byte`}</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+                                sx={{
+                                    borderBottom: '1px solid #DBDBDB',
+                                    bgcolor: selectedDriveItem?.id === driveItem.id ? '#e8f2fd' : 'transparent', // bg-blue-100
+                                    '&:hover': {
+                                        bgcolor: selectedDriveItem?.id === driveItem.id ? '#e8f2fd' : '#f3f4f6', // hover:bg-gray-100
+                                    },
+                                }}
+                            >
+                                
+                                <TableCell sx={{ py: 1.5, px: 1, fontWeight: 500 }}>
+                                    <Box
+                                        component="img"
+                                        src={driveItem.type === "FOLDER" ? folderIcon : fileIcon}
+                                        sx={{ display: 'inline-block',
+                                            height: driveItem.type === "FOLDER" ? '15px' : '18px',
+                                            width: '15px',
+                                            mr: '5px',
+                                            mb: '3px',
+                                        }}
+                                    />
+                                    {driveItem.itemName}
+                                    {driveItem.extension === "UC" || driveItem.extension === null ? "" : `.${driveItem.extension}`}
+                                    {driveItem.isFavorite === true && " ★"}</TableCell>
+                                <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666'}}>{formatDate(driveItem.createdDate)}</TableCell>
+                                <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666'}}>
+                                    {driveItem.size === null ?
+                                    "--" : `${driveItem.size} Byte`}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </TableContainer>
             )}
-        </div>
+        </Box>
         
         {driveItemMenu.isOpen && selectedDriveItem && (
             <TrashMenuModal
@@ -159,7 +158,7 @@ function TrashList() {
             onClose={closeDriveItemMenu}
             />
         )}
-    </>
+        </>
     );
 }
 

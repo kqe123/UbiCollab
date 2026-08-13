@@ -219,7 +219,7 @@ function MyDriveList() {
                 >
                     <ReplyIcon color="primary" />
                 </IconButton>
-                
+
                 {/* Path */}
                 <Typography variant="body2" sx={{ fontWeight: 500}}>
                     내 드라이브 / {[...paths].map((path) => path.itemName).join(" / ")}
@@ -291,7 +291,6 @@ function MyDriveList() {
                     </TableBody>
                 </Table>
             </TableContainer>
-
             )}
         </Box>
         
