@@ -1,6 +1,7 @@
 import Header from "../components/driver/DriverHeader.tsx";
 import DriverSideBar from "../components/driver/DriverSideBar.tsx";
 import Directory from "../components/driver/Directory.tsx";
+import Box from '@mui/material/Box';
 
 function DriverPage() {
 	const accessToken = localStorage.getItem("accessToken");
@@ -9,18 +10,15 @@ function DriverPage() {
 		console.log(new Date(payload.exp * 1000));
 	}
 	return (
-		<>
-			<div className="flex flex-col min-h-screen">
-				<Header />
-				<div className="flex flex-1 bg-[#F9F9FA]">
-					<DriverSideBar />
-					<div className="min-w-0 flex-1 p-3">
-						<Directory />
-						
-					</div>
-				</div>
-			</div>
-		</>
+		<Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+			<Header />
+			<Box sx={{ display: 'flex', flex: 1, bgcolor: '#F9F9FA' }}>
+				<DriverSideBar />
+				<Box sx={{ minWidth: 0, flex: 1, p: 3 }}>
+					<Directory />
+				</Box>
+			</Box>
+		</Box>
 	);
 }
 

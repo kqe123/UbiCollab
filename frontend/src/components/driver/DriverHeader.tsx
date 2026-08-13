@@ -2,6 +2,9 @@ import logo from '../../assets/logo.jpg'
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Avatar from '@mui/material/Avatar';
 
 function Header() {
 
@@ -30,7 +33,7 @@ function Header() {
             );
 
             console.log("문서 생성 성공:", response.data);
-            navigate(`/editor/${response.data.id}`); // editor에게 documentId만 전달
+            navigate(`/editor/${response.data}`); // editor에게 documentId만 전달
         } catch (error : unknown) {
             // axios에서 발생한 오류인 경우
             if (axios.isAxiosError(error)) {
@@ -51,35 +54,58 @@ function Header() {
     }
 
     return (
-        <header className="w-full h-[70px] bg-[#104FCD] flex items-center box-border px-6">
+    <>
+        <Box 
+            component="header" 
+            sx={{ width: '100%', height: '70px', bgcolor: '#104FCD', display: 'flex',
+                alignItems: 'center', boxSizing: 'border-box', px: 2,}}
+        >
             {/* Logo */}
-            <div className="flex items-center shrink-0">
-                <img src={logo} alt="UbiCollab Logo" className="w-[170px] h-[40px] block" />
-            </div>
+
+            <Box 
+                component="img"
+                src={logo}
+                sx={{ width: '15%', maxWidth: 200, height: '60%', mx: 'auto'}}
+            />
 
             {/* Search */}
-            <div className="flex-1 flex justify-center px-8">
+            <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center'}}>
                 <input type="text" placeholder="문서 검색" className="w-full max-w-[600px] h-[42px]
                                                             px-4 border border-gray-300 rounded-lg
                                                             text-[15px] outline-none focus:border-indigo-500
                                                             focus:ring-4 focus:ring-indigo-200 bg-[#ffffff]"/>
-            </div>
+            </Box>
 
             {/* Buttons */}
-            <div className="flex items-center gap-4 shrink-0">
-                <button type="button" 
-                        onClick={createFile}
-                        className="h-10 px-[18px] rounded-lg bg-[#ffffff]
-                                text-black text-sm font-semibold hover:bg-[#F6F6F6] cursor-pointer">
+            <Box sx={{ width : '20%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap : 2}}>
+                <Button 
+                    disableElevation
+                    type="button"
+                    onClick={createFile}
+                    variant="contained"
+                    size="large"
+                    color="primary"
+                    sx={{
+                        color: 'black',
+                        fontWeight : 700,
+                        bgcolor : 'white',
+                        borderRadius: '9px',
+                    }}
+                >
                     + 새 파일
-                </button>
-
-                <button type="button" className="w-12 h-12 rounded-full bg-[#ffffff] text-[13px]
-                                                font-semibold overflow-hidden cursor-pointer">
-                    프로필
-                </button>
-            </div>
-        </header>
+                </Button>
+                    
+                <Avatar 
+                    alt="프로필사진"
+                    sx={{
+                        width: 50,
+                        height: 50,
+                        cursor : 'pointer'
+                        }}
+                 />
+            </Box>
+        </Box>
+    </>
     );
 }
 

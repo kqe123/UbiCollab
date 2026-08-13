@@ -1,4 +1,3 @@
-import logo from "../assets/logo.png"
 import { useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
