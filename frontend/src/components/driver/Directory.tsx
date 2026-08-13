@@ -1,7 +1,7 @@
 import { Outlet } from "react-router-dom";
 import { useState } from "react";
 import type {DriveItem} from "../../types/driveitem";
-
+import Box from '@mui/material/Box';
 
 export type MenuType = {
     isOpen : boolean;
@@ -67,9 +67,20 @@ function Directory() {
     };
 
     return (
-        <div className="h-full min-h-[500px] rounded-[24px] bg-white p-6">
-            <Outlet context={outletContext}/>
-        </div>
+        <>
+        <Box sx={{ flex: 1, p: 3 }}>
+            <Box
+                sx={{
+                    height : "100%",
+                    borderRadius: '24px', // rounded-[24px]
+                    bgcolor: 'white', // bg-white
+                    p: 3, // p-6 = 24px = MUI spacing 3 (spacing 1 = 8px)
+                }}
+            >
+                <Outlet context={outletContext}/>
+            </Box>
+        </Box>
+        </>
     );
 }
 

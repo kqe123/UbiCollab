@@ -14,9 +14,7 @@ function DriverPage() {
 			<Header />
 			<Box sx={{ display: 'flex', flex: 1, bgcolor: '#F9F9FA' }}>
 				<DriverSideBar />
-				<Box sx={{ minWidth: 0, flex: 1, p: 3 }}>
-					<Directory />
-				</Box>
+				<Directory />
 			</Box>
 		</Box>
 	);

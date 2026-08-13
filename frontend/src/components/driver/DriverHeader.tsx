@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
+import TextField from '@mui/material/TextField';
 
 function Header() {
 
@@ -54,14 +55,12 @@ function Header() {
     }
 
     return (
-    <>
         <Box 
             component="header" 
             sx={{ width: '100%', height: '70px', bgcolor: '#104FCD', display: 'flex',
                 alignItems: 'center', boxSizing: 'border-box', px: 2,}}
         >
             {/* Logo */}
-
             <Box 
                 component="img"
                 src={logo}
@@ -69,11 +68,18 @@ function Header() {
             />
 
             {/* Search */}
-            <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center'}}>
-                <input type="text" placeholder="문서 검색" className="w-full max-w-[600px] h-[42px]
-                                                            px-4 border border-gray-300 rounded-lg
-                                                            text-[15px] outline-none focus:border-indigo-500
-                                                            focus:ring-4 focus:ring-indigo-200 bg-[#ffffff]"/>
+            <Box sx={{ flex: 1, height : '100%', display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
+                <TextField 
+                    sx={{
+                        width: '60%',
+                        bgcolor: 'white',
+                        borderRadius: '9px',
+                        '& .MuiInputBase-root': {
+                            height: '48px', // 원하는 높이는 여기서 지정
+                            borderRadius: '9px',
+                        },
+                    }}
+                />
             </Box>
 
             {/* Buttons */}
@@ -105,7 +111,6 @@ function Header() {
                  />
             </Box>
         </Box>
-    </>
     );
 }
 
