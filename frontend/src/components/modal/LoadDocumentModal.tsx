@@ -3,6 +3,17 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import fileIcon from "@/assets/file.png";
+import Box from '@mui/material/Box';
+import CloseIcon from '@mui/icons-material/Close';
+import Divider from '@mui/material/Divider';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
 
 function LoadDocumentModal({onClose} : {onClose : () => void}) {
     const [selectedFileId, setSelectedFileId] = useState<string|null>(null); // 현재 선택된 문서 ID
@@ -54,72 +65,99 @@ function LoadDocumentModal({onClose} : {onClose : () => void}) {
 
     return (
         // 오버레이 (배경)
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-            onClick={onClose}>
+        <Box 
+            sx={{
+                position: 'fixed', // fixed
+                inset: 0, // inset-0
+                zIndex: 50, // z-50
+                display: 'flex',
+                bgcolor: 'rgba(0, 0, 0, 0.4)', // bg-black/40
+                alignItems: 'center',
+                justifyContent: 'center',
+            }}
+            onClick={onClose}
+        >
             {/* 모달창 */}
-            <div className=" w-[600px] min-h-[400px] rounded-2xl bg-white p-6 shadow-xl"
-                onClick={(e) => e.stopPropagation()}>
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold">문서 불러오기</h2>
-                    <button type="button" onClick={onClose} className="text-2xl">×</button>
-                </div>
+            <Box 
+                sx={{
+                    width : '50%',
+                    height : '50%',
+                    bgcolor: 'white',
+                    p : 3,
+                    borderRadius: '8px',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                }}
+                onClick={(e) => e.stopPropagation()}
+            >
+                <Box sx={{display : 'flex' }}>
+                    <Typography variant="h5" sx={{ fontWeight: 500, mt: 1, flex : 1}}>문서 불러오기</Typography>
+                    <Button type="button" onClick={onClose}><CloseIcon /></Button>
+                </Box>
 
                 {/* 로딩 처리 */}
                 {isLoading && (
-                    <p className="mt-10">
-                        문서를 불러오는 중입니다...
-                    </p>
+                    <Typography variant="h5" sx={{ mt: 5}}>문서를 불러오는 중입니다...</Typography>
                 )}
 
                 {/* 오류 처리 */}
                 {isError && (
-                    <p className="mt-10 text-red-500">
-                        문서를 불러오지 못했습니다: {error?.message}
-                    </p>
+                    <Typography variant="h5" sx={{ mt: 5, color: 'red',}}>문서를 불러오지 못했습니다: {error?.message}</Typography>
                 )}
 
                 {/* 문서가 0건일 때 */}
                 {!isLoading && !isError && files.length === 0 && (
-                    <p className="mt-10">
-                        불러올 문서가 없습니다..
-                    </p>
+                    <Typography variant="h5" sx={{ mt: 5}}>불러올 문서가 없습니다..</Typography>
                 )}
 
                 {/* 문서 테이블 */}
-                <table className="mt-10 w-full table-fixed text-left">
-                    <thead>
-                        <tr className="border-b border-[#DBDBDB]">
-                            <td className="w-[50%] pb-3 text-sm ">이름</td>
-                            <td className="w-[30%] pb-3 text-sm">생성 날짜</td>
-                            <td className="w-[20%] pb-3 text-sm">파일 크기</td>
-                        </tr>
-                    </thead>
+                <TableContainer>
+                <Table sx={{ mt: 5, width: '100%', tableLayout: 'fixed', textAlign: 'left' }}>
+                    <TableHead>
+                        <TableRow sx={{ borderBottom: '1px solid #DBDBDB'}}>
+                            <TableCell sx={{ width : '50%', py: 1}}>이름</TableCell>
+                            <TableCell sx={{ width : '30%', py: 1}}>생성 날짜</TableCell>
+                            <TableCell sx={{ width : '20%', py: 1}}>파일 크기</TableCell>
+                        </TableRow>
+                    </TableHead>
                 
-                    <tbody>
+                    <TableBody>
                         {[...files].sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()) // 생성 날짜 내림차순 정렬
                             .map((file) => (
-                                <tr key={file.id} 
+                                <TableRow key={file.id} 
                                     onClick={() => setSelectedFileId(file.publicId)}
                                     onDoubleClick={loadDocument}
-                                    className={
-                                        `cursor-pointer
-                                        ${ selectedFileId === file.publicId
-                                            ? "bg-blue-100"
-                                            : "hover:bg-gray-100"
-                                        }`}>
-                                    <td className="py-3 text-sm font-medium">
-                                        <img src={fileIcon} alt="" className="inline-block h-[18px] w-[15px] mr-[5px] mb-[3px]" />
+                                    sx={{
+                                    borderBottom: '1px solid #DBDBDB',
+                                    bgcolor: selectedFileId === file.publicId ? '#e8f2fd' : 'transparent', // bg-blue-100
+                                    '&:hover': {
+                                        bgcolor: selectedFileId === file.publicId ? '#e8f2fd' : '#f3f4f6', // hover:bg-gray-100
+                                    },
+                                    }}
+                                >
+                                    <TableCell sx={{ py: 1.5, px: 1, fontWeight: 500 }}>
+                                        <Box
+                                            component="img"
+                                            src={fileIcon}
+                                            sx={{ display: 'inline-block',
+                                                height: '18px',
+                                                width: '15px',
+                                                mr: '5px',
+                                                mb: '3px',
+                                            }}
+                                        />
                                         {file.itemName}
-                                        {file.extension === "UC" || file.extension === null ? "" : `.${file.extension}`}</td>
-                                    <td className="py-3 text-sm font-light">{formatDate(file.createdDate)}</td>
-                                    <td className="py-3 text-sm font-light">{file.size} B</td>
-                                </tr>
+                                        {file.extension === "UC" || file.extension === null ? "" : `.${file.extension}`}</TableCell>
+                                    <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666'}}>{formatDate(file.createdDate)}</TableCell>
+                                    <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666'}}>{file.size} B</TableCell>
+                                </TableRow>
                             ))
                         }
-                    </tbody>
-                </table>
-            </div>
-        </div>
+                    </TableBody>
+                </Table>
+                </TableContainer>
+            </Box>
+        </Box>
     );
 }
 
