@@ -2,8 +2,6 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import fileIcon from "../../../assets/file.png";
 import folderIcon from "../../../assets/folder.png";
-import homeIcon from "../../../assets/home.png";
-import backIcon from "../../../assets/back.png";
 import noDriveImg from "../../../assets/empty-drive.png";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
@@ -12,6 +10,17 @@ import DriveItemMenuModal from "../../modal/DriveItemMenuModal"
 import NewDriveItemModal from "../../modal/NewDriveItemModal"
 import type {DriveItem} from "../../../types/driveitem";
 import type { DirectoryOutletContext, MenuType} from "../Directory";
+import Box from '@mui/material/Box';
+import IconButton from  '@mui/material/IconButton';
+import HomeIcon from '@mui/icons-material/Home';
+import ReplyIcon from '@mui/icons-material/Reply';
+import Typography from '@mui/material/Typography';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
 
 function MyDriveList() {
     // 상태(state)들
@@ -143,10 +152,9 @@ function MyDriveList() {
     // 로딩 처리
     if (isDriveItemsLoading) {
         return (
-        <>
-            <h1 className="text-2xl font-medium">내 드라이브</h1>
-            <p className="mt-10">문서를 불러오는 중입니다...</p>
-        </>
+            <Box sx={{ minHeight: '100vh', alignItems: 'center', justifyContent: 'center'}}>
+                <Typography>문서를 불러오는 중입니다...</Typography>
+            </Box>
         )
     }
 
@@ -154,10 +162,9 @@ function MyDriveList() {
     // 오류 처리
     if (isDriveItemsError) {
         return (
-        <>
-            <h1 className="text-2xl font-medium ">내 드라이브</h1>
-            <p className="mt-10 text-red-500">문서를 불러오지 못했습니다: {driveItemsError.message}</p>
-        </>
+            <Box sx={{ minHeight: '100vh', alignItems: 'center', justifyContent: 'center'}}>
+                <Typography sx={{ color: 'error.main' }}>문서를 불러오지 못했습니다 : {driveItemsError.message}</Typography>
+            </Box>
         )
     }
 
@@ -165,92 +172,127 @@ function MyDriveList() {
     // 문서 리스트를 정상적으로 받아왔을 때
     return (
         <>
-        <h1 className="text-2xl font-medium">내 드라이브</h1>
-        <div className="w-full h-full" 
-            onContextMenu= {(e) => {tableRightClick(e);}}>
-            <div className="flex mt-10">
-                <button type="button" onClick={moveToRoot}
+        <Typography variant="h5" sx={{ fontWeight: 500, mt: 1}}>내 드라이브</Typography>
+        <Box
+            sx={{ width : '100%', height : '100%'}}
+            onContextMenu= {(e) => {tableRightClick(e);}}
+        >
+            <Box sx={{ display: 'flex', width: '50%', alignItems: 'center' , 
+                gap : 0.5, mt : 4, bgcolor: '#eaeefc', borderRadius: '10px'}}>
+
+                {/* Home Button */}
+                <IconButton
+                    type="button"
+                    onClick={moveToRoot}
                     disabled={paths.length === 0}
-                    className={`w-8 h-8 flex items-center justify-center rounded-xl border border-gray-200
-                        transition-colors
-                        ${paths.length === 0
-                        ? "text-gray-300 cursor-not-allowed"
-                        : "text-gray-600 hover:bg-gray-100 cursor-pointer"
-                        }`} title="홈">
-                        <img src={homeIcon} alt="홈" className="w-8 h-8 rounded-xl"/>
-                </button>
-                <button type="button" onClick={moveToBack}
+                    size="large"
+                    sx={{ width: 30, height: 30, display: 'flex', alignItems: 'center',
+                        justifyContent: 'center', borderRadius: '10px',
+                        '&:hover': {
+                            bgcolor: '#b2c9f8',
+                        },
+                        '&.Mui-disabled': {
+                            cursor: 'not-allowed',
+                            pointerEvents: 'auto', // ← 이거 추가해야 cursor가 실제로 적용됨
+                        },
+                    }}
+                >
+                    <HomeIcon color="primary" />
+                </IconButton>
+
+                {/* Back Button */}
+                <IconButton
+                    type="button"
+                    onClick={moveToBack}
                     disabled={paths.length === 0}
-                    className={`w-8 h-8 flex items-center justify-center rounded-xl border border-gray-200 mx-3
-                        transition-colors
-                        ${paths.length === 0
-                        ? "text-gray-300 cursor-not-allowed"
-                        : "text-gray-600 hover:bg-gray-100 cursor-pointer"
-                        }`} title="뒤로가기">
-                        <img src={backIcon} alt="뒤로가기" className="w-8 h-8 rounded-xl"/>
-                </button>
-                <div className="w-[50%] h-8 p-[6px] bg-[#F0F2FA] flex rounded-xl">
-                    <span className="text-sm">
-                        내 드라이브 / {[...paths].map((path) => path.itemName).join(" / ")}
-                    </span>
-                
-            </div>
-            </div>
+                    size="large"
+                    sx={{ width: 30, height: 30, display: 'flex', alignItems: 'center',
+                        justifyContent: 'center', borderRadius: '10px',
+                        '&:hover': {
+                            bgcolor: '#b2c9f8',
+                        },
+                        '&.Mui-disabled': {
+                            cursor: 'not-allowed',
+                            pointerEvents: 'auto', // ← 이거 추가해야 cursor가 실제로 적용됨
+                        },
+                    }}
+                >
+                    <ReplyIcon color="primary" />
+                </IconButton>
+
+                {/* Path */}
+                <Typography variant="body2" sx={{ fontWeight: 500}}>
+                    내 드라이브 / {[...paths].map((path) => path.itemName).join(" / ")}
+                </Typography>
+            </Box>
             {/* 폴더/파일이 0건일때 예외처리 */}    
             {[...driveItems].filter((driveItem) => driveItem.isInTrash === false).length === 0 ? (
                 <>
-                    <img src={noDriveImg} className="w-[40%] h-[40%] mx-auto mt-10"></img>
-                    <h1 className="mt-5 text-center text-2xl">
-                        우클릭으로 폴더/파일을 생성해 보세요!
-                    </h1>
+                    <Box component="img" src={noDriveImg} sx={{ width: '40%', height: '35%', mx: 'auto', mt: 5}}/>
+                    <Typography variant="h5" sx={{ mt : 2.5, textAlign: 'center', }}>우클릭으로 폴더/파일을 생성해 보세요!</Typography>
                 </>
             ) : (
-            <table className="mt-5 w-full table-fixed text-left">
-                <thead>
-                    <tr className="border-b border-[#DBDBDB]">
-                        <td className="w-[50%] pb-3 text-sm ">이름</td>
-                        <td className="w-[30%] pb-3 text-sm">생성 일자</td>
-                        <td className="w-[20%] pb-3 text-sm">파일 크기</td>
-                    </tr>
-                </thead>
+            <TableContainer>
+                <Table sx={{ mt: 2.5, width: '100%', tableLayout: 'fixed', textAlign: 'left', }}>
+                    <TableHead>
+                        <TableRow sx={{ borderBottom: '1px solid #DBDBDB'}}>
+                            <TableCell sx={{ width : '50%', py: 1}}>이름</TableCell>
+                            <TableCell sx={{ width : '30%', py: 1}}>생성 일자</TableCell>
+                            <TableCell sx={{ width : '20%', py: 1}}>파일 크기</TableCell>
+                        </TableRow>
+                    </TableHead>
 
-                <tbody>
-                    {[...driveItems].filter((driveItem) => driveItem.isInTrash === false)
-                    .sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()) // 생성 날짜 내림차순 정렬
-                    .map((driveItem) => (
-                        <tr key={driveItem.id}
-                            onClick= {() => setSelectedDriveItem(driveItem)}
-                            onContextMenu= {(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                setSelectedDriveItem(driveItem);
-                                openDriveItemMenu(e); 
+                    <TableBody>
+                        {[...driveItems].filter((driveItem) => driveItem.isInTrash === false)
+                        .sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()) // 생성 날짜 내림차순 정렬
+                        .map((driveItem) => (
+                            <TableRow key={driveItem.id}
+                                onClick= {() => setSelectedDriveItem(driveItem)}
+                                onContextMenu= {(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setSelectedDriveItem(driveItem);
+                                    openDriveItemMenu(e); 
+                                    }
                                 }
-                            }
-                            onDoubleClick = {(e) => {
-                                e.stopPropagation();
-                                elementDoubleClick(driveItem);
-                            }}
-                            className={`border-b border-[#DBDBDB]
-                                ${selectedDriveItem?.id === driveItem.id ? "bg-blue-100" : "hover:bg-gray-100"}`}>
-                            
-                            <td className="py-3 px-2 text-sm font-medium">
-                                {driveItem.type === "FOLDER" ? 
-                                    <img src={folderIcon} alt="" className="inline-block h-[15px] w-[15px] mr-[5px] mb-[3px]" />
-                                    : <img src={fileIcon} alt="" className="inline-block h-[18px] w-[15px] mr-[5px] mb-[3px]" />}
-                                {driveItem.itemName}
-                                {driveItem.extension === "UC" || driveItem.extension === null ? "" : `.${driveItem.extension}`}
-                                {driveItem.isFavorite === true && " ★"}</td>
-                            <td className="py-3 text-sm font-light">{formatDate(driveItem.createdDate)}</td>
-                            <td className="py-3 text-sm font-light">
-                                {driveItem.size === null ?
-                                "--" : `${driveItem.size} Byte`}</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+                                onDoubleClick = {(e) => {
+                                    e.stopPropagation();
+                                    elementDoubleClick(driveItem);
+                                }}
+                                sx={{
+                                    borderBottom: '1px solid #DBDBDB',
+                                    bgcolor: selectedDriveItem?.id === driveItem.id ? '#e8f2fd' : 'transparent', // bg-blue-100
+                                    '&:hover': {
+                                        bgcolor: selectedDriveItem?.id === driveItem.id ? '#e8f2fd' : '#f3f4f6', // hover:bg-gray-100
+                                    },
+                                }}
+                            >
+                                
+                                <TableCell sx={{ py: 1.5, px: 1, fontWeight: 500 }}>
+                                    <Box
+                                        component="img"
+                                        src={driveItem.type === "FOLDER" ? folderIcon : fileIcon}
+                                        sx={{ display: 'inline-block',
+                                            height: driveItem.type === "FOLDER" ? '15px' : '18px',
+                                            width: '15px',
+                                            mr: '5px',
+                                            mb: '3px',
+                                        }}
+                                    />
+                                    {driveItem.itemName}
+                                    {driveItem.extension === "UC" || driveItem.extension === null ? "" : `.${driveItem.extension}`}
+                                    {driveItem.isFavorite === true && " ★"}</TableCell>
+                                <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666'}}>{formatDate(driveItem.createdDate)}</TableCell>
+                                <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666'}}>
+                                    {driveItem.size === null ?
+                                    "--" : `${driveItem.size} Byte`}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </TableContainer>
             )}
-        </div>
+        </Box>
         
         {driveItemMenu.isOpen && selectedDriveItem && (
             <DriveItemMenuModal

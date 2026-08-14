@@ -1,5 +1,7 @@
 import fileIcon from "../../../assets/file.png";
 import DocumentName from "./DocumentName";
+import Box from '@mui/material/Box';
+import Avatar from '@mui/material/Avatar';
 function EditorHeader({
     fileName,
     setFileName 
@@ -9,28 +11,35 @@ function EditorHeader({
 }) {
 return (
 <>
-    <header className="w-full h-[70px] bg-white flex items-center px-6 border-b border-[#E5E7EB]">
-        <div className="flex items-center flex-1">
-            {/* Logo */}
-            <img src={fileIcon} alt="File Icon" className="w-[30px] h-[40px] mr-2 block" />
+    <Box 
+        component="header" 
+        sx={{ width: '100%', height: '70px', bgcolor: 'white', display: 'flex',
+            alignItems: 'center', px: 2, borderBottom: '1px solid #DBDBDB'}}
+    >
+        <Box sx={{ display: 'flex', alignItems: 'center', flex: 1, }}>
+            {/* FileIcon */}
+            <Box
+                component="img"
+                src={fileIcon}
+                sx={{ display: 'inline-block',
+                    height: '40px',
+                    width: '30px',
+                    mr: '8px'
+                }}
+            />
+            {/* FileName */}
             <DocumentName 
                 fileName={fileName}
                 setFileName={setFileName}/>
-        </div>
+        </Box>
 
 
         
         {/* Buttons */}
-        
-        <div className="flex items-center gap-4 shrink-0">
-
-            <button type="button" className="w-12 h-12 rounded-full bg-[#E5E7EB] text-[13px]
-                                            font-semibold overflow-hidden cursor-pointer">
-                프로필
-            </button>
-        </div>
-        
-    </header>
+        <Box sx={{ width : '20%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap : 2}}>
+            <Avatar alt="프로필사진" sx={{ width: 50, height: 50, cursor : 'pointer'}} />
+        </Box>
+    </Box>
 </>
 )
 }

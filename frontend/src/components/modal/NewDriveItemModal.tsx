@@ -3,6 +3,10 @@ import toast from "react-hot-toast";
 import fileIcon from "../../assets/file.png";
 import folderIcon from "../../assets/folder.png";
 import { useQueryClient } from "@tanstack/react-query";
+import Box from '@mui/material/Box';
+import Paper from '@mui/material/Paper';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
 function NewDriveItemModal({
     x, y, onClose, currentFolderId
 } : {
@@ -108,22 +112,47 @@ function NewDriveItemModal({
 
     return (
         <>
-            <div className="fixed inset-0 z-40" onClick={onClose}>
-                <div className="fixed z-50 w-44 rounded-lg border border-gray-200 bg-white py-2 shadow-lg"
-                    style={{ left: `${x}px`, top: `${y}px`,}}
-                    onClick={(e) => e.stopPropagation()}>
-                    <button type="button" className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 cursor-pointer"
-                        onClick={() => {createFolder()}}>
-                        <img src={folderIcon} alt="" className="inline-block h-[15px] w-[15px] mr-[5px] mb-[3px]" />
-                        새 폴더 만들기
-                    </button>
-                    <button type="button" className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 cursor-pointer"
-                        onClick={() => {createFile()}}>
-                        <img src={fileIcon} alt="" className="inline-block h-[18px] w-[15px] mr-[5px] mb-[3px]" />
-                        새 파일 만들기
-                    </button>
-                </div>
-            </div>
+            <Box sx={{ position: 'fixed', inset: 0,  zIndex: 40}} onClick={onClose}>
+                <Paper
+                    elevation={2}
+                    onClick={(e) => e.stopPropagation()}
+                    sx={{
+                        position: 'fixed',
+                        zIndex: 50,
+                        width: 176, // w-44 (44 * 4px)
+                        borderRadius: 2, // rounded-lg
+                        bgcolor: 'background.paper',
+                        py: 0.5, // py-2
+                        left: `${x}px`,
+                        top: `${y}px`,
+                    }}
+                >   
+                    <Button 
+                        type="button"
+                        onClick={() => {createFolder()}}
+                        sx={{width : '100%', justifyContent: 'flex-start', px : 2}}
+                    >
+                        <Box 
+                            component="img"
+                            src={folderIcon}
+                            sx={{ width: '15px', height: '15px', mr : '5px', mb : '3px'}}
+                        />
+                        <Typography variant="body2" sx={{color: 'black' }}>새 폴더 만들기</Typography>
+                    </Button>
+                    <Button 
+                        type="button" 
+                        onClick={() => {createFile()}}
+                        sx={{width : '100%', justifyContent: 'flex-start', px : 2}}
+                    >   
+                        <Box 
+                            component="img"
+                            src={fileIcon}
+                            sx={{ width: '15px', height: '18px', mr : '5px', mb : '3px'}}
+                        />
+                        <Typography variant="body2" sx={{color: 'black' }}>새 파일 만들기</Typography>
+                    </Button>
+                </Paper>
+            </Box>
         </>
     );
 }

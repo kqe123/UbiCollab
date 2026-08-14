@@ -3,6 +3,8 @@ import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
 
 function EditorPage() {
     // URL이 /editor/3이라면 documentId에는 "3"이 들어옴 -> string | undefined
@@ -59,20 +61,34 @@ function EditorPage() {
     // 문서를 받아오기 전에 편집기를 렌더링하지 않음
     if (isLoading) {
         return (
-            <div className="flex min-h-screen items-center justify-center">
-                <p>문서를 불러오는 중입니다...</p>
-            </div>
+            <Box
+                sx={{
+                    display: 'flex',
+                    minHeight: '100vh',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                }}
+            >
+                <Typography>문서를 불러오는 중입니다...</Typography>
+            </Box>
         );
     }
 
     // 문서 조회에 실패했을 때
     if (error) {
         return (
-            <div className="flex min-h-screen items-center justify-center">
-                <p className="text-red-500">
+            <Box
+                sx={{
+                    display: 'flex',
+                    minHeight: '100vh',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                }}
+            >
+                <Typography sx={{ color: 'error.main' }}>
                     문서를 불러오지 못했습니다.
-                </p>
-            </div>
+                </Typography>
+            </Box>
         );
     }
 

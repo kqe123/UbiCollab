@@ -3,6 +3,13 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import type {DriveItem} from "../../types/driveitem";
 import { useQueryClient } from "@tanstack/react-query";
+import Box from '@mui/material/Box';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
+import EditIcon from '@mui/icons-material/Edit';
+
+
 function ChangeNameModal ({
     onClose,
     driveItem
@@ -64,49 +71,75 @@ function ChangeNameModal ({
     };
 
     return ( 
-        <>  
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-                onClick={onClose}>
-                {/* 모달창 */}
-                <div className=" w-[400px] min-h-[250px] rounded-2xl bg-white p-6 shadow-xl"
-                    onClick={(e) => e.stopPropagation()}>
-                    <div className="flex items-center justify-between">
-                        <h1 className="text-2xl font-semibold">파일명 변경</h1>
-                    </div>
+        <Box 
+            sx={{
+                position: 'fixed', // fixed
+                inset: 0, // inset-0
+                zIndex: 50, // z-50
+                display: 'flex',
+                bgcolor: 'rgba(0, 0, 0, 0.4)', // bg-black/40
+                alignItems: 'center',
+                justifyContent: 'center',
+            }}
+            onClick={onClose}
+        >
+            {/* 모달창 */}
+            <Box 
+                sx={{
+                    width : '30%',
+                    height : '30%',
+                    bgcolor: 'white',
+                    p : 3,
+                    borderRadius: '8px',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                }}
+                onClick={(e) => e.stopPropagation()}
+            >
+                <Typography variant="h5" sx={{ fontWeight: 500 }} ><EditIcon /> 이름 변경</Typography>
                 {/* 입력창 */}
-                <input type="text" value={driveItemName}
+                <TextField
+                    type="text"
+                    value={driveItemName}
                     onChange={(e) => setDriveItemName(e.target.value)}
                     onKeyDown={(e) => {
                         if (e.key === "Enter") {
                             changeName();
                         }
                     }}
-                    className="mt-8 h-14 w-full rounded-xl
-                    border border-gray-300 px-4 text-lg
-                    outline-none transition focus:border-blue-500
-                    focus:ring-4 focus:ring-blue-100"/>
-            {/* 버튼 */}
-            <div className="mt-8 flex justify-end gap-3">
-                <button
-                    type="button"
-                    onClick={onClose}
-                    className="rounded-lg px-5 py-2.5
-                        text-base font-medium text-gray-700
-                        transition hover:bg-gray-100">
-                    취소
-                </button>
+                    sx={{ mt : 4, width : '100%'}}
+                />
+                {/* 버튼 */}
+                <Box sx={{ mt : 4, display : 'flex', justifyContent: 'flex-end', gap : 1.5 }}>
+                    <Button
+                        type="button"
+                        onClick={onClose}
+                        size="large"
+                        sx={{ borderRadius: '8px',
+                            fontWeight: 500, 
+                            color: 'grey.700', 
+                            '&:hover': {
+                                 bgcolor: 'grey.100',
+                            },
+                        }}
+                    >
+                        취소
+                     </Button>
 
-                <button
-                    type="button" onClick={changeName}
-                    className="rounded-lg bg-blue-600 px-5
-                    py-2.5 text-base font-medium text-white
-                    transition hover:bg-blue-700 active:scale-95">
-                    확인
-                </button>
-            </div>
-        </div>
-    </div>
-    </>
+                    <Button
+                        disableElevation
+                        type="button"
+                        size="large"
+                        variant="contained"
+                        onClick={changeName}
+                        color='primary'
+                        sx={{ borderRadius: '8px', fontWeight: 500,}}
+                    >
+                        확인
+                    </Button>
+                </Box>
+            </Box>
+        </Box>
     )
 }
 

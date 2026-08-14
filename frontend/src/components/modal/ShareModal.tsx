@@ -5,9 +5,17 @@ import type {User} from "../../types/user";
 import type {sharedUser} from "../../types/sharedUser";
 import fileIcon from "../../assets/file.png";
 import folderIcon from "../../assets/folder.png";
-import defaultProfileIcon from "../../assets/profile-default.png";
-import {useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
+import CloseIcon from '@mui/icons-material/Close';
+import ShareIcon from '@mui/icons-material/Share';
+import Avatar from '@mui/material/Avatar';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import TextField from '@mui/material/TextField';
 
 function  ShareModal ({
     driveItem,
@@ -60,48 +68,85 @@ function  ShareModal ({
     
     return ( 
     <>  
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-            onClick={onClose}>
+        <Box 
+            sx={{
+                position: 'fixed', // fixed
+                inset: 0, // inset-0
+                zIndex: 50, // z-50
+                display: 'flex',
+                bgcolor: 'rgba(0, 0, 0, 0.4)', // bg-black/40
+                alignItems: 'center',
+                justifyContent: 'center',
+            }}
+            onClick={onClose}
+        >
             {/* 모달창 */}
-            <div className=" w-[500px] min-h-[500px] rounded-2xl bg-white p-6 shadow-xl"
+            <Box 
+                sx={{
+                    width : '40%',
+                    height : '60%',
+                    bgcolor: 'white',
+                    p : 3,
+                    borderRadius: '8px',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                }}
                 onClick={(e) => {
                     e.stopPropagation();
                     setIsUserListOpen(false);
-                }}>
-                <div className="flex items-center justify-between">
-                    <h1 className="text-xl font-medium">
-                        {driveItem.type === "FOLDER" ? 
-                        <img src={folderIcon} alt="" className="inline-block h-[15px] w-[15px] mr-[5px] mb-[3px]" />
-                        : <img src={fileIcon} alt="" className="inline-block h-[18px] w-[15px] mr-[5px] mb-[3px]" />}
-                        <span>
-                            {driveItem.itemName}
-                            {driveItem.extension === "UC" || driveItem.extension === null ? "" : `.${driveItem.extension}`}
-                        </span>
-                        <span className="ml-1">
-                            공유
-                        </span>
-                    </h1>
-                </div>
-                <div className="relative"
-                    onClick={(e) => e.stopPropagation()}>
-                    <label className="block mt-6 text-purple-600 text-xs text-">공유 대상</label>
+                }}
+            >   
+                {/* 메뉴명 */}
+                <Box sx={{display : 'flex' }}>
+                    <Typography variant="h6" sx={{ fontWeight: 500, mt: 1, flex : 1}}>
+                        <ShareIcon sx={{mb : '3px'}}/> "{driveItem.itemName}" 공유 추가</Typography>
+                    <Button type="button" onClick={onClose}><CloseIcon sx={{color: 'black'}}/></Button>
+                </Box>
+
+                <Box sx={{ position: 'relative' }} onClick={(e) => e.stopPropagation()}>
                     {/* 입력창 */}
-                    <input type="text" 
+                    <TextField 
+                        type="text" 
+                        size="small"
+                        label="공유 대상"
                         onChange = {(e) => {
                             setText(e.target.value);
                             setIsUserListOpen(true);}}
                         onFocus={() => {
                             setIsUserListOpen(true);}}
-                        className="h-11 w-full mt-1 rounded-xl
-                        border-[1.5px] border-sky-400 px-4 text-lg
-                        outline-none transition focus:border-blue-500" />
+                        sx={{
+                            width : '100%',
+                            mt: 3,
+                        }}
+                    />
                     {/* 자동완성 사용자 목록 */}
                     {isUserListOpen && text !== "" &&  users.length > 0 && (
-                        <div className="absolute left-0 top-full z-50 
-                            w-full max-h-[180px] rounded-2xl bg-white shadow-xl overflow-y-auto">
+                        <Box
+                            sx={{
+                                position: 'absolute', // fixed
+                                left: 0,
+                                top: '100%',
+                                zIndex: 50,
+                                width: '100%',
+                                maxHeight: 'min(240px, 35vh)',
+                                borderRadius: '16px', // rounded-2xl
+                                bgcolor: 'white',
+                                boxShadow: 6, // shadow-xl 근사치
+                                overflowY: 'auto',
+                            }} 
+                        >
                             {users.map((user) => (
-                                <div key={user.id}
-                                    className="h-15 hover:bg-gray-100 flex items-center text-sm p-4 cursor-pointer"
+                                <Box key={user.id}
+                                    sx={{
+                                        height : 'min(60px, 7vh)',
+                                        display: 'flex',
+                                        cursor :'pointer',
+                                        '&:hover': {
+                                            bgcolor: '#e8f2fd'
+                                        },
+                                        alignItems : 'center',
+                                        mx : 2
+                                    }}
                                     onClick={() => {
                                         // 선택한 사용자가 이미 중복 선택된 경우 예외처리
                                         const isDuplicate = sharedUsers.some(
@@ -124,82 +169,107 @@ function  ShareModal ({
                                                 type: "VIEWER",
                                             }
                                         ])
-
                                         setIsUserListOpen(false);
                                         }
-                                    }>
-                                    {user.profileImageKey === null ? 
-                                    (<img src={defaultProfileIcon} className="w-8 h-8 rounded-full bg-[#ffffff] overflow-hidden"></img>)
-                                    : (<img src={user.profileImageKey} className="w-8 h-8 rounded-full bg-[#ffffff] overflow-hidden"></img>)
                                     }
-                                    <div className="flex-col ml-4">
-                                        <p className="font-medium">{user.nickname}</p>
-                                        <p className="text-gray-500">{user.username}</p>
-                                    </div>
-                                </div>
+                                >
+                                    {user.profileImageKey === null ? 
+                                    (<Avatar alt="기본프로필사진" sx={{ width: 32, height: 32}} />)
+                                    : (<Avatar src={user.profileImageKey} alt="프로필사진" sx={{ width: 32, height: 32}} />)
+                                    }
+                                    
+                                    <Box sx={{display : 'flex', flexDirection : "column", ml : 2 }}>
+                                        <Typography variant="body2" sx={{ fontWeight : 500, flex : 1}}>{user.nickname}</Typography>
+                                        <Typography variant="body2" sx={{ color : 'gray', flex : 1}}>{user.username}</Typography>
+                                    </Box>
+                                </Box>
                             ))}
-                        </div>
+                        </Box>
                     )}
-                </div>
+                </Box>
                 
                 {/* 추가된 공유 사용자들 목록 */}
-                <div className="mt-4">
-                    <h1 className="font-medium">추가된 공유 사용자</h1>
+                <Box sx={{mt : 2}}>
+                    <Typography variant="body1" sx={{ fontWeight: 500, mt: 1}}>추가된 공유 사용자</Typography>
                     {sharedUsers.length > 0 && (
-                        <div className="w-full max-h-[300px] bg-white overflow-y-auto mt-2">
+                        <Box sx={{width: '100%', maxHeight : '30%', overflowY: 'auto'}}>
                             {sharedUsers.map((sharedUser : sharedUser) => (
-                                <div key={sharedUser.id}
-                                    className="h-12 hover:bg-gray-100 flex items-center text-sm">
+                                <Box 
+                                    key={sharedUser.id}
+                                    sx={{
+                                        display : 'flex',
+                                        height : '12.5%',
+                                        '&:hover': {
+                                            bgcolor: '#e8f2fd'
+                                        },
+                                        alignItems : 'center',
+                                        my : 1
+                                    }}
+                                >
                                     {sharedUser.profileImageKey === null ? 
-                                    (<img src={defaultProfileIcon} className="w-8 h-8 rounded-full ml-2"></img>)
-                                    : (<img src={sharedUser.profileImageKey} className="w-8 h-8 rounded-full ml-2"></img>)
+                                    (<Avatar alt="기본프로필사진" sx={{ width: 32, height: 32}} />)
+                                    : (<Avatar src={sharedUser.profileImageKey} alt="프로필사진" sx={{ width: 32, height: 32}} />)
                                     }
-                                    <div className="flex-col ml-4">
-                                        <p className="font-medium">{sharedUser.nickname}</p>
-                                        <p className="text-gray-500">{sharedUser.username}</p>
-                                    </div>
-                                    <div className="ml-auto">
-                                        <select value={sharedUser.type}
-                                            className="rounded-lg border border-gray-300 bg-white px-1 py-1 text-sm
-                                            outline-none transition
-                                            hover:border-blue-400
-                                            focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                                    <Box sx={{ display : 'flex', flexDirection : "column", ml : 2 }}>
+                                        <Typography variant="body2" sx={{ fontWeight : 500, flex : 1}}>{sharedUser.nickname}</Typography>
+                                        <Typography variant="body2" sx={{ color : 'gray', flex : 1}}>{sharedUser.username}</Typography>
+                                    </Box>
+                                    <Box sx={{ ml: 'auto' }}>
+                                        <Select
+                                            value={sharedUser.type}
+                                            size="small"
                                             onChange={(e) => {
-                                                setSharedUsers((prev) =>
-                                                    prev.map((user) =>
-                                                        user.id === sharedUser.id
-                                                            ? {
-                                                                ...user,
-                                                                type: e.target.value,
-                                                            }
-                                                            : user
-                                                    )
+                                            setSharedUsers((prev) =>
+                                                prev.map((user) =>
+                                                user.id === sharedUser.id
+                                                    ? { ...user, type: e.target.value }
+                                                    : user
+                                                )
                                                 );
-                                            }}>
-                                            <option value="VIEWER">뷰어</option>
-                                            <option value="COMMENTOR">댓글 작성자</option>
-                                            <option value="EDITOR">편집자</option>
-                                            <option value="MANAGER">관리자</option>
-                                        </select>
-                                    </div>
-                                </div>
+                                            }}
+                                            sx={{
+                                                fontSize: '13px', // text-sm
+                                                bgcolor: 'white',
+                                                borderRadius: 2, // rounded-lg
+                                                '& .MuiOutlinedInput-notchedOutline': {
+                                                    borderColor: 'grey.300',
+                                                },
+                                                '&:hover .MuiOutlinedInput-notchedOutline': {
+                                                    borderColor: 'primary.light', // hover:border-blue-400
+                                                },
+                                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                                    borderColor: 'primary.main', // focus:border-blue-500
+                                                    borderWidth: 2,
+                                                },
+                                            }}
+                                        >
+                                            <MenuItem value="VIEWER">뷰어</MenuItem>
+                                            <MenuItem value="COMMENTOR">댓글 작성자</MenuItem>
+                                            <MenuItem value="EDITOR">편집자</MenuItem>
+                                            <MenuItem value="MANAGER">관리자</MenuItem>
+                                        </Select>
+                                    </Box>
+                                </Box>
                             ))}
-                        </div>
+                        </Box>
                     )}
-                </div>
+                </Box>
 
                 {/* 버튼 */}
-                <div className="mt-8 flex justify-end gap-3">
-                    <button
+                <Box sx={{ mt : 4, display : 'flex', gap : 1.5, justifyContent : "flex-end"}}>
+                    <Button
+                        disableElevation
                         type="button"
-                        className="rounded-lg bg-blue-600 px-5
-                        py-2.5 text-base font-medium text-white
-                        transition hover:bg-blue-700 active:scale-95">
+                        size="large"
+                        variant="contained"                 
+                        color='primary'
+                        sx={{ borderRadius: '8px', fontWeight: 500}}
+                    >
                         완료
-                    </button>
-                </div>
-            </div>
-        </div>
+                    </Button>
+                </Box>
+            </Box>
+        </Box>
     </>
     )
 }

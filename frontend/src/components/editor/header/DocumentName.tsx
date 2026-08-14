@@ -1,5 +1,6 @@
 import { useState } from "react";
-
+import InputBase from '@mui/material/InputBase';
+import Typography from '@mui/material/Typography';
 function DocumentName({
     fileName,
     setFileName 
@@ -38,44 +39,47 @@ function DocumentName({
     return (
         <>
             {editing ? (
-                <input
+                <InputBase
                     value={fileName}
                     onChange={(e) => setFileName(e.target.value)}
                     onBlur={finishEditing}
                     onKeyDown={handleKeyDown}
-                    maxLength={maxNameLength}
+                    inputProps={{ maxLength: maxNameLength }}
                     autoFocus
-                    style={{
+                    sx={{
                         width: `${Math.min(
                             Math.max(fileName.length + 4, 18),
                             maxNameLength
                         )}ch`,
+                        maxWidth: '500px',
+                        border: '1px solid',
+                        borderColor: 'grey.300',
+                        borderRadius: '4px',
+                        px: 1,
+                        py: 0.5,
+                        '&.Mui-focused': {
+                            borderColor: 'primary.main',
+                        },
                     }}
-                    className="
-                        max-w-[500px]
-                        border border-gray-300
-                        rounded
-                        px-2 py-1
-                        outline-none
-                        focus:border-blue-500
-                    "
                 />
             ) : (
-                <span
+                <Typography
                     onClick={() => setEditing(true)}
-                    className="
-                        inline-block
-                        min-w-[220px]
-                        max-w-[500px]
-                        truncate
-                        cursor-text
-                        text-lg
-                        font-medium
-                    "
                     title={fileName}
+                    sx={{
+                        display: 'inline-block',
+                        minWidth: '220px',
+                        maxWidth: '500px',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        cursor: 'text',
+                        fontSize: '1.125rem', // text-lg
+                        fontWeight: 500, // font-medium
+                    }}
                 >
                     {fileName}
-                </span>
+                </Typography>
             )}
         </>
     );

@@ -1,8 +1,14 @@
 import logo from "../assets/logo.png"
-import { useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Box from '@mui/material/Box';
+import Container from '@mui/material/Container';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
+import Divider from '@mui/material/Divider';
 
 function LoginPage () {
     const [username, setUsername] = useState<string>("");
@@ -70,50 +76,79 @@ function LoginPage () {
     }
 
     return (
-    <>
-        <div className="w-full h-screen bg-[#E6F8FE] flex
-            items-center justify-center box-border px-6" >
-            <div className="w-[600px] h-[600px] rounded-[24px] flex flex-col bg-white px-6">
+        <Box 
+            sx={{ width: '100%',height : '100vh', bgcolor: '#E6F8FE', display: 'flex',
+                alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box', px: 6,
+            }}
+        >   
+            {/* Card Layout */}
+            <Container 
+                sx={{ width : '50%', height : '70vh', borderRadius: '24px', display: 'flex',
+                    flexDirection: 'column', bgcolor: 'white', px: 6
+                }}
+            >
+
                 {/* logo */}
-                <img src={logo} className="w-[250px] h-[60px] mx-auto mt-10"></img>
+                <Box 
+                    component="img"
+                    src={logo}
+                    sx={{ width: '100%', maxWidth: 250, height: 'auto', mx: 'auto', mt: 5}}
+                />
 
                 {/* Login Panel */}
-                <form onSubmit={login} className="w-[350px] mt-8 flex mx-auto gap-3">
-                    <div className="flex flex-1 flex-col gap-3">
-                        {/* ID */}
-                        <input type="text" 
-                            className=" w-full h-[40px] border border-gray-300 rounded-md
-                                text-sm focus:outline-none focus:border-sky-500 pl-2"
-                                onChange={changeUsername}
-                                value={username}
-                                placeholder="아이디" />
-                        {/* PW */}
-                        <input type="password" 
-                            className="w-full h-[40px] border border-gray-300 rounded-md
-                                text-sm focus:outline-none focus:border-sky-500 pl-2"
-                                onChange={changePassword}
-                                value={password}
-                                placeholder="비밀번호" />
-                        <input type="submit" className="w-full h-[40px] bg-[#104FCD] rounded-[6px]
-                        text-white text-sm border-0 cursor-pointer" value="로그인"/>
-                    </div>
-                    
-                </form>
+                <Box 
+                    component="form"
+                    onSubmit={login}
+                    sx={{ width : '60%', mx: 'auto', display: 'flex', flexDirection: 'column',
+                        gap: 1.5, mt : 3}}
+                >
+                    {/* ID */}
+                    <TextField 
+                        type="text" 
+                        size="small"
+                        onChange={changeUsername}
+                        value={username}
+                        label="아이디"
+                    />
+                    {/* PW */}
+                    <TextField 
+                        type="password" 
+                        size="small"
+                        onChange={changePassword}
+                        value={password}
+                        label="비밀번호"
+                    />
+                    {/* Login Button */}
+                    <Button 
+                        disableElevation
+                        type="submit"
+                        variant="contained"
+                        size="medium"
+                        color="primary">
+                        로그인
+                    </Button>
+                </Box>
+                        
+                <Typography
+                    variant="body2"
+                    sx={{ mx: 'auto', mt : 1, color: 'grey.500', cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
+                    onClick={() => navigate('/signup')}
+                > 회원가입
+                </Typography>
+            
+                <Box sx={{ display: 'flex', alignItems: 'center', mt: 5, gap: 2, width: '100%'}}>
+                    <Divider sx={{ flex: 1 }} />
+                    <Typography variant="body2" sx={{ color: 'grey.500', fontWeight: 500, whiteSpace: 'nowrap' }}>
+                        또는
+                    </Typography>
+                    <Divider sx={{ flex: 1 }} />
+                </Box>
                 
-                <div className="w-[350px] mt-3 flex mx-auto gap-3">
-                    <p className="text-sm mx-auto text-gray-400 cursor-pointer hover:underline"
-                        onClick={() => navigate('/signup')}>회원가입</p>
-                </div>
-
-                <div className="flex items-center mt-15 gap-4 w-full">
-                    <hr className="flex-1 border-gray-300" />
-                    <span className="text-gray-500 text-sm font-medium whitespace-nowrap">또는</span>
-                    <hr className="flex-1 border-gray-300" />
-                </div>
-                <h1 className="mx-auto mt-5 font-semibold">다른 계정으로 로그인</h1>
-            </div>
-        </div>
-    </>
+                <Typography sx={{ mx: 'auto', fontWeight: 700, mt: 2}}>
+                    다른 계정으로 로그인
+                </Typography>
+            </Container>
+        </Box>
     )
 }
 

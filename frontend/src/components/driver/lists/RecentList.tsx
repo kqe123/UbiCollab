@@ -5,7 +5,14 @@ import DocumentMenuModal from "../../modal/DriveItemMenuModal"
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import type { DirectoryOutletContext } from "../Directory";
-
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
 
 function RecentList() {
     // 상태(state)들
@@ -49,49 +56,51 @@ function RecentList() {
 
     // 로딩 처리
     if (isLoading) {
-        return <p className="mt-10">문서를 불러오는 중입니다...</p>
+        return (
+            <Box sx={{ minHeight: '100vh', alignItems: 'center', justifyContent: 'center'}}>
+                <Typography>문서를 불러오는 중입니다...</Typography>
+            </Box>
+        )
     }
 
     // 오류 처리
     if (isError) {
         return (
-            <p className="mt-10 text-red-500">
-                문서를 불러오지 못했습니다: {error.message}
-            </p>
+            <Box sx={{ minHeight: '100vh', alignItems: 'center', justifyContent: 'center'}}>
+                <Typography sx={{ color: 'error.main' }}>문서를 불러오지 못했습니다 : {error.message}</Typography>
+            </Box>
         );
     }
 
     // 문서 리스트를 정상적으로 받아왔을 때
     return (
         <>
-        <h1 className="text-2xl font-medium">최근 문서</h1>
+        <Typography variant="h5" sx={{ fontWeight: 500, mt: 1}}>최근 문서</Typography>
         {[...files].filter((file) => file.isInTrash === false).length === 0 ? (
-                <>
-                    <img src={noFilesImg} className="w-[40%] h-[40%] mx-auto mt-10"></img>
-                    <h1 className="mt-5 text-center text-2xl">
-                        최근에 생성한 파일이 없습니다!
-                    </h1>
-                    <h2 className="mt-5 text-center">
-                        내 드라이브에서 [우클릭] - [새 파일 만들기]를 누르거나 <br></br>
-                        우측 상단의 [+ 새 파일] 버튼을 눌러주세요.
-                    </h2>
-                </>
+            <>  
+                <Box component="img" src={noFilesImg} sx={{ width: '40%', height: '35%', mx: 'auto', mt: 5}}/>
+                <Typography variant="h5" sx={{ mt : 2.5, textAlign: 'center'}}>최근에 생성한 파일이 없습니다!</Typography>
+                <Typography variant="body1" sx={{ mt : 2.5, textAlign: 'center'}}>
+                    내 드라이브에서 [우클릭] - [새 파일 만들기]를 누르거나 <br></br>
+                    우측 상단의 [+ 새 파일] 버튼을 눌러주세요.
+                </Typography>
+            </>
         ) : (
-        <div>
-        <table className="mt-10 w-full table-fixed text-left">
-            <thead>
-                <tr className="border-b border-[#DBDBDB]">
-                    <td className="w-[50%] pb-3 text-sm ">이름</td>
-                    <td className="w-[30%] pb-3 text-sm">생성 시각</td>
-                    <td className="w-[20%] pb-3 text-sm">파일 크기</td>
-                </tr>
-            </thead>
+        <TableContainer>
+            <Table sx={{ mt: 2.5, width: '100%', tableLayout: 'fixed', textAlign: 'left', }}>
+                <TableHead>
+                    <TableRow sx={{ borderBottom: '1px solid #DBDBDB'}}>
+                        <TableCell sx={{ width : '50%', py: 1}}>이름</TableCell>
+                        <TableCell sx={{ width : '30%', py: 1}}>생성 시각</TableCell>
+                        <TableCell sx={{ width : '20%', py: 1}}>파일 크기</TableCell>
+                    </TableRow>
+                </TableHead>
 
-            <tbody>
-                {[...files].filter((driveItem) => driveItem.isInTrash === false)
-                .sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()) // 생성 날짜 내림차순 정렬
-                .map((file) => (
-                    <tr key={file.id}
+                <TableBody>
+                    {[...files].filter((driveItem) => driveItem.isInTrash === false)
+                    .sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()) // 생성 날짜 내림차순 정렬
+                    .map((file) => (
+                    <TableRow key={file.id}
                         onClick= {() => setSelectedDriveItem(file)}
                         onContextMenu= {(e) => {
                             setSelectedDriveItem(file);
@@ -99,21 +108,30 @@ function RecentList() {
                             }
                         }
                         onDoubleClick = {() => navigate(`/editor/${file.publicId}`)}
-                        className={`border-b border-[#DBDBDB]
-                            ${selectedDriveItem?.id === file.id ? "bg-blue-100" : "hover:bg-gray-100"}`}>
-                        
-                        <td className="py-3 px-2 text-sm font-medium">
-                            <img src={fileIcon} alt="" className="inline-block h-[18px] w-[15px] mr-[5px] mb-[3px]" />
+                        sx={{
+                            borderBottom: '1px solid #DBDBDB',
+                            bgcolor: selectedDriveItem?.id === file.id ? '#e8f2fd' : 'transparent', // bg-blue-100
+                            '&:hover': {
+                                bgcolor: selectedDriveItem?.id === file.id ? '#e8f2fd' : '#f3f4f6', // hover:bg-gray-100
+                            },
+                        }}
+                    >
+                        <TableCell sx={{ py: 1.5, px: 1, fontWeight: 500 }}>
+                            <Box
+                                component="img"
+                                src={fileIcon}
+                                sx={{ display: 'inline-block', height: '18px', width: '15px', mr: '5px', mb: '3px'}}
+                            />
                             {file.itemName}
                             {file.extension === "UC" || file.extension === null ? "" : `.${file.extension}`}
-                            {file.isFavorite === true && " ★"}</td>
-                        <td className="py-3 text-sm font-light">{formatDate(file.createdDate)}</td>
-                        <td className="py-3 text-sm font-light">{file.size} B</td>
-                    </tr>
-                ))}
-            </tbody>
-        </table>
-        </div>
+                            {file.isFavorite === true && " ★"}</TableCell>
+                        <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666'}}>{formatDate(file.createdDate)}</TableCell>
+                        <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666'}}>{file.size} B</TableCell>
+                    </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+        </TableContainer>
     )}
         {driveItemMenu.isOpen && selectedDriveItem && (
             <DocumentMenuModal

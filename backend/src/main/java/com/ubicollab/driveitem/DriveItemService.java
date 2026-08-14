@@ -39,7 +39,7 @@ public class DriveItemService {
 	}
 	
 	// DriveItem(folder/file) 생성 메서드
-	public void createDriveItem(DriveItemCreateRequest request, String username) {
+	public String createDriveItem(DriveItemCreateRequest request, String username) {
 		// 프론트에서 보내지 않은 값은 Jackson이 모두 null로 처리해준다.
 		String itemName = request.getItemName(); // 무조건 필수
 		DriveItemType type = request.getType(); // 무조건 필수
@@ -104,23 +104,27 @@ public class DriveItemService {
 	    	throw new IllegalArgumentException("지원하지 않는 타입입니다.");
 	    }
 	    
+		// 랜덤 publicId 생성
+		String publicId = randomNanoId();
+
 	    // 새로운 DriveItem 객체 생성
 	    DriveItem newDriveItem = new DriveItem(
-	    		randomNanoId(),
-	            itemName.trim(),
-	            type,
-	            parent,
-	            user,
-	            content,
-	            extension,
-	            size,
-	            LocalDateTime.now(),
-	            false,
-	            false
-	        );
+	    	publicId,
+	        itemName.trim(),
+	        type,
+	        parent,
+	        user,
+	        content,
+	        extension,
+	        size,
+	        LocalDateTime.now(),
+	        false,
+	        false
+	    );
 	    
-	    // 저장
+	    // 저장 + publicId 반환
 	    driveRepository.save(newDriveItem);
+		return publicId;
 	}
 	
 	

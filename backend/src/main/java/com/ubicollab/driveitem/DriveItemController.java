@@ -37,17 +37,17 @@ public class DriveItemController {
 	
 	// [테이블 메뉴] 폴더/파일 생성 API (POST '/api/driveitem/create')
 	@PostMapping("/create")
-	public ResponseEntity createDriveItem(
+	public ResponseEntity<String> createDriveItem(
 			@Valid @RequestBody DriveItemCreateRequest request,
 			Authentication authentication) {
 		
 		String username = authentication.getName(); // 현재 사용자 ID
 		
 		
-		driveService.createDriveItem(request, username);
+		String publicId = driveService.createDriveItem(request, username);
 		return ResponseEntity
 		        .status(HttpStatus.CREATED)
-		        .build();
+		        .body(publicId);
 	}
 	
 	// [최근 문서] 파일 목록 조회 API (GET '/api/driveitem/files')

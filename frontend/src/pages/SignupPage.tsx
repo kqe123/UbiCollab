@@ -1,8 +1,14 @@
-import logo from "../assets/logo.png"
 import { useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import Box from '@mui/material/Box';
+import Container from '@mui/material/Container';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
+import Avatar from '@mui/material/Avatar';
+import ButtonBase from '@mui/material/ButtonBase';
 
 function SignupPage () {
     const [user, setUser] = useState({
@@ -12,6 +18,19 @@ function SignupPage () {
         profileImageKey : null
     });
 
+    const [avatarSrc, setAvatarSrc] = useState<string | undefined>(undefined);
+    const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+            if (file) {
+                // Read the file as a data URL
+                const reader = new FileReader();
+                reader.onload = () => {
+                    setAvatarSrc(reader.result as string);
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+    
     const navigate = useNavigate();
 
     const handleChange = (event : React.ChangeEvent<HTMLInputElement>) => {
@@ -124,58 +143,113 @@ function SignupPage () {
     
 
     return (
-    <>
-        <div className="w-full h-screen bg-[#E6F8FE] flex
-            items-center justify-center box-border px-6" >
-            <div className="w-[600px] h-[600px] rounded-[24px] flex flex-col bg-white px-6 ">
-                {/* logo */}
-                <img src={logo} className="w-[250px] h-[60px] mx-auto mt-5"></img>
+        <Box 
+            sx={{ width: '100%',height : '100vh', bgcolor: '#E6F8FE', display: 'flex',
+                alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box', px: 6,
+            }}
+        >   
+            {/* Card Layout */}
+            <Container 
+                sx={{ width : '50%', height : '70vh', borderRadius: '24px', display: 'flex',
+                    flexDirection: 'column', bgcolor: 'white', px: 6
+                }}
+            >
                 
-                {/* Login Panel */}
-                <form onSubmit={signup} className="w-[350px] mt-10 flex mx-auto gap-3">
-                    <div className="flex flex-1 flex-col gap-3">
-                        <h1 className="text-lg font-bold">회원가입</h1>
-                        {/* Profile Image */}
-                        <div className="relative w-28 h-28 mx-auto">
-                            <div className="w-full h-full rounded-full border-2 border-gray-300
-                                    bg-gray-100 overflow-hidden">
-                                <img className="w-full h-full object-cover"/>
-                            </div>
+                {/* Signup Panel */}
+                <Box 
+                    component="form"
+                    onSubmit={signup}
+                    sx={{ width : '60%', mx: 'auto', display: 'flex', flexDirection: 'column',
+                        gap: 1.5, mt : 3}}
+                >
+                    <Typography 
+                        variant="body1"
+                        sx={{ fontWeight: 700, mt: 2}}>
+                        회원가입
+                    </Typography>
 
-                            <div className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-blue-600 text-center
-                                text-white shadow">+</div>
-                        </div>
-                        {/* ID */}
-                        <input type="text" 
-                            className=" w-full h-[40px] border border-gray-300 rounded-md
-                                text-sm focus:outline-none focus:border-sky-500 pl-2"
-                                onChange={handleChange}
-                                value={user.username}
-                                placeholder="아이디: 5~20자의 영문 소문자, 숫자와 특수기호(_),(-)만 사용 가능"
-                                name="username"  />
-                        {/* PW */}
-                        <input type="password" 
-                            className="w-full h-[40px] border border-gray-300 rounded-md
-                                text-sm focus:outline-none focus:border-sky-500 pl-2"
-                                onChange={handleChange}
-                                value={user.password}
-                                placeholder="비밀번호: 8~16자의 영문 대/소문자, 숫자, 특수문자 포함"
-                                name="password" />
-                        {/* nickname */}   
-                        <input type="text" 
-                            className="w-full h-[40px] border border-gray-300 rounded-md
-                                text-sm focus:outline-none focus:border-sky-500 pl-2"
-                                onChange={handleChange}
-                                value={user.nickname}
-                                placeholder="닉네임 : 2자 이상 입력"
-                                name="nickname" />
-                        <input type="submit" className="w-full h-[40px] bg-[#104FCD] rounded-[12px]
-                            text-white text-sm border-0 cursor-pointer" value="회원가입"/>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </>
+                    {/* Profile Image */}
+                    <ButtonBase
+                        component="label"
+                        role={undefined}
+                        tabIndex={-1} // prevent label from tab focus
+                        aria-label="Avatar image"
+                        sx={{ borderRadius: '40px', mt : 3, mb : 3,
+                            '&:has(:focus-visible)': {
+                                outline: '2px solid',
+                                outlineOffset: '2px',
+                            },
+                        }}
+                    >
+                        <Avatar alt="Upload new avatar" src={avatarSrc} sx={{ width: 56, height: 56}} />
+                        <input
+                            type="file"
+                            accept="image/*"
+                            style={{
+                            border: 0,
+                            clip: 'rect(0 0 0 0)',
+                            height: '1px',
+                            margin: '-1px',
+                            overflow: 'hidden',
+                            padding: 0,
+                            position: 'absolute',
+                            whiteSpace: 'nowrap',
+                            width: '1px',
+                            }}
+                            onChange={handleAvatarChange}
+                        />
+                    </ButtonBase>
+                    {/* ID */}
+                    <TextField
+                        required
+                        variant="standard"
+                        type="text"
+                        size="small"
+                        name="username"
+                        onChange={handleChange}
+                        value={user.username}
+                        label="아이디"
+                        placeholder="5~20자의 영문 소문자, 숫자와 특수기호(_),(-)만 사용 가능"
+                        sx={{'& .MuiInputBase-input': { fontSize: '15px'} }}
+                    />
+                    {/* PW */}
+                    <TextField
+                        required
+                        variant="standard"
+                        type="password"
+                        size="small"
+                        name="password"
+                        onChange={handleChange}
+                        value={user.password}
+                        label="비밀번호"
+                        placeholder="8~16자의 영문 대/소문자, 숫자, 특수문자 포함"
+                        sx={{'& .MuiInputBase-input': { fontSize: '15px'} }}
+                    />
+                    {/* nickname */}
+                    <TextField
+                        required
+                        variant="standard"
+                        type="text"
+                        size="small"
+                        name="nickname"
+                        onChange={handleChange}
+                        value={user.nickname}
+                        label="닉네임"
+                        placeholder="2자 이상 입력"
+                        sx={{'& .MuiInputBase-input': { fontSize: '15px'} }}
+                    />
+                    {/* Submit Button */}
+                    <Button 
+                        disableElevation
+                        type="submit"
+                        variant="contained"
+                        size="medium"
+                        color="primary">
+                        회원가입
+                    </Button>
+                </Box>
+            </Container>
+        </Box>
     )
 }
 
