@@ -11,6 +11,11 @@ import Paper from '@mui/material/Paper';
 import Divider from '@mui/material/Divider';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
+import EditIcon from '@mui/icons-material/Edit';
+import StarIcon from '@mui/icons-material/StarBorder';
+import ShareIcon from '@mui/icons-material/Share';
+import PermissionIcon from '@mui/icons-material/CoPresent';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 function DriveItemMenuModal({
     x, y, driveItem, onClose
@@ -173,40 +178,45 @@ function DriveItemMenuModal({
                     <Button 
                         type="button"
                         onClick={() => {setMenuMode("RENAME")}}
-                        sx={{ width : '100%', justifyContent: 'flex-start', px : 2}}
+                        sx={{ width : '100%', justifyContent: 'flex-start', px : 2, color : 'black'}}
+                        startIcon={<EditIcon sx={{ mb : '3px'}} />}
                     >
-                        <Typography variant="body2" sx={{color: 'black' }}>✍️ 이름 변경</Typography>
+                        <Typography variant="body2" sx={{color: 'black' }}>이름 변경</Typography>
                     </Button>
                     {driveItem.isFavorite === true ? (
                         <Button 
                             type="button"
                             onClick={deleteFavorite}
-                            sx={{width : '100%', justifyContent: 'flex-start', px : 2}}
+                            sx={{width : '100%', justifyContent: 'flex-start', px : 2, color : 'black'}}
+                            startIcon={<StarIcon sx={{ mb : '3px'}}/>}
                         >
-                            <Typography variant="body2" sx={{color: 'black' }}>⭐ 즐겨찾기 해제</Typography>
+                            <Typography variant="body2" sx={{color: 'black' }}>즐겨찾기 해제</Typography>
                         </Button>
                     ) : 
                         <Button 
                             type="button" 
                             onClick={addFavorite}
-                            sx={{width : '100%', justifyContent: 'flex-start', px : 2}}
+                            sx={{width : '100%', justifyContent: 'flex-start', px : 2, color : 'black'}}
+                            startIcon={<StarIcon sx={{ mb : '3px'}}/>}
                         >
-                            <Typography variant="body2" sx={{color: 'black' }}>⭐ 즐겨찾기 추가</Typography>
+                            <Typography variant="body2" sx={{color: 'black' }}>즐겨찾기 추가</Typography>
                         </Button>
                     }
                     <Button 
                         type="button" 
                         onClick={() => {setMenuMode("SHARE")}}
-                        sx={{width : '100%', justifyContent: 'flex-start', px : 2}}
+                        sx={{width : '100%', justifyContent: 'flex-start', px : 2, color : 'black'}}
+                        startIcon={<ShareIcon sx={{ mb : '3px'}}/>}
                     >
-                        <Typography variant="body2" sx={{color: 'black' }}>🔗 공유 추가</Typography>
+                        <Typography variant="body2" sx={{color: 'black' }}>공유 추가</Typography>
                     </Button>
                     <Button 
                         type="button" 
                         onClick={() => {setMenuMode("PERMISSION")}}
-                        sx={{width : '100%', justifyContent: 'flex-start', px : 2}}
+                        sx={{width : '100%', justifyContent: 'flex-start', px : 2, color : 'black'}}
+                        startIcon={<PermissionIcon sx={{ mb : '3px'}}/>}
                     >
-                        <Typography variant="body2" sx={{color: 'black' }}>👥 권한 관리</Typography>
+                        <Typography variant="body2" sx={{color: 'black' }}>권한 관리</Typography>
                     </Button>
                     <Divider sx={{my : 0.5}}/>
                     <Button 
@@ -216,12 +226,14 @@ function DriveItemMenuModal({
                             width : '100%',
                             justifyContent: 'flex-start',
                             px : 2,
+                            color : 'red',
                             '&:hover': {
                                 bgcolor: '#fdc2c2'
                             },
                         }}
+                        startIcon={<DeleteIcon sx={{ mb : '3px'}}/>}
                     >
-                        <Typography variant="body2" sx={{color: 'red', fontWeight: 600 }}>🗑️ 휴지통으로 이동</Typography>
+                        <Typography variant="body2" sx={{color: 'red', fontWeight: 600 }}>휴지통으로 이동</Typography>
                     </Button>
                 </Paper>
             </Box>

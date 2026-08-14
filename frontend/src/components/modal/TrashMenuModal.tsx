@@ -1,10 +1,14 @@
-import { useNavigate } from "react-router-dom";
 import type {DriveItem} from "../../types/driveitem";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-
+import Box from '@mui/material/Box';
+import Paper from '@mui/material/Paper';
+import Divider from '@mui/material/Divider';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
+import RestoreIcon from '@mui/icons-material/RestoreFromTrash';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 function TrashMenu({
     x, y, driveItem, onClose
 } : {
@@ -111,21 +115,48 @@ function TrashMenu({
 
     return (
         <>
-        <div className="fixed inset-0 z-40" onClick={onClose}>
-            <div className="fixed z-50 w-44 rounded-lg border border-gray-200 bg-white py-2 shadow-lg"
-                style={{ left: `${x}px`, top: `${y}px`,}}
-                onClick={(e) => e.stopPropagation()}>
-                <button type="button" className="w-full px-4 py-2 text-left text-sm transition-colors hover:bg-gray-100 cursor-pointer"
-                    onClick={restoreTrash}>
-                    복원
-                </button>
-                <hr className="my-1 border-gray-200" />
-                <button type="button" className=" w-full px-4 py-2 text-left text-sm font-bold transition-colors text-[#ED1C24] hover:bg-red-200 cursor-pointer"
-                    onClick={handlePermanentDelete}>
-                    영구 삭제
-                </button>
-            </div>
-        </div>
+        <Box sx={{ position: 'fixed', inset: 0,  zIndex: 40}} onClick={onClose}>
+            <Paper
+                elevation={2}
+                onClick={(e) => e.stopPropagation()}
+                sx={{
+                    position: 'fixed',
+                    zIndex: 50,
+                    width: 176, // w-44 (44 * 4px)
+                    borderRadius: 2, // rounded-lg
+                    bgcolor: 'background.paper',
+                    py: 0.5, // py-2
+                    left: `${x}px`,
+                    top: `${y}px`,
+                }}
+            >
+                <Button 
+                    type="button"
+                    onClick={restoreTrash}
+                    sx={{width : '100%', justifyContent: 'flex-start', px : 2, color: 'black'}}
+                    startIcon={<RestoreIcon sx={{ mb : '3px'}}/>}
+                >
+                    <Typography variant="body2" sx={{color: 'black' }}>복원</Typography>
+                </Button>
+                <Divider sx={{my : 0.5}}/>
+                <Button 
+                    type="button"
+                    onClick={handlePermanentDelete}
+                    sx={{
+                            width : '100%',
+                            justifyContent: 'flex-start',
+                            px : 2,
+                            color: 'red',
+                            '&:hover': {
+                                bgcolor: '#fdc2c2'
+                            },
+                    }}
+                    startIcon={<DeleteForeverIcon sx={{ mb : '3px'}} />}
+                >
+                    <Typography variant="body2" sx={{color: 'red', fontWeight: 600 }}>영구 삭제</Typography>
+                </Button>
+            </Paper>
+        </Box>
         </>
     );
 }

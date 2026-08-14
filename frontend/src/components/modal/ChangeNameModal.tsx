@@ -7,6 +7,7 @@ import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
+import EditIcon from '@mui/icons-material/Edit';
 
 
 function ChangeNameModal ({
@@ -95,7 +96,7 @@ function ChangeNameModal ({
                 }}
                 onClick={(e) => e.stopPropagation()}
             >
-                <Typography variant="h5" sx={{ fontWeight: 500 }}>파일명 변경</Typography>
+                <Typography variant="h5" sx={{ fontWeight: 500 }} ><EditIcon /> 이름 변경</Typography>
                 {/* 입력창 */}
                 <TextField
                     type="text"

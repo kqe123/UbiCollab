@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom";
 import fileIcon from "@/assets/file.png";
 import Box from '@mui/material/Box';
 import CloseIcon from '@mui/icons-material/Close';
-import Divider from '@mui/material/Divider';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import Table from '@mui/material/Table';
