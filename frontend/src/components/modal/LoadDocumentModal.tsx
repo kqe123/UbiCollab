@@ -62,6 +62,25 @@ function LoadDocumentModal({onClose} : {onClose : () => void}) {
         onClose();
     }
 
+    // 로딩 처리
+    if (isLoading) {
+        return (
+            <Box sx={{ minHeight: '100vh', alignItems: 'center', justifyContent: 'center'}}>
+                <Typography>문서를 불러오는 중입니다...</Typography>
+            </Box>
+        )
+    }
+
+
+    // 오류 처리
+    if (isError) {
+        return (
+            <Box sx={{ minHeight: '100vh', alignItems: 'center', justifyContent: 'center'}}>
+                <Typography sx={{ color: 'error.main' }}>문서를 불러오지 못했습니다 : {error.message}</Typography>
+            </Box>
+        )
+    }
+
     return (
         // 오버레이 (배경)
         <Box 
@@ -93,16 +112,6 @@ function LoadDocumentModal({onClose} : {onClose : () => void}) {
                     <Typography variant="h5" sx={{ fontWeight: 500, mt: 1, flex : 1}}>문서 불러오기</Typography>
                     <Button type="button" onClick={onClose}><CloseIcon /></Button>
                 </Box>
-
-                {/* 로딩 처리 */}
-                {isLoading && (
-                    <Typography variant="h5" sx={{ mt: 5}}>문서를 불러오는 중입니다...</Typography>
-                )}
-
-                {/* 오류 처리 */}
-                {isError && (
-                    <Typography variant="h5" sx={{ mt: 5, color: 'red',}}>문서를 불러오지 못했습니다: {error?.message}</Typography>
-                )}
 
                 {/* 문서가 0건일 때 */}
                 {!isLoading && !isError && files.length === 0 && (

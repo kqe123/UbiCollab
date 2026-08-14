@@ -101,17 +101,17 @@ function TrashMenu({
     }
 
     const handlePermanentDelete = async () => {
-    const confirmed = window.confirm(
-        "이 항목을 영구 삭제하시겠습니까?\n삭제한 항목은 복구할 수 없습니다."
-    );
+        const confirmed = window.confirm(
+            "이 항목을 영구 삭제하시겠습니까?\n삭제한 항목은 복구할 수 없습니다."
+        );
 
-    if (!confirmed) 
-        return;
-    
+        if (!confirmed) 
+            return;
+        
 
-    await deleteTrash();
-    onClose();
-    };
+        await deleteTrash();
+        onClose();
+        };
 
     return (
         <>
