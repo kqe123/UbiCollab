@@ -2,7 +2,6 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import type {DriveItem} from "../../types/driveitem";
 import type {sharedUser} from "../../types/sharedUser";
-import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -85,7 +84,6 @@ function  PermissionModal ({
     }
 
     return ( 
-    <>  
         <Box 
             sx={{
                 position: 'fixed', // fixed
@@ -110,27 +108,29 @@ function  PermissionModal ({
                     justifyContent: 'center',
                 }}
                 onClick={(e) => e.stopPropagation()}
-            >
+            >   
+                {/* 메뉴명 */}
                 <Box sx={{display : 'flex' }}>
                     <Typography variant="h6" sx={{ fontWeight: 500, mt: 1, flex : 1}}>
                         <PermissionIcon sx={{mb : '3px'}}/> "{driveItem.itemName}" 권한 관리</Typography>
                     <Button type="button" onClick={onClose}><CloseIcon sx={{color: 'black'}}/></Button>
                 </Box>
-
+                
                 <Box sx={{mt : 4}}>
                     <Typography variant="body1" sx={{ fontWeight: 500}}>현재 공유된 사용자</Typography>
                     {sharedUsers.length > 0 && (
-                        <Box sx={{width: '100%', maxHeight : '50%', overflowY: 'auto', mt : 1 }}>
+                        <Box sx={{width: '100%', maxHeight : 'min(300px, 35vh)', overflowY: 'auto', mt : 1 }}>
                             {sharedUsers.map((sharedUser : sharedUser) => (
                                 <Box 
                                     key={sharedUser.id}
                                     sx={{
                                         display : 'flex',
-                                        height : '12.5%',
+                                        height : 'min(60px, 7vh)',
                                         '&:hover': {
                                             bgcolor: '#e8f2fd'
                                         },
-                                        alignItems : 'center'
+                                        alignItems : 'center',
+                                        
                                     }}
                                 >
                                     {sharedUser.profileImageKey === null ? 
@@ -170,7 +170,6 @@ function  PermissionModal ({
                 </Box>
             </Box>
         </Box>
-    </>
     )
 }
 
