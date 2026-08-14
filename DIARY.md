@@ -1,5 +1,42 @@
 # 개발 일지 (DIARY)
 
+## 2026-08-15
+
+### 프로젝트 진행
+- issue #16 (모든 UI 요소를 tailwind css -> MUI로 통일) 해결
+- Full request 완료
+
+## 2026-08-12
+
+### 프로젝트 진행
+- 백엔드, 프론트엔드 실행환경을 Windows -> Linux 환경으로 이동
+- 프로젝트 폴더 또한 Windows -> Linux 디렉토리로 이동
+- Linux용 Eclipse 재설치
+
+## 2026-08-05
+
+### 프로젝트 진행
+- issue #13 (휴지통 탭 구현) 해결
+- issue #14 (즐겨찾기 탭 구현) 해결
+- Full request 완료
+
+## 2026-08-03
+
+### 프로젝트 진행
+- issue #12 (최근 문서 탭 구현) 해결
+
+## 2026-08-02
+
+### 프로젝트 진행
+- issue #11 (내 드라이브 탭 구현) 해결
+- Full request 완료
+
+## 2026-07-27
+
+### 프로젝트 진행
+- issue #10 (Document -> DriveItem Entity로 변경) 해결
+- Full request 완료
+
 ## 2026-07-25
 
 ### 프로젝트 진행
