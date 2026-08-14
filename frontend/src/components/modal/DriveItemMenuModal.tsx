@@ -6,6 +6,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import ChangeNameModal from "./ChangeNameModal"
 import ShareModal from "./ShareModal"
 import PermissionModal from "./PermissionModal"
+import Box from '@mui/material/Box';
+import Paper from '@mui/material/Paper';
+import Divider from '@mui/material/Divider';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
 
 function DriveItemMenuModal({
     x, y, driveItem, onClose
@@ -150,42 +156,77 @@ function DriveItemMenuModal({
         <>
         {/* menuMode = CONTEXT일때 */}
         {menuMode === "CONTEXT" && (
-            <div className="fixed inset-0 z-40" onClick={onClose}>
-                <div className="fixed z-50 w-44 rounded-lg border border-gray-200 bg-white py-2 shadow-lg"
-                    style={{ left: `${x}px`, top: `${y}px`,}}
-                    onClick={(e) => e.stopPropagation()}>
-                    <button type="button" className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 cursor-pointer"
-                        onClick={() => {setMenuMode("RENAME")}}>
-                        ✍️ 이름 변경
-                    </button>
+            <Box sx={{ position: 'fixed', inset: 0,  zIndex: 40}} onClick={onClose}>
+                <Paper
+                    elevation={4}
+                    onClick={(e) => e.stopPropagation()}
+                    sx={{
+                        position: 'fixed',
+                        zIndex: 50,
+                        width: 176, // w-44 (44 * 4px)
+                        borderRadius: 2, // rounded-lg
+                        bgcolor: 'background.paper',
+                        py: 0.5, // py-2
+                        left: `${x}px`,
+                        top: `${y}px`,
+                    }}
+                >
+                    <Button 
+                        type="button"
+                        onClick={() => {setMenuMode("RENAME")}}
+                        sx={{ width : '100%', justifyContent: 'flex-start', px : 2}}
+                    >
+                        <Typography variant="body2" sx={{color: 'black' }}>✍️ 이름 변경</Typography>
+                    </Button>
                     {driveItem.isFavorite === true ? (
-                        <button type="button" className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 cursor-pointer"
-                        onClick={deleteFavorite}>
-                        ⭐ 즐겨찾기 해제
-                        </button>
+                        <Button 
+                            type="button"
+                            onClick={deleteFavorite}
+                            sx={{width : '100%', justifyContent: 'flex-start', px : 2}}
+                        >
+                            <Typography variant="body2" sx={{color: 'black' }}>⭐ 즐겨찾기 해제</Typography>
+                        </Button>
                     ) : 
-                        <button type="button" className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 cursor-pointer"
-                        onClick={addFavorite}>
-                        ⭐ 즐겨찾기 추가
-                        </button>
+                        <Button 
+                            type="button" 
+                            onClick={addFavorite}
+                            sx={{width : '100%', justifyContent: 'flex-start', px : 2}}
+                        >
+                            <Typography variant="body2" sx={{color: 'black' }}>⭐ 즐겨찾기 추가</Typography>
+                        </Button>
                     }
-                    <button type="button" className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 cursor-pointer"
-                        onClick={() => {setMenuMode("SHARE")}}>
-                        🔗 공유 추가
-                    </button>
-                    <button type="button" className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 cursor-pointer"
-                        onClick={() => {setMenuMode("PERMISSION")}}>
-                        👥 권한 관리
-                    </button>
-                    <hr className="my-1 border-gray-200" />
-                    <button type="button" className=" w-full px-4 py-2 text-left text-sm font-bold text-[#ED1C24] hover:bg-red-200 cursor-pointer"
-                        onClick={throwTrash}>
-                        🗑️ 휴지통으로 이동
-                    </button>
-                </div>
-            </div>
+                    <Button 
+                        type="button" 
+                        onClick={() => {setMenuMode("SHARE")}}
+                        sx={{width : '100%', justifyContent: 'flex-start', px : 2}}
+                    >
+                        <Typography variant="body2" sx={{color: 'black' }}>🔗 공유 추가</Typography>
+                    </Button>
+                    <Button 
+                        type="button" 
+                        onClick={() => {setMenuMode("PERMISSION")}}
+                        sx={{width : '100%', justifyContent: 'flex-start', px : 2}}
+                    >
+                        <Typography variant="body2" sx={{color: 'black' }}>👥 권한 관리</Typography>
+                    </Button>
+                    <Divider sx={{my : 0.5}}/>
+                    <Button 
+                        type="button" 
+                        onClick={throwTrash}
+                        sx={{
+                            width : '100%',
+                            justifyContent: 'flex-start',
+                            px : 2,
+                            '&:hover': {
+                                bgcolor: '#fdc2c2'
+                            },
+                        }}
+                    >
+                        <Typography variant="body2" sx={{color: 'red', fontWeight: 600 }}>🗑️ 휴지통으로 이동</Typography>
+                    </Button>
+                </Paper>
+            </Box>
         )}
-        
         {/* menuMode = RENAME일때 */}
         {menuMode === "RENAME" && (
             <ChangeNameModal
