@@ -9,7 +9,6 @@ import PermissionModal from "./PermissionModal"
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Divider from '@mui/material/Divider';
-import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 
@@ -158,7 +157,7 @@ function DriveItemMenuModal({
         {menuMode === "CONTEXT" && (
             <Box sx={{ position: 'fixed', inset: 0,  zIndex: 40}} onClick={onClose}>
                 <Paper
-                    elevation={4}
+                    elevation={2}
                     onClick={(e) => e.stopPropagation()}
                     sx={{
                         position: 'fixed',
