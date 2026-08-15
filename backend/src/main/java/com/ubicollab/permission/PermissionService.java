@@ -1,28 +1,51 @@
 package com.ubicollab.permission;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.ubicollab.driveitem.DriveItem;
 import com.ubicollab.driveitem.DriveItemRepository;
+import com.ubicollab.permission.dto.PermissionCreateDto;
+import com.ubicollab.permission.dto.PermissionCreateDto.UserDto;
 import com.ubicollab.permission.dto.SharedUserResponse;
 import com.ubicollab.permission.enums.PermissionType;
 import com.ubicollab.user.User;
 import com.ubicollab.user.UserRepository;
-import com.ubicollab.user.dto.UserResponse;
 
 @Service
 public class PermissionService {
 	private final DriveItemRepository driveRepository;
+	private final PermissionRepository permissionRepository;
+	private final UserRepository userRepository;
 
 	
-	public PermissionService (DriveItemRepository driveRepository) {
+	public PermissionService (DriveItemRepository driveRepository,
+			PermissionRepository permissionRepository,
+			UserRepository userRepository) {
 		this.driveRepository = driveRepository;
+		this.permissionRepository = permissionRepository;
+		this.userRepository = userRepository;
 	}
 	
+	@Transactional
+	public int createPermission(String username, PermissionCreateDto request) {
+		String publicId = request.publicId();
+		DriveItem driveItem = driveRepository.findByPublicId(publicId).orElseThrow(
+				() -> new RuntimeException("DriveItem을 찾을 수 없습니다. publicId=" + publicId));
+		List<UserDto> userList = request.userList();
+		
+		
+		for (UserDto userInfo : userList) {
+			User user = userRepository.findById(userInfo.userId()).orElseThrow(
+					() -> new RuntimeException("User를 찾을 수 없습니다. : " + userInfo.userId()));
+			Permission permission = new Permission(user, driveItem,userInfo.type(), LocalDateTime.now()); 
+			permissionRepository.save(permission);
+		}
+		return userList.size();
+	}
 	
 	// 공유 사용자 목록 조회 메서드
 	public Iterable<SharedUserResponse> getSharedUsers(String username, String publicId) {

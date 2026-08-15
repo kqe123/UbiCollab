@@ -66,6 +66,53 @@ function  ShareModal ({
         return () => clearTimeout(timer);
     }, [text]);
     
+    const shareDriveItem = async () => {
+        try {
+            if (sharedUsers.length === 0) {
+                toast.error("공유할 사용자를 먼저 추가해주세요.");
+                return;
+            }
+
+            const response = await axios.post(
+                "http://localhost:8080/api/permission/create",
+                {
+                    publicId: driveItem.publicId,
+                    userList: sharedUsers.map((user) => ({
+                        userId: user.id,
+                        type: user.type,
+                    })),
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                    },
+                }
+            );
+            
+            console.log("공유 성공 : ", response.data);
+            toast.success("공유 성공하였습니다!");
+            onClose();
+        } catch (error: unknown) {
+            console.error("공유 실패... : ", error);
+
+            // axios에서 발생한 오류인 경우
+            if (axios.isAxiosError(error)) {
+                console.error("백엔드 응답:", error.response?.data);
+                toast.error(error.response?.data?.message ?? "공유 실패했습니다.");
+            } 
+            // 일반 오류인 경우
+            else if (error instanceof Error) {
+                console.error("일반 오류:", error.message);
+                toast.error(error.message);
+            } 
+            // 그 외의 오류인 경우
+            else {
+                console.error("알 수 없는 오류:", error);
+                toast.error("알 수 없는 오류가 발생했습니다.");
+            }
+        }
+    }
+
     return ( 
     <>  
         <Box 
@@ -88,8 +135,9 @@ function  ShareModal ({
                     bgcolor: 'white',
                     p : 3,
                     borderRadius: '8px',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    overflow: 'hidden',
                 }}
                 onClick={(e) => {
                     e.stopPropagation();
@@ -189,16 +237,17 @@ function  ShareModal ({
                 </Box>
                 
                 {/* 추가된 공유 사용자들 목록 */}
-                <Box sx={{mt : 2}}>
-                    <Typography variant="body1" sx={{ fontWeight: 500, mt: 1}}>추가된 공유 사용자</Typography>
+                <Box sx={{mt : 2, flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column'}}>
+                    <Typography variant="body1" sx={{ fontWeight: 500, mt: 1, flexShrink: 0}}>추가된 공유 사용자</Typography>
                     {sharedUsers.length > 0 && (
-                        <Box sx={{width: '100%', maxHeight : '30%', overflowY: 'auto'}}>
+                        <Box sx={{width: '100%', flex: 1, minHeight: 0, overflowY: 'auto'}}>
                             {sharedUsers.map((sharedUser : sharedUser) => (
-                                <Box 
+                                <Box
                                     key={sharedUser.id}
                                     sx={{
                                         display : 'flex',
-                                        height : '12.5%',
+                                        height : 'min(60px, 7vh)',
+                                        flexShrink: 0,
                                         '&:hover': {
                                             bgcolor: '#e8f2fd'
                                         },
@@ -263,6 +312,7 @@ function  ShareModal ({
                         size="large"
                         variant="contained"                 
                         color='primary'
+                        onClick={shareDriveItem}
                         sx={{ borderRadius: '8px', fontWeight: 500}}
                     >
                         완료
