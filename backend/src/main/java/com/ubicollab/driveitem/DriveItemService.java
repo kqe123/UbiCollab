@@ -13,9 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ubicollab.driveitem.DriveItem;
 import com.ubicollab.driveitem.DriveItemRepository;
-import com.ubicollab.driveitem.dto.DriveItemCreateRequest;
-import com.ubicollab.driveitem.dto.DriveItemResponse;
-import com.ubicollab.driveitem.dto.DriveItemUpdateRequest;
+import com.ubicollab.driveitem.dto.DriveItemCreateDto;
+import com.ubicollab.driveitem.dto.DriveItemResponseDto;
+import com.ubicollab.driveitem.dto.DriveItemUpdateDto;
 import com.ubicollab.driveitem.enums.DriveItemExtension;
 import com.ubicollab.driveitem.enums.DriveItemType;
 import com.ubicollab.favorite.Favorite;
@@ -39,14 +39,14 @@ public class DriveItemService {
 	}
 	
 	// DriveItem(folder/file) 생성 메서드
-	public String createDriveItem(DriveItemCreateRequest request, String username) {
+	public String createDriveItem(DriveItemCreateDto request, String username) {
 		// 프론트에서 보내지 않은 값은 Jackson이 모두 null로 처리해준다.
-		String itemName = request.getItemName(); // 무조건 필수
-		DriveItemType type = request.getType(); // 무조건 필수
+		String itemName = request.itemName(); // 무조건 필수
+		DriveItemType type = request.type(); // 무조건 필수
 		DriveItem parent = null; // null 허용
 		User user = null; // 무조건 필수
-		String content = request.getContent(); // 파일은 O, 폴더는 null
-		DriveItemExtension extension = request.getExtension(); // 파일은 O, 폴더는 null
+		String content = request.content(); // 파일은 O, 폴더는 null
+		DriveItemExtension extension = request.extension(); // 파일은 O, 폴더는 null
 		Long size = null; // 파일은 O, 폴더는 null
 		
 		// 기본적인 유효성 검사 (itemName, type, User, Parent)
@@ -66,8 +66,8 @@ public class DriveItemService {
 		                "존재하지 않는 사용자입니다."));		
 		
 		// "ParentID가 존재한다면" Parent를 찾으면서 유효성 체크
-		if (request.getParentPublicId() != null) {
-	        parent = driveRepository.findByPublicId(request.getParentPublicId())
+		if (request.parentPublicId() != null) {
+	        parent = driveRepository.findByPublicId(request.parentPublicId())
 	            .orElseThrow(() ->
 	                new IllegalArgumentException("부모 폴더가 존재하지 않습니다."));
 
@@ -129,21 +129,21 @@ public class DriveItemService {
 	
 	
 	// 현재 사용자의 전체 file를 조회하는 메서드
-	public Iterable<DriveItemResponse> getFiles(String username) { 
-		List<DriveItemResponse> result = new ArrayList<>();
+	public Iterable<DriveItemResponseDto> getFiles(String username) { 
+		List<DriveItemResponseDto> result = new ArrayList<>();
 
 		for (DriveItem driveItem : driveRepository.findByTypeAndUserUsername(DriveItemType.FILE, username)) {
 			// 해당 DriveItem이 즐겨찾기에 등록되어 있는지 확인
 			boolean isFavorite = (favoriteRepository.findByUserUsernameAndItem(username, driveItem)
 													.isPresent()) ? true : false; 
-		    result.add(new DriveItemResponse(driveItem, isFavorite));
+		    result.add(new DriveItemResponseDto(driveItem, isFavorite));
 		}
 		
 		return result;
 	}
 	
 	// file 하나를 반환하는 메서드
-	public DriveItemResponse getFile(String publicId, String username) {
+	public DriveItemResponseDto getFile(String publicId, String username) {
 		DriveItem file = driveRepository.findByPublicId(publicId).orElseThrow(
 				() -> new RuntimeException("파일를 찾을 수 없습니다. publicId=" + publicId));
 		
@@ -153,27 +153,27 @@ public class DriveItemService {
 		
 		boolean isFavorite = (favoriteRepository.findByUserUsernameAndItem(username, file)
 												.isPresent()) ? true : false; 
-		return new DriveItemResponse(file, isFavorite);
+		return new DriveItemResponseDto(file, isFavorite);
 	}
 	
 	
 	// 현재 디렉토리의 DriveItem(folder/file)들을 반환하는 메서드
-	public Iterable<DriveItemResponse> getDriveItems(String parentPublicId, String username) {
-		List<DriveItemResponse> result = new ArrayList<>();
+	public Iterable<DriveItemResponseDto> getDriveItems(String parentPublicId, String username) {
+		List<DriveItemResponseDto> result = new ArrayList<>();
 		
 		for (DriveItem driveItem : driveRepository.findByUserUsernameAndParentPublicId(username, parentPublicId)) {
 			// 해당 DriveItem이 즐겨찾기에 등록되어 있는지 확인
 			boolean isFavorite = (favoriteRepository.findByUserUsernameAndItem(username, driveItem)
 													.isPresent()) ? true : false; 
-			result.add(new DriveItemResponse(driveItem, isFavorite));
+			result.add(new DriveItemResponseDto(driveItem, isFavorite));
 		}
 		
 		return result;
 	}
 	
 	// 현재 디렉토리의 경로(path)를 반환하는 메서드
-	public Iterable<DriveItemResponse> getDrivePath(String publicId, String username) {
-		List<DriveItemResponse> path = new ArrayList<>();
+	public Iterable<DriveItemResponseDto> getDrivePath(String publicId, String username) {
+		List<DriveItemResponseDto> path = new ArrayList<>();
 		
 		// 부모로 거슬러 올라가면서 path에 현재 DriveItem 객체를 DriveItemResponse로 바꿔서 저장한다.
 		// 이렇게 되면, 가장 하위 디렉토리부터 저장이 되게 된다. [자식(0), 부모(1), 조부모(2)...] 
@@ -184,7 +184,7 @@ public class DriveItemService {
 			
 			boolean isFavorite = (favoriteRepository.findByUserUsernameAndItem(username, driveItem.get())
 													.isPresent()) ? true : false; 
-			path.add(new DriveItemResponse(driveItem.get(), isFavorite));
+			path.add(new DriveItemResponseDto(driveItem.get(), isFavorite));
 			DriveItem parent = driveItem.get().getParent();
 			
 			publicId = (parent == null) ? null : parent.getPublicId();
@@ -196,26 +196,26 @@ public class DriveItemService {
 	}
 	
 	// 휴지통 최상위 DriveItem(folder/file)를 가져오는 메서드
-	public Iterable<DriveItemResponse> getTrash(String username) {
-		List<DriveItemResponse> result = new ArrayList<>();
+	public Iterable<DriveItemResponseDto> getTrash(String username) {
+		List<DriveItemResponseDto> result = new ArrayList<>();
 		
 		// 휴지통 최상위 요소인지는 IsTrashRoot가 true인지로 판단한다.
 		for ( DriveItem driveItem : driveRepository.findByUserUsernameAndIsTrashRoot(username, true)) {
 			boolean isFavorite = (favoriteRepository.findByUserUsernameAndItem(username, driveItem)
 													.isPresent()) ? true : false; 
-			result.add(new DriveItemResponse(driveItem, isFavorite));
+			result.add(new DriveItemResponseDto(driveItem, isFavorite));
 		}
 		
 		return result;
 	}
 	
 	// DriveItem(folder/file)를 수정하는 메서드 (파일/폴더명 변경, 파일 내용 변경, 파일/폴더 이동)
-	public void updateDriveItem(String publicId, DriveItemUpdateRequest request, String username) {
+	public void updateDriveItem(String publicId, DriveItemUpdateDto request, String username) {
 		
 		// 변경가능한 필드들 (3개)
-		String itemName = request.getItemName();
+		String itemName = request.itemName();
 	    DriveItem parent = null;
-	    String content = request.getContent();
+	    String content = request.content();
 	    
 	    // 현재 로그인 사용자
 	    User user = userRepository.findByUsername(username)
@@ -248,9 +248,9 @@ public class DriveItemService {
 		}
 		
 		// 부모 폴더 변경
-	    if (request.getParentId() != null) {
+	    if (request.parentId() != null) {
 	        parent = driveRepository
-	            .findById(request.getParentId())
+	            .findById(request.parentId())
 	            .orElseThrow(() ->
 	                new IllegalArgumentException(
 	                    "이동할 부모 폴더가 존재하지 않습니다."
@@ -283,7 +283,6 @@ public class DriveItemService {
 	        long size = content.getBytes(StandardCharsets.UTF_8).length;
 	        driveItem.setSize(size);
 	    }
-		
 		driveRepository.save(driveItem);
 	}
 	

@@ -8,7 +8,7 @@ import com.ubicollab.driveitem.enums.DriveItemType;
 
 // DriveItem에 User, Parent는 객체 그대로 프론트에 보내면 
 // 성능이 느려지고, 불필요한 정보들까지 내려올수 있으므로 parentID, userId만 내려보낸다.
-public class DriveItemResponse {
+public class DriveItemResponseDto {
     private Long id;
     private String publicId;
     private String itemName;
@@ -23,7 +23,7 @@ public class DriveItemResponse {
     private Boolean isFavorite; // DriveItem Entity에는 없지만, Response에는 필요한 값
     // isTrashRoot는 API에서만 사용하므로 제외
     
-    public DriveItemResponse(DriveItem driveItem, Boolean isFavorite) {
+    public DriveItemResponseDto(DriveItem driveItem, Boolean isFavorite) {
         this.id = driveItem.getId();
         this.publicId = driveItem.getPublicId();
         this.itemName = driveItem.getItemName();

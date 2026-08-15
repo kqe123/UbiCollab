@@ -2,7 +2,7 @@ package com.ubicollab.permission.enums;
 
 public enum PermissionType {
 	OWNER("owner"),
-	VIEWOR("viewer"),
+	VIEWER("viewer"),
 	COMMENTOR("commentor"),
 	EDITOR("editor"),
 	MANAGER("manager");

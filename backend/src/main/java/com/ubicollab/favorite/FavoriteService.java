@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ubicollab.driveitem.DriveItem;
 import com.ubicollab.driveitem.DriveItemRepository;
-import com.ubicollab.driveitem.dto.DriveItemResponse;
+import com.ubicollab.driveitem.dto.DriveItemResponseDto;
 import com.ubicollab.driveitem.enums.DriveItemType;
 import com.ubicollab.favorite.FavoriteRepository;
 import com.ubicollab.user.UserRepository;
@@ -46,13 +46,13 @@ public class FavoriteService {
 	}
 	
 	// 즐겨찾기들을 조회하는 메서드
-	public Iterable<DriveItemResponse> getFavorites(String parentPublicId, String username) {
-		List<DriveItemResponse> result = new ArrayList<>();
+	public Iterable<DriveItemResponseDto> getFavorites(String parentPublicId, String username) {
+		List<DriveItemResponseDto> result = new ArrayList<>();
 			
 		// parentPublicId가 없다면 Favorite 엔티티 데이터들을 반환
 		if (parentPublicId == null) { 
 			for (Favorite favorite : favoriteRepository.findByUserUsername(username)) {
-				result.add(new DriveItemResponse(favorite.getItem(), true));
+				result.add(new DriveItemResponseDto(favorite.getItem(), true));
 			}
 		}
 			
@@ -61,7 +61,7 @@ public class FavoriteService {
 			for (DriveItem driveItem : driveItemRepository.findByUserUsernameAndParentPublicId(username, parentPublicId)) {
 				boolean isFavorite = (favoriteRepository.findByUserUsernameAndItem(username, driveItem)
 														.isPresent()) ? true : false; 
-				result.add(new DriveItemResponse(driveItem, isFavorite));
+				result.add(new DriveItemResponseDto(driveItem, isFavorite));
 			}
 		}
 			

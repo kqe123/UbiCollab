@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ubicollab.driveitem.dto.DriveItemCreateRequest;
-import com.ubicollab.driveitem.dto.DriveItemResponse;
+import com.ubicollab.driveitem.dto.DriveItemCreateDto;
+import com.ubicollab.driveitem.dto.DriveItemResponseDto;
 import com.ubicollab.favorite.Favorite;
 import com.ubicollab.favorite.FavoriteService;
 
@@ -46,7 +46,7 @@ public class FavoriteController {
 	
 	// [즐겨찾기] 즐겨찾기 조회 API (GET '/api/favorite')
 	@GetMapping
-	public Iterable<DriveItemResponse> getFavorites(
+	public Iterable<DriveItemResponseDto> getFavorites(
 			@RequestParam(value = "parentPublicId", required = false) String parentPublicId,
 			Authentication authentication) {
 		String username = authentication.getName(); // 현재 사용자 username
