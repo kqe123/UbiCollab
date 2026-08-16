@@ -48,5 +48,7 @@ public class PermissionController {
 		String username = authentication.getName();
 		return permissionService.getSharedUsers(username, publicId);
 	}
+	
+	
 
 }

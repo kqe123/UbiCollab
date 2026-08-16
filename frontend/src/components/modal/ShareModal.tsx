@@ -89,7 +89,7 @@ function  ShareModal ({
                 }
             );
             
-            console.log("공유 성공 : ", response.data);
+            console.log(`알림 : ${response.data}명 공유 성공!`);
             toast.success("공유 성공하였습니다!");
             onClose();
         } catch (error: unknown) {
@@ -211,6 +211,7 @@ function  ShareModal ({
                                             ...prev,
                                             {
                                                 id: user.id,
+                                                publicId : user.publicId,
                                                 username: user.username,
                                                 nickname: user.nickname,
                                                 profileImageKey: user.profileImageKey,

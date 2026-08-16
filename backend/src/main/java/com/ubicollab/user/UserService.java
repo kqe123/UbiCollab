@@ -57,7 +57,7 @@ public class UserService {
 		return userRepository.save(newUser);
 	}
 	
-	// 중복 username 검사 메서드
+	// 중복 username 검사 메서드 
 	public Boolean checkSameUsername(String username) {
 	    return userRepository.findByUsername(username).isPresent();
 	}

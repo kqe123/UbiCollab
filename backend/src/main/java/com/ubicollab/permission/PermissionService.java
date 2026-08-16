@@ -58,7 +58,8 @@ public class PermissionService {
 		result.add(new SharedUserResponse(owner,PermissionType.OWNER));
 			
 		// result에 권한 소유자 추가
-			
+		List<Permission> permissionList = permissionRepository.findByItem(driveItem);
+
 		return result;
 	}
 	
