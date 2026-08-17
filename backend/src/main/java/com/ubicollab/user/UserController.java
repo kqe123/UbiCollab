@@ -1,5 +1,7 @@
 package com.ubicollab.user;
 
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -27,11 +29,10 @@ public class UserController {
 	// 회원가입 API (POST 'api/user')
 	@PostMapping
 	public ResponseEntity<User> createUser(@RequestBody User user) {
-		User savedUser =
-	            userService.createUser(user);
+	    userService.createUser(user);
 		return ResponseEntity
 	            .status(HttpStatus.CREATED)
-	            .body(savedUser);
+	            .build();
 	}
 	
 	// 중복 username 체크 API (GET 'api/user/check-username')
@@ -39,17 +40,18 @@ public class UserController {
 	public ResponseEntity<Boolean> checkUsername(
 	        @RequestParam("username") String username) {
 	    Boolean exists = userService.checkSameUsername(username);
-	    return ResponseEntity.ok(exists);
+	    return ResponseEntity.status(HttpStatus.OK).body(exists);
 	}
 	
 	// 실시간 username 검색 결과 API (GET 'api/user/search')
 	@GetMapping("/search")
-	public Iterable<UserResponse> searchUsers(
+	public ResponseEntity<List<UserResponse>> searchUsers(
 			@RequestParam("keyword") String keyword,
 			@RequestParam("publicId") String publicId,
 			Authentication authentication) {
 		String username = authentication.getName(); // 현재 로그인 username
-		return userService.searchUsers(username, keyword, publicId);
+		return ResponseEntity.status(HttpStatus.OK)
+				.body(userService.searchUsers(username, keyword, publicId));
 	}
 
 	

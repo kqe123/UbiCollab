@@ -3,7 +3,7 @@ import toast from "react-hot-toast";
 import type {DriveItem} from "../../types/driveitem";
 import type {sharedUser} from "../../types/sharedUser";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, useRef, useEffect } from "react";
+import { useRef, useEffect } from "react";
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
@@ -39,7 +39,7 @@ function  PermissionModal ({
                     }
                 }
             )
-            console.log("공유 사용자 불러오기 성공");
+            console.log("알림 : 공유 사용자 불러오기 성공");
             return response.data;
         } catch (error: unknown) {
             console.error("공유 사용자 불러오기 실패 : ", error);

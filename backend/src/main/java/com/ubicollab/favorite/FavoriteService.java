@@ -46,7 +46,7 @@ public class FavoriteService {
 	}
 	
 	// 즐겨찾기들을 조회하는 메서드
-	public Iterable<DriveItemResponseDto> getFavorites(String parentPublicId, String username) {
+	public List<DriveItemResponseDto> getFavorites(String parentPublicId, String username) {
 		List<DriveItemResponseDto> result = new ArrayList<>();
 			
 		// parentPublicId가 없다면 Favorite 엔티티 데이터들을 반환

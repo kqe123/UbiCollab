@@ -1,6 +1,7 @@
 package com.ubicollab.favorite;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -46,11 +47,12 @@ public class FavoriteController {
 	
 	// [즐겨찾기] 즐겨찾기 조회 API (GET '/api/favorite')
 	@GetMapping
-	public Iterable<DriveItemResponseDto> getFavorites(
+	public ResponseEntity<List<DriveItemResponseDto>> getFavorites(
 			@RequestParam(value = "parentPublicId", required = false) String parentPublicId,
 			Authentication authentication) {
 		String username = authentication.getName(); // 현재 사용자 username
-		return favoriteService.getFavorites(parentPublicId, username);
+		return ResponseEntity.status(HttpStatus.OK)
+				.body(favoriteService.getFavorites(parentPublicId, username));
 	}
 	
 	// [즐겨찾기] 즐겨찾기 삭제 API (DELETE '/api/favorite/delete/{id}')
@@ -59,7 +61,7 @@ public class FavoriteController {
 				Authentication authentication) {
 			String username = authentication.getName();
 			favoriteService.deleteFavorite(publicId,username);
-		    return ResponseEntity.ok("삭제 완료");
+		    return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
 		}
 	
 	

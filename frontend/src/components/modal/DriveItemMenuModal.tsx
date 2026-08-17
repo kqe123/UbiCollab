@@ -41,7 +41,7 @@ function DriveItemMenuModal({
     const addFavorite = async () => {
         try {
             // Backend API 호출
-            const response = await axios.post(`http://localhost:8080/api/favorite/create/${driveItem.publicId}`,
+            await axios.post(`http://localhost:8080/api/favorite/create/${driveItem.publicId}`,
             null,
             {
                 headers: {
@@ -50,7 +50,7 @@ function DriveItemMenuModal({
             }
             );
         
-            console.log("즐겨찾기 추가 성공", response.data);
+            console.log("알림 : 즐겨찾기 추가 성공");
             await queryClient.invalidateQueries({
                 queryKey: ["driveItems"]
             });
@@ -81,7 +81,7 @@ function DriveItemMenuModal({
     const deleteFavorite = async () => {
         try {
             // Backend API 호출
-            const response = await axios.delete(`http://localhost:8080/api/favorite/delete/${driveItem.publicId}`,
+            await axios.delete(`http://localhost:8080/api/favorite/delete/${driveItem.publicId}`,
             {
                 headers: {
                     Authorization: `Bearer ${accessToken}`
@@ -89,7 +89,7 @@ function DriveItemMenuModal({
             }
             );
         
-            console.log("즐겨찾기 해제 성공", response.data);
+            console.log("알림 : 즐겨찾기 해제 성공");
             await queryClient.invalidateQueries({
                 queryKey: ["driveItems"]
             });
@@ -129,19 +129,19 @@ function DriveItemMenuModal({
             }
             );
         
-            console.log("문서를 휴지통으로 보내기 성공", response.data);
+            console.log(response.data);
             await queryClient.invalidateQueries({
                 queryKey: ["driveItems"]
             });
-            toast.success("파일이 휴지통으로 이동되었습니다.");
+            toast.success("알림 : 파일/폴더가 휴지통으로 이동되었습니다.");
             onClose();
         } catch (error: unknown) {
-            console.error("문서를 휴지통으로 보내기 실패.. : ", error);
+            console.error("파일/폴더를 휴지통으로 보내기 실패.. : ", error);
 
             // axios에서 발생한 오류인 경우
             if (axios.isAxiosError(error)) {
                 console.error("백엔드 응답:", error.response?.data);
-                toast.error(error.response?.data?.message ?? "문서를 휴지통으로 보내기에 실패했습니다.");
+                toast.error(error.response?.data?.message ?? "파일/폴더를 휴지통으로 보내기에 실패했습니다.");
             } 
             // 일반 오류인 경우
             else if (error instanceof Error) {

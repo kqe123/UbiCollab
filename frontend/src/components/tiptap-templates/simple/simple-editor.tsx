@@ -295,8 +295,7 @@ export function SimpleEditor({
         }
       );
         
-      console.log("문서 저장 성공");
-      console.log(response.data);
+      console.log("알림 : 문서 저장 성공");
       toast.success("성공적으로 저장되었습니다.");
       } catch (error: unknown) {
       console.error("문서 저장 실패:", error);

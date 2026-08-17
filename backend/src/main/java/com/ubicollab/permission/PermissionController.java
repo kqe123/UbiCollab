@@ -1,5 +1,7 @@
 package com.ubicollab.permission;
 
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -49,18 +51,19 @@ public class PermissionController {
 		String username = authentication.getName();
 		int permissionCount = permissionService.updatePermission(username, request);
 		return ResponseEntity
-		        .status(HttpStatus.CREATED)
+		        .status(HttpStatus.OK)
 		        .body(permissionCount);
 	}
 		
 	
 	// 공유된 사용자들 목록 조회 API (GET 'api/permission/shared')
 	@GetMapping("/shared")
-	public Iterable<SharedUserResponse> getSharedUsers(
+	public ResponseEntity<List<SharedUserResponse>> getSharedUsers(
 			@RequestParam("publicId") String publicId,
 			Authentication authentication) {
 		String username = authentication.getName();
-		return permissionService.getSharedUsers(username, publicId);
+		return ResponseEntity.status(HttpStatus.OK)
+				.body(permissionService.getSharedUsers(username, publicId));
 	}
 	
 	

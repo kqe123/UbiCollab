@@ -67,7 +67,7 @@ public class PermissionService {
 	}
 	
 	// 공유 사용자 목록 조회 메서드
-	public Iterable<SharedUserResponse> getSharedUsers(String username, String publicId) {
+	public List<SharedUserResponse> getSharedUsers(String username, String publicId) {
 		List<SharedUserResponse> result = new ArrayList<>();
 			
 		// result에 소유자 추가

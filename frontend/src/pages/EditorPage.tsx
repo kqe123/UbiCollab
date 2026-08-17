@@ -7,7 +7,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 
 function EditorPage() {
-    // URL이 /editor/3이라면 documentId에는 "3"이 들어옴 -> string | undefined
+    // URL이 /editor/zhamslwl.....이라면 documentId에는 "zhamslwl....."이 들어옴 -> string | undefined
     const { fileId } = useParams();
 
     // 백엔드에서 받아온 파일명과 문서 내용을 저장

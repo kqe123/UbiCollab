@@ -35,7 +35,7 @@ function TrashMenu({
             }
             );
         
-            console.log("복원 완료", response.data);
+            console.log("알림 : " + response.data);
             await queryClient.invalidateQueries({
                 queryKey: ["driveItems"]
             });
@@ -66,7 +66,7 @@ function TrashMenu({
     const deleteTrash = async () => {
         try {
             // 문서 변경 Backend API 호출
-            const response = await axios.delete(`http://localhost:8080/api/driveitem/delete/${driveItem.publicId}`,
+            await axios.delete(`http://localhost:8080/api/driveitem/delete/${driveItem.publicId}`,
             {
                 headers: {
                     Authorization: `Bearer ${accessToken}`
@@ -74,7 +74,7 @@ function TrashMenu({
             }
             );
         
-            console.log("영구 삭제 완료", response.data);
+            console.log("알림 : 영구 삭제 완료");
             await queryClient.invalidateQueries({
                 queryKey: ["driveItems"]
             });

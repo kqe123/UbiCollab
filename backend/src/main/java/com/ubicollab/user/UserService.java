@@ -29,7 +29,7 @@ public class UserService {
 	}
 	
 	// User를 생성하는 메서드
-	public User createUser(User user) {
+	public void createUser(User user) {
 		String username = user.getUsername();
 		String password = user.getPassword();
 		String nickname = user.getNickname();
@@ -53,8 +53,8 @@ public class UserService {
 		User newUser = new User(username, passwordEncoder.encode(password), nickname,
 								LocalDateTime.now(),"USER", profileImageKey);
 		
-		// 저장 + User 객체 반환
-		return userRepository.save(newUser);
+		// User 저장
+		userRepository.save(newUser);
 	}
 	
 	// 중복 username 검사 메서드 
@@ -63,7 +63,7 @@ public class UserService {
 	}
 	
 	// username 검색 엔진 메서드
-	public Iterable<UserResponse> searchUsers(String username, String keyword, String publicId) {
+	public List<UserResponse> searchUsers(String username, String keyword, String publicId) {
 		List<UserResponse> result = new ArrayList<>();
 		
 		// 현재 DriveItem

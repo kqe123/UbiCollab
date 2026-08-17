@@ -130,7 +130,7 @@ public class DriveItemService {
 	
 	
 	// 현재 사용자의 전체 file를 조회하는 메서드
-	public Iterable<DriveItemResponseDto> getFiles(String username) { 
+	public List<DriveItemResponseDto> getFiles(String username) { 
 		List<DriveItemResponseDto> result = new ArrayList<>();
 
 		for (DriveItem driveItem : driveRepository.findByTypeAndUserUsername(DriveItemType.FILE, username)) {
@@ -159,7 +159,7 @@ public class DriveItemService {
 	
 	
 	// 현재 디렉토리의 DriveItem(folder/file)들을 반환하는 메서드
-	public Iterable<DriveItemResponseDto> getDriveItems(String parentPublicId, String username) {
+	public List<DriveItemResponseDto> getDriveItems(String parentPublicId, String username) {
 		List<DriveItemResponseDto> result = new ArrayList<>();
 		List<DriveItem> driveItems; // 현재 디렉토리의 DriveItem List를 담을 변수
 		
@@ -187,7 +187,7 @@ public class DriveItemService {
 	}
 	
 	// 현재 디렉토리의 경로(path)를 반환하는 메서드
-	public Iterable<DriveItemResponseDto> getDrivePath(String publicId, String username) {
+	public List<DriveItemResponseDto> getDrivePath(String publicId, String username) {
 		List<DriveItemResponseDto> path = new ArrayList<>();
 		
 		// 부모로 거슬러 올라가면서 path에 현재 DriveItem 객체를 DriveItemResponse로 바꿔서 저장한다.
@@ -211,7 +211,7 @@ public class DriveItemService {
 	}
 	
 	// 휴지통 최상위 DriveItem(folder/file)를 가져오는 메서드
-	public Iterable<DriveItemResponseDto> getTrash(String username) {
+	public List<DriveItemResponseDto> getTrash(String username) {
 		List<DriveItemResponseDto> result = new ArrayList<>();
 		
 		// 휴지통 최상위 요소인지는 IsTrashRoot가 true인지로 판단한다.

@@ -40,7 +40,7 @@ function NewDriveItemModal({
                 }
             );
 
-            console.log("파일 생성 성공:", response.data);
+            console.log("알림 : 파일 생성 성공 : ", response.data);
             await queryClient.invalidateQueries({
                 queryKey: ["driveItems"]
             });
@@ -85,7 +85,7 @@ function NewDriveItemModal({
                 }
             );
 
-            console.log("폴더 생성 성공:", response.data);
+            console.log("알림 : 폴더 생성 성공 : ", response.data);
             await queryClient.invalidateQueries({
                 queryKey: ["driveItems"]
             });

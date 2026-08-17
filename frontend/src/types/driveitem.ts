@@ -4,7 +4,7 @@ export type DriveItem = {
     type : "FILE" | "FOLDER";
 
     parentId : number | null;
-    userId : number ;
+    userId : number;
 
     content: string|null;
     extension: string|null;
