@@ -150,8 +150,6 @@ function MyDriveList() {
     } = useQuery({
         queryKey: ["driveItems", currentFolderId], // 서버 데이터를 해당 이름으로 관리
         queryFn: getDriveItems,   // getDriveItems() 실행
-        retry : 2,
-        retryDelay : 100
     });
 
     // useQuery 실행 
@@ -265,7 +263,7 @@ function MyDriveList() {
                         {[...driveItems].filter((driveItem) => driveItem.isInTrash === false)
                         .sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()) // 생성 날짜 내림차순 정렬
                         .map((driveItem) => (
-                            <TableRow key={driveItem.id}
+                            <TableRow key={driveItem.publicId}
                                 onClick= {() => setSelectedDriveItem(driveItem)}
                                 onContextMenu= {(e) => {
                                     e.preventDefault();
@@ -280,9 +278,9 @@ function MyDriveList() {
                                 }}
                                 sx={{
                                     borderBottom: '1px solid #DBDBDB',
-                                    bgcolor: selectedDriveItem?.id === driveItem.id ? '#e8f2fd' : 'transparent', // bg-blue-100
+                                    bgcolor: selectedDriveItem?.publicId === driveItem.publicId ? '#e8f2fd' : 'transparent', // bg-blue-100
                                     '&:hover': {
-                                        bgcolor: selectedDriveItem?.id === driveItem.id ? '#e8f2fd' : '#f3f4f6', // hover:bg-gray-100
+                                        bgcolor: selectedDriveItem?.publicId === driveItem.publicId ? '#e8f2fd' : '#f3f4f6', // hover:bg-gray-100
                                     },
                                 }}
                             >

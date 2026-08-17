@@ -3,10 +3,7 @@ import toast from "react-hot-toast";
 import type {DriveItem} from "../../types/driveitem";
 import type {User} from "../../types/user";
 import type {sharedUser} from "../../types/sharedUser";
-import fileIcon from "../../assets/file.png";
-import folderIcon from "../../assets/folder.png";
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
@@ -76,9 +73,9 @@ function  ShareModal ({
             const response = await axios.post(
                 "http://localhost:8080/api/permission/create",
                 {
-                    publicId: driveItem.publicId,
+                    driveItemId: driveItem.publicId,
                     userList: sharedUsers.map((user) => ({
-                        userId: user.id,
+                        userId: user.publicId,
                         type: user.type,
                     })),
                 },
@@ -184,7 +181,7 @@ function  ShareModal ({
                             }} 
                         >
                             {users.map((user) => (
-                                <Box key={user.id}
+                                <Box key={user.publicId}
                                     sx={{
                                         height : 'min(60px, 7vh)',
                                         display: 'flex',
@@ -198,7 +195,7 @@ function  ShareModal ({
                                     onClick={() => {
                                         // 선택한 사용자가 이미 중복 선택된 경우 예외처리
                                         const isDuplicate = sharedUsers.some(
-                                            (sharedUser) => sharedUser.id === user.id
+                                            (sharedUser) => sharedUser.publicId === user.publicId
                                         );
 
                                         if (isDuplicate) {
@@ -210,7 +207,6 @@ function  ShareModal ({
                                         setSharedUsers((prev) => [
                                             ...prev,
                                             {
-                                                id: user.id,
                                                 publicId : user.publicId,
                                                 username: user.username,
                                                 nickname: user.nickname,
@@ -244,7 +240,7 @@ function  ShareModal ({
                         <Box sx={{width: '100%', flex: 1, minHeight: 0, overflowY: 'auto'}}>
                             {sharedUsers.map((sharedUser : sharedUser) => (
                                 <Box
-                                    key={sharedUser.id}
+                                    key={sharedUser.publicId}
                                     sx={{
                                         display : 'flex',
                                         height : 'min(60px, 7vh)',
@@ -271,7 +267,7 @@ function  ShareModal ({
                                             onChange={(e) => {
                                             setSharedUsers((prev) =>
                                                 prev.map((user) =>
-                                                user.id === sharedUser.id
+                                                user.publicId === sharedUser.publicId
                                                     ? { ...user, type: e.target.value }
                                                     : user
                                                 )

@@ -106,7 +106,7 @@ function TrashList() {
                         {[...driveItems].filter((driveItem) => driveItem.isInTrash === true)
                         .sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()) // 생성 날짜 내림차순 정렬
                         .map((driveItem) => (
-                            <TableRow key={driveItem.id}
+                            <TableRow key={driveItem.publicId}
                                 onClick= {() => setSelectedDriveItem(driveItem)}
                                 onContextMenu= {(e) => {
                                     e.preventDefault();
@@ -117,9 +117,9 @@ function TrashList() {
                                 }
                                 sx={{
                                     borderBottom: '1px solid #DBDBDB',
-                                    bgcolor: selectedDriveItem?.id === driveItem.id ? '#e8f2fd' : 'transparent', // bg-blue-100
+                                    bgcolor: selectedDriveItem?.publicId === driveItem.publicId ? '#e8f2fd' : 'transparent', // bg-blue-100
                                     '&:hover': {
-                                        bgcolor: selectedDriveItem?.id === driveItem.id ? '#e8f2fd' : '#f3f4f6', // hover:bg-gray-100
+                                        bgcolor: selectedDriveItem?.publicId === driveItem.publicId ? '#e8f2fd' : '#f3f4f6', // hover:bg-gray-100
                                     },
                                 }}
                             >

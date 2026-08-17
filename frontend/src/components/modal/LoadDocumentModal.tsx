@@ -29,9 +29,6 @@ function LoadDocumentModal({onClose} : {onClose : () => void}) {
                 }
             }
         );
-            
-        console.log("백엔드 응답:", response.data);
-
         return response.data;
     };
 
@@ -132,7 +129,7 @@ function LoadDocumentModal({onClose} : {onClose : () => void}) {
                     <TableBody>
                         {[...files].sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()) // 생성 날짜 내림차순 정렬
                             .map((file) => (
-                                <TableRow key={file.id} 
+                                <TableRow key={file.publicId} 
                                     onClick={() => setSelectedFileId(file.publicId)}
                                     onDoubleClick={loadDocument}
                                     sx={{

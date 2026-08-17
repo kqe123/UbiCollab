@@ -32,14 +32,14 @@ public class PermissionService {
 	
 	@Transactional
 	public int createPermission(String username, PermissionRequestDto request) {
-		String publicId = request.publicId();
-		DriveItem driveItem = driveRepository.findByPublicId(publicId).orElseThrow(
-				() -> new RuntimeException("DriveItem을 찾을 수 없습니다. publicId=" + publicId));
+		String driveItemId = request.driveItemId();
+		DriveItem driveItem = driveRepository.findByPublicId(driveItemId).orElseThrow(
+				() -> new RuntimeException("DriveItem을 찾을 수 없습니다. publicId=" + driveItemId));
 		List<UserDto> userList = request.userList();
 		
 		
 		for (UserDto userInfo : userList) {
-			User user = userRepository.findById(userInfo.userId()).orElseThrow(
+			User user = userRepository.findByPublicId(userInfo.userId()).orElseThrow(
 					() -> new RuntimeException("User를 찾을 수 없습니다. : " + userInfo.userId()));
 			Permission permission = new Permission(user, driveItem,userInfo.type(), LocalDateTime.now()); 
 			permissionRepository.save(permission);
@@ -49,13 +49,13 @@ public class PermissionService {
 	
 	@Transactional
 	public int updatePermission(String username, PermissionRequestDto request) {
-		String publicId = request.publicId();
-		DriveItem driveItem = driveRepository.findByPublicId(publicId).orElseThrow(
-				() -> new RuntimeException("DriveItem을 찾을 수 없습니다. publicId=" + publicId));
+		String driveItemId = request.driveItemId();
+		DriveItem driveItem = driveRepository.findByPublicId(driveItemId).orElseThrow(
+				() -> new RuntimeException("DriveItem을 찾을 수 없습니다. publicId=" + driveItemId));
 		List<UserDto> userList = request.userList();
 		
 		for (UserDto userInfo : userList) {
-			User user = userRepository.findById(userInfo.userId()).orElseThrow(
+			User user = userRepository.findByPublicId(userInfo.userId()).orElseThrow(
 					() -> new RuntimeException("User를 찾을 수 없습니다. : " + userInfo.userId()));
 			Permission permission = permissionRepository.findByItemAndUser(driveItem, user).orElseThrow(
 					() -> new RuntimeException("Permission를 찾을 수 없습니다. : " + userInfo.userId() + driveItem.getPublicId()));
@@ -64,7 +64,6 @@ public class PermissionService {
 		}
 		
 		return userList.size();
-		
 	}
 	
 	// 공유 사용자 목록 조회 메서드

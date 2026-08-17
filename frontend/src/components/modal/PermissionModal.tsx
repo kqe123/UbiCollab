@@ -102,9 +102,9 @@ function  PermissionModal ({
             const response = await axios.patch(
                 "http://localhost:8080/api/permission/update",
                 {
-                    publicId: driveItem.publicId,
+                    driveItemId: driveItem.publicId,
                     userList: updateUsers.map((user : sharedUser) => ({
-                        userId: user.id,
+                        userId: user.publicId,
                         type: user.type,
                     })),
                 },
@@ -207,7 +207,7 @@ function  PermissionModal ({
                         <Box sx={{width: '100%', maxHeight : 'min(300px, 35vh)', overflowY: 'auto', mt : 1 }}>
                             {sharedUsers.map((sharedUser : sharedUser) => (
                                 <Box 
-                                    key={sharedUser.id}
+                                    key={sharedUser.publicId}
                                     sx={{
                                         display : 'flex',
                                         height : 'min(60px, 7vh)',
@@ -236,7 +236,7 @@ function  PermissionModal ({
                                             onChange={(e: SelectChangeEvent) => {
                                                 queryClient.setQueryData<sharedUser[]>(["users", driveItem.publicId], (prev) =>
                                                     (prev ?? []).map((user) =>
-                                                        user.id === sharedUser.id
+                                                        user.publicId === sharedUser.publicId
                                                             ? { ...user, type: e.target.value }
                                                             : user
                                                     )
