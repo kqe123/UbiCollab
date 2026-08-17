@@ -24,7 +24,7 @@ function  PermissionModal ({
     const queryClient = useQueryClient(); // QueryClient 가져옴
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
     const initialUsers = useRef<sharedUser[]>([]); // 공유된 사용자들의 권한 초기 상태 스냅샷
-    const hasSnapshot = useRef(false);
+    const hasSnapshot = useRef(false);   // Snapshot을 찍었는지 안찍었는지 여부
 
     // 현재 공유된 사용자 목록 불러오는 함수
     const getSharedUser = async () => {
@@ -97,7 +97,6 @@ function  PermissionModal ({
             toast("변경사항이 없습니다.");  
             return;
         }
-
         try {
 
             const response = await axios.patch(

@@ -11,6 +11,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.ubicollab.common.exception.PermissionDeniedException;
 import com.ubicollab.driveitem.DriveItem;
 import com.ubicollab.driveitem.DriveItemRepository;
 import com.ubicollab.driveitem.dto.DriveItemCreateDto;
@@ -160,8 +161,22 @@ public class DriveItemService {
 	// 현재 디렉토리의 DriveItem(folder/file)들을 반환하는 메서드
 	public Iterable<DriveItemResponseDto> getDriveItems(String parentPublicId, String username) {
 		List<DriveItemResponseDto> result = new ArrayList<>();
+		List<DriveItem> driveItems; // 현재 디렉토리의 DriveItem List를 담을 변수
 		
-		for (DriveItem driveItem : driveRepository.findByUserUsernameAndParentPublicId(username, parentPublicId)) {
+		if (parentPublicId == null) {
+			driveItems = driveRepository.findByUserUsernameAndParentPublicId(username, parentPublicId);
+		}
+		// 현재 로그인된 유저가 해당 부모 폴더의 소유자가 아니라면 접근 제어
+		else {
+			DriveItem driveItem = driveRepository.findByParentPublicId(parentPublicId).orElseThrow(
+					() -> new RuntimeException("파일을 찾을 수 없습니다. publicId=" + parentPublicId));
+			if (!driveItem.getUser().getUsername().equals(username)) {
+				throw new PermissionDeniedException("해당 사용자는 접근할 권한이 없습니다.");
+			}
+			driveItems = driveRepository.findByUserUsernameAndParentPublicId(username, parentPublicId);
+		}
+		
+		for (DriveItem driveItem :driveItems) {
 			// 해당 DriveItem이 즐겨찾기에 등록되어 있는지 확인
 			boolean isFavorite = (favoriteRepository.findByUserUsernameAndItem(username, driveItem)
 													.isPresent()) ? true : false; 

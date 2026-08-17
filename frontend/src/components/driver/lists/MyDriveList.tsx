@@ -3,6 +3,7 @@ import toast from "react-hot-toast";
 import fileIcon from "../../../assets/file.png";
 import folderIcon from "../../../assets/folder.png";
 import noDriveImg from "../../../assets/empty-drive.png";
+import noAuthorizedIcon from "../../../assets/noAuthorized.png";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useNavigate, useParams, useOutletContext } from "react-router-dom";
@@ -95,34 +96,49 @@ function MyDriveList() {
 
     // 백엔드 api(디렉토리 조회)를 호출하는 비동기 함수
     const getDriveItems = async () => {
-
-        // axios로 백엔드 api 호출
-        const response = await axios.get(
-            "http://localhost:8080/api/driveitem/driveitems",
-            {   
-                params: {
-                    parentPublicId: currentFolderId
-                },
-                headers: {
-                    Authorization: `Bearer ${accessToken}`
+        try {
+            // axios로 백엔드 api 호출
+            const response = await axios.get(
+                "http://localhost:8080/api/driveitem/driveitems",
+                {   
+                    params: {
+                        parentPublicId: currentFolderId
+                    },
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`
+                    }
                 }
+            );
+            return response.data;
+        } catch (error: unknown) {
+            if (axios.isAxiosError(error)) {
+                const message = error.response?.data?.message ?? "디렉토리 조회에 실패했습니다.";
+                throw new Error(message); // 여기서 백엔드 메시지를 담은 새 Error로 교체
             }
-        );
-        return response.data;
+            throw error;
+        }
     };
 
     // 백엔드 api(현재 경로 조회)를 호출하는 비동기 함수
     const getDrivePath = async ()  => {
-        const response = await axios.get(
-            `http://localhost:8080/api/driveitem/path/${currentFolderId}`,
-            {
-                headers : {
-                    Authorization: `Bearer ${accessToken}`
+        try {
+            const response = await axios.get(
+                `http://localhost:8080/api/driveitem/path/${currentFolderId}`,
+                {
+                    headers : {
+                        Authorization: `Bearer ${accessToken}`
+                    }
                 }
+            )
+            console.log(response.data)
+            return response.data;
+        } catch (error: unknown) {
+            if (axios.isAxiosError(error)) {
+                const message = error.response?.data?.message ?? "경로 조회에 실패했습니다.";
+                throw new Error(message); // 여기서 백엔드 메시지를 담은 새 Error로 교체
             }
-        )
-        console.log(response.data)
-        return response.data;
+            throw error;
+        }
     };
 
     // useQuery 실행 (첫 렌더링 시, queryKey가 변경될 시에 실행한다.)
@@ -134,6 +150,8 @@ function MyDriveList() {
     } = useQuery({
         queryKey: ["driveItems", currentFolderId], // 서버 데이터를 해당 이름으로 관리
         queryFn: getDriveItems,   // getDriveItems() 실행
+        retry : 2,
+        retryDelay : 100
     });
 
     // useQuery 실행 
@@ -163,7 +181,8 @@ function MyDriveList() {
     if (isDriveItemsError) {
         return (
             <Box sx={{ minHeight: '100vh', alignItems: 'center', justifyContent: 'center'}}>
-                <Typography sx={{ color: 'error.main' }}>문서를 불러오지 못했습니다 : {driveItemsError.message}</Typography>
+                <Box component="img" src={noAuthorizedIcon} sx={{ width: '40%', height: '35%', mx: 'auto', mt: 5}}/>
+                <Typography variant="h5" sx={{ color: 'error.main' ,textAlign: 'center',}}>{driveItemsError.message}</Typography>
             </Box>
         )
     }
