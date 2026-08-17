@@ -2,14 +2,16 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import type {DriveItem} from "../../types/driveitem";
 import type {sharedUser} from "../../types/sharedUser";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState, useRef, useEffect } from "react";
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import CloseIcon from '@mui/icons-material/Close';
 import PermissionIcon from '@mui/icons-material/CoPresent';
 import Avatar from '@mui/material/Avatar';
-
+import Select, { type SelectChangeEvent } from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
 
 function  PermissionModal ({
     driveItem,
@@ -19,7 +21,12 @@ function  PermissionModal ({
     onClose : () => void;
 }) { 
 
+    const queryClient = useQueryClient(); // QueryClient 가져옴
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
+    const initialUsers = useRef<sharedUser[]>([]); // 공유된 사용자들의 권한 초기 상태 스냅샷
+    const hasSnapshot = useRef(false);
+
+    // 현재 공유된 사용자 목록 불러오는 함수
     const getSharedUser = async () => {
         try {
             const response = await axios.get("http://localhost:8080/api/permission/shared",
@@ -54,16 +61,95 @@ function  PermissionModal ({
         } 
     }
 
+    // useQuery로 DriveItem이 바뀔때마다 새로운 공유 사용자를 불러옴.
     const {
         data : sharedUsers = [],
         isLoading,            // 현재 요청 중인지 여부
         isError,            // 요청이 실패했는지 여부
         error                // 실패했을 때 오류 정보
     } = useQuery({
-        queryKey : ["users"],
+        queryKey : ["users", driveItem.publicId],
         queryFn : getSharedUser,
     })
     
+    // 권한이 업데이트된 사용자들을 뽑아내는 함수
+    const updateUser = () => {
+        // 1단계: initialUsers를 publicId 기준으로 즉시 조회 가능한 Map으로 변환
+        const initialUserMap = new Map(
+            initialUsers.current.map((user) => [user.publicId, user])
+        );
+
+        // 2단계: sharedUsers를 한 번만 순회하면서, 타입이 바뀐 사람만 필터링해서 반환
+        const changedUsers = sharedUsers
+            .filter((sharedUser : sharedUser) => {
+                const initialUser = initialUserMap.get(sharedUser.publicId); // 키 조회(없으면 undefined)
+                return initialUser && initialUser.type !== sharedUser.type;
+            })
+
+        return changedUsers;
+    }
+
+    // 권한 업데이트 함수
+    const updatePermission = async () => {
+        const updateUsers = updateUser();
+
+        if (updateUsers.length === 0) {
+            toast("변경사항이 없습니다.");  
+            return;
+        }
+
+        try {
+
+            const response = await axios.patch(
+                "http://localhost:8080/api/permission/update",
+                {
+                    publicId: driveItem.publicId,
+                    userList: updateUsers.map((user : sharedUser) => ({
+                        userId: user.id,
+                        type: user.type,
+                    })),
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                    },
+                }
+            );
+                
+            console.log(`알림 : ${response.data}명 권한 업데이트 성공`);
+            toast.success("권한 업데이트에 성공하였습니다!");
+            onClose();
+        } catch (error: unknown) {
+            console.error("권한 업데이트 실패... : ", error);
+    
+            // axios에서 발생한 오류인 경우
+            if (axios.isAxiosError(error)) {
+                console.error("백엔드 응답:", error.response?.data);
+                toast.error(error.response?.data?.message ?? "권한 업데이트에 실패했습니다.");
+            } 
+            // 일반 오류인 경우
+            else if (error instanceof Error) {
+                console.error("일반 오류:", error.message);
+                toast.error(error.message);
+            } 
+            // 그 외의 오류인 경우
+            else {
+                console.error("알 수 없는 오류:", error);
+                toast.error("알 수 없는 오류가 발생했습니다.");
+            }
+        }
+    }
+
+    // 초기 스냅샷 찍음.
+    useEffect(() => {
+        {/* 현재 로딩중이 아니고, 스냅샷을 안찍은 상태일때*/}
+        if (!hasSnapshot.current &&!isLoading) {
+            initialUsers.current = sharedUsers;
+            hasSnapshot.current = true;
+            console.log(initialUsers);
+        }
+    }, [isLoading, sharedUsers]);
+
     // 로딩 처리
     if (isLoading) {
         return (
@@ -100,7 +186,7 @@ function  PermissionModal ({
             <Box 
                 sx={{
                     width : '40%',
-                    height : '60%',
+                    height : '65%',
                     bgcolor: 'white',
                     p : 3,
                     borderRadius: '8px',
@@ -141,14 +227,46 @@ function  PermissionModal ({
                                         <Typography variant="body2" sx={{ fontWeight : 500, flex : 1}}>{sharedUser.nickname}</Typography>
                                         <Typography variant="body2" sx={{ color : 'gray', flex : 1}}>{sharedUser.username}</Typography>
                                     </Box>
-                                    <Box sx={{ml: 'auto'}}>
-                                        {(sharedUser.type === "OWNER") ? (
-                                            <Typography variant="body2" sx={{ color : 'gray', m : 2, flex : 1}}>소유자</Typography>
-                                        ) : (
-                                            <Typography variant="body2" sx={{ color : 'gray', m : 2, flex : 1}}>편집자</Typography>
-                                        )
-                                        }
-                                    </Box>
+                                    {sharedUser.type === "OWNER" ? (
+                                        <Typography variant="body2" sx={{ color : 'gray', m : 2, ml: 'auto'}}>소유자</Typography>
+                                    ) : (
+                                        <Box sx={{ml: 'auto'}}>
+                                        <Select
+                                            value={sharedUser.type}
+                                            size="small"
+                                            onChange={(e: SelectChangeEvent) => {
+                                                queryClient.setQueryData<sharedUser[]>(["users", driveItem.publicId], (prev) =>
+                                                    (prev ?? []).map((user) =>
+                                                        user.id === sharedUser.id
+                                                            ? { ...user, type: e.target.value }
+                                                            : user
+                                                    )
+                                                );
+                                                }
+                                            }
+                                            sx={{
+                                                fontSize: '13px', // text-sm
+                                                bgcolor: 'white',
+                                                borderRadius: 2, // rounded-lg
+                                                '& .MuiOutlinedInput-notchedOutline': {
+                                                    borderColor: 'grey.300',
+                                                },
+                                                '&:hover .MuiOutlinedInput-notchedOutline': {
+                                                    borderColor: 'primary.light', // hover:border-blue-400
+                                                },
+                                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                                    borderColor: 'primary.main', // focus:border-blue-500
+                                                    borderWidth: 2,
+                                                },
+                                            }}
+                                        >
+                                            <MenuItem value="VIEWER">뷰어</MenuItem>
+                                            <MenuItem value="COMMENTOR">댓글 작성자</MenuItem>
+                                            <MenuItem value="EDITOR">편집자</MenuItem>
+                                            <MenuItem value="MANAGER">관리자</MenuItem>
+                                        </Select>
+                                        </Box>
+                                    )}
                                 </Box>
                             ))}
                         </Box>
@@ -163,6 +281,7 @@ function  PermissionModal ({
                         size="large"
                         variant="contained"                 
                         color='primary'
+                        onClick={updatePermission}
                         sx={{ borderRadius: '8px', fontWeight: 500}}
                     >
                         완료

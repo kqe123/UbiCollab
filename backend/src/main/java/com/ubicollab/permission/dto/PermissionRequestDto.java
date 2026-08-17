@@ -24,7 +24,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
 // 권한 생성 DTO
-public record PermissionCreateDto(
+public record PermissionRequestDto(
     // DriveItem의 publicId
 	@NotNull(message="DriveItem의 publicId는 필수입니다!")
 	String publicId,

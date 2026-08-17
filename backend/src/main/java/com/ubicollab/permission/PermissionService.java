@@ -8,8 +8,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ubicollab.driveitem.DriveItem;
 import com.ubicollab.driveitem.DriveItemRepository;
-import com.ubicollab.permission.dto.PermissionCreateDto;
-import com.ubicollab.permission.dto.PermissionCreateDto.UserDto;
+import com.ubicollab.permission.dto.PermissionRequestDto;
+import com.ubicollab.permission.dto.PermissionRequestDto.UserDto;
 import com.ubicollab.permission.dto.SharedUserResponse;
 import com.ubicollab.permission.enums.PermissionType;
 import com.ubicollab.user.User;
@@ -31,7 +31,7 @@ public class PermissionService {
 	}
 	
 	@Transactional
-	public int createPermission(String username, PermissionCreateDto request) {
+	public int createPermission(String username, PermissionRequestDto request) {
 		String publicId = request.publicId();
 		DriveItem driveItem = driveRepository.findByPublicId(publicId).orElseThrow(
 				() -> new RuntimeException("DriveItem을 찾을 수 없습니다. publicId=" + publicId));
@@ -47,6 +47,26 @@ public class PermissionService {
 		return userList.size();
 	}
 	
+	@Transactional
+	public int updatePermission(String username, PermissionRequestDto request) {
+		String publicId = request.publicId();
+		DriveItem driveItem = driveRepository.findByPublicId(publicId).orElseThrow(
+				() -> new RuntimeException("DriveItem을 찾을 수 없습니다. publicId=" + publicId));
+		List<UserDto> userList = request.userList();
+		
+		for (UserDto userInfo : userList) {
+			User user = userRepository.findById(userInfo.userId()).orElseThrow(
+					() -> new RuntimeException("User를 찾을 수 없습니다. : " + userInfo.userId()));
+			Permission permission = permissionRepository.findByItemAndUser(driveItem, user).orElseThrow(
+					() -> new RuntimeException("Permission를 찾을 수 없습니다. : " + userInfo.userId() + driveItem.getPublicId()));
+			permission.setType(userInfo.type());
+			permissionRepository.save(permission);
+		}
+		
+		return userList.size();
+		
+	}
+	
 	// 공유 사용자 목록 조회 메서드
 	public Iterable<SharedUserResponse> getSharedUsers(String username, String publicId) {
 		List<SharedUserResponse> result = new ArrayList<>();
@@ -59,8 +79,13 @@ public class PermissionService {
 			
 		// result에 권한 소유자 추가
 		List<Permission> permissionList = permissionRepository.findByItem(driveItem);
-
+		for(Permission permission : permissionList) {
+			result.add(new SharedUserResponse(
+					permission.getUser(),permission.getType()));
+		}
 		return result;
 	}
+	
+	
 	
 }
