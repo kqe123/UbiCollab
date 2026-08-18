@@ -6,7 +6,7 @@ import noDriveImg from "../../../assets/empty-drive.png";
 import noAuthorizedIcon from "../../../assets/noAuthorized.png";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { useNavigate, useParams, useOutletContext } from "react-router-dom";
+import { useNavigate, useParams, useOutletContext, NavLink } from "react-router-dom";
 import DriveItemMenuModal from "../../modal/DriveItemMenuModal"
 import NewDriveItemModal from "../../modal/NewDriveItemModal"
 import type {DriveItem} from "../../../types/driveitem";
@@ -22,6 +22,8 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
+import Breadcrumbs from '@mui/material/Breadcrumbs';
+import Link from '@mui/material/Link';
 
 function MyDriveList() {
     // 상태(state)들
@@ -194,7 +196,7 @@ function MyDriveList() {
             sx={{ width : '100%', height : '100%'}}
             onContextMenu= {(e) => {tableRightClick(e);}}
         >
-            <Box sx={{ display: 'flex', width: '50%', alignItems: 'center' , 
+            <Box sx={{ display: 'flex', width: '70%', alignItems: 'center' , 
                 gap : 0.5, mt : 4, bgcolor: '#eaeefc', borderRadius: '10px'}}>
 
                 {/* Home Button */}
@@ -238,9 +240,33 @@ function MyDriveList() {
                 </IconButton>
 
                 {/* Path */}
-                <Typography variant="body2" sx={{ fontWeight: 500}}>
-                    내 드라이브 / {[...paths].map((path) => path.itemName).join(" / ")}
-                </Typography>
+                <Breadcrumbs
+                    separator="/"
+                    maxItems={4}
+                    sx={{
+                        fontWeight: 500,
+                        fontSize: "14px",
+                        flexWrap: "nowrap",   // 줄바꿈 방지
+                        overflow: "hidden",
+                        "& .MuiBreadcrumbs-ol": { flexWrap: "nowrap" },
+                    }}
+                >
+                    <Typography variant="body2" sx={{ fontWeight: 500}}>
+                        내 드라이브
+                    </Typography>
+                    {[...paths].map((path) => (
+                        <Box key={path.publicId}>
+                            <Link 
+                                key={path.publicId}
+                                component={NavLink}
+                                to={`/drive/my-drive/${path.publicId}`}
+                                sx={{color : 'blue'}}    
+                            >
+                                {path.itemName}
+                            </Link>
+                        </Box>
+                    ))}
+                </Breadcrumbs>
             </Box>
             {/* 폴더/파일이 0건일때 예외처리 */}    
             {[...driveItems].filter((driveItem) => driveItem.isInTrash === false).length === 0 ? (

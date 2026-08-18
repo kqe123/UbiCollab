@@ -1,6 +1,7 @@
 package com.ubicollab.driveitem.dto;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import com.ubicollab.driveitem.DriveItem;
 import com.ubicollab.driveitem.enums.DriveItemExtension;
@@ -12,8 +13,8 @@ public record DriveItemResponseDto(
 	    String publicId,
 	    String itemName,
 	    DriveItemType type,
-	    Long parentId, 
-	    Long userId,   
+	    String parentId,
+	    UUID userId, 
 	    String content,
 	    DriveItemExtension extension,
 	    Long size,
@@ -27,8 +28,8 @@ public record DriveItemResponseDto(
     	this(	driveItem.getPublicId(),
     			driveItem.getItemName(),
     			driveItem.getType(),
-    			driveItem.getParent() == null ? null : driveItem.getParent().getId(),
-    			driveItem.getUser().getId(),
+    			driveItem.getParent() == null ? null : driveItem.getParent().getPublicId(),
+    			driveItem.getUser().getPublicId(),
     			driveItem.getContent(),
     			driveItem.getExtension(),
     			driveItem.getSize(),

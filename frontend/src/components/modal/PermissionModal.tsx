@@ -29,7 +29,7 @@ function  PermissionModal ({
     // 현재 공유된 사용자 목록 불러오는 함수
     const getSharedUser = async () => {
         try {
-            const response = await axios.get("http://localhost:8080/api/permission/shared",
+            const response = await axios.get("http://localhost:8080/api/permission/sharedUser",
                 {   
                     params: {
                         publicId: driveItem.publicId

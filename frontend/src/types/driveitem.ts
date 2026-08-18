@@ -3,8 +3,8 @@ export type DriveItem = {
     itemName: string;
     type : "FILE" | "FOLDER";
 
-    parentId : number | null;
-    userId : number;
+    parentId : string | null;
+    userId : string;
 
     content: string|null;
     extension: string|null;

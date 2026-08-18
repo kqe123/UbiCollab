@@ -8,8 +8,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ubicollab.driveitem.DriveItem;
 import com.ubicollab.driveitem.DriveItemRepository;
+import com.ubicollab.driveitem.dto.DriveItemResponseDto;
+import com.ubicollab.favorite.Favorite;
 import com.ubicollab.permission.dto.PermissionRequestDto;
 import com.ubicollab.permission.dto.PermissionRequestDto.UserDto;
+import com.ubicollab.permission.dto.SharedItemResponse;
 import com.ubicollab.permission.dto.SharedUserResponse;
 import com.ubicollab.permission.enums.PermissionType;
 import com.ubicollab.user.User;
@@ -85,6 +88,20 @@ public class PermissionService {
 		return result;
 	}
 	
+	// 공유 문서 디렉토리를 조회하는 메서드
+	public List<SharedItemResponse> getSharedDriveItems(String username, String driveItemId) {
+		List<SharedItemResponse> result = new ArrayList<>();
+
+		// 현재 DriveItem
+		DriveItem driveItem = driveRepository.findByPublicId(driveItemId).orElseThrow(
+				() -> new RuntimeException("DriveItem을 찾을 수 없습니다. publicId=" + driveItemId));
+		
+		// 현재 로그인된 유저
+		User user = userRepository.findByUsername(username).orElseThrow(
+					() -> new RuntimeException("User를 찾을 수 없습니다. : " + username));
+		
+		return result;
+	}
 	
 	
 }

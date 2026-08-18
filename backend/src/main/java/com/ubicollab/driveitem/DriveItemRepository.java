@@ -11,7 +11,6 @@ import com.ubicollab.user.User;
 
 public interface DriveItemRepository extends CrudRepository<DriveItem, Long>{
 	Optional<DriveItem> findByPublicId(String publicId);
-	Optional<DriveItem> findByParentPublicId(String parentPublicId);
 	List<DriveItem> findByType(DriveItemType type);
 	List<DriveItem> findByTypeAndUserUsername(DriveItemType type, String username);
 	List<DriveItem> findByUserUsernameAndParentPublicId(String username,String parentPublicId);

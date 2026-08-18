@@ -9,6 +9,7 @@ import com.ubicollab.user.User;
 
 public interface PermissionRepository extends CrudRepository<Permission, Long>{
 	List<Permission> findByItem(DriveItem item);
+	List<Permission> findByUser(User user);
 	Optional<Permission> findByItemAndUser(DriveItem item, User user);
 	
 }

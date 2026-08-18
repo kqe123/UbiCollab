@@ -168,9 +168,9 @@ public class DriveItemService {
 		}
 		// 현재 로그인된 유저가 해당 부모 폴더의 소유자가 아니라면 접근 제어
 		else {
-			DriveItem driveItem = driveRepository.findByParentPublicId(parentPublicId).orElseThrow(
+			DriveItem parentItem = driveRepository.findByPublicId(parentPublicId).orElseThrow(
 					() -> new RuntimeException("파일을 찾을 수 없습니다. publicId=" + parentPublicId));
-			if (!driveItem.getUser().getUsername().equals(username)) {
+			if (!parentItem.getUser().getUsername().equals(username)) {
 				throw new PermissionDeniedException("해당 사용자는 접근할 권한이 없습니다.");
 			}
 			driveItems = driveRepository.findByUserUsernameAndParentPublicId(username, parentPublicId);

@@ -80,7 +80,7 @@ public class DriveItemController {
 				.body(driveService.getDriveItems(parentPublicId, username));
 	}
 	
-	// [내 드라이브] 현재 경로 가져오기 API (GET '/api/driveitem/path/{id}')
+	// [내 드라이브, 즐겨찾기] 현재 경로 가져오기 API (GET '/api/driveitem/path/{id}')
 	@GetMapping("/path/{id}")
 	public ResponseEntity<List<DriveItemResponseDto>> getDrivePath(@PathVariable("id") String publicId,
 			Authentication authentication) {
