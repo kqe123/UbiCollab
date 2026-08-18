@@ -23,7 +23,6 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Breadcrumbs from '@mui/material/Breadcrumbs';
-import Link from '@mui/material/Link';
 
 function MyDriveList() {
     // 상태(state)들
@@ -47,10 +46,10 @@ function MyDriveList() {
 
     // 요소 더블클릭 시 발생하는 이벤트 함수
     const elementDoubleClick = (driveItem: DriveItem): void => {
-        if (driveItem.type === "FOLDER") {
+        if (driveItem.itemType === "FOLDER") {
             navigate(`/drive/my-drive/${driveItem.publicId}`);
         }
-        else if (driveItem.type === "FILE") {
+        else if (driveItem.itemType === "FILE") {
             navigate(`/editor/${driveItem.publicId}`);
         }
         else {
@@ -247,8 +246,7 @@ function MyDriveList() {
                         fontWeight: 500,
                         fontSize: "14px",
                         flexWrap: "nowrap",   // 줄바꿈 방지
-                        overflow: "hidden",
-                        "& .MuiBreadcrumbs-ol": { flexWrap: "nowrap" },
+                        overflowX: 'auto',
                     }}
                 >
                     <Typography variant="body2" sx={{ fontWeight: 500}}>
@@ -256,14 +254,17 @@ function MyDriveList() {
                     </Typography>
                     {[...paths].map((path) => (
                         <Box key={path.publicId}>
-                            <Link 
+                            <Typography
+                                variant="body2"
                                 key={path.publicId}
                                 component={NavLink}
                                 to={`/drive/my-drive/${path.publicId}`}
-                                sx={{color : 'blue'}}    
+                                sx={{color : 'blue',
+                                    flexWrap: "nowrap"
+                                }}    
                             >
                                 {path.itemName}
-                            </Link>
+                            </Typography>
                         </Box>
                     ))}
                 </Breadcrumbs>
@@ -314,9 +315,9 @@ function MyDriveList() {
                                 <TableCell sx={{ py: 1.5, px: 1, fontWeight: 500 }}>
                                     <Box
                                         component="img"
-                                        src={driveItem.type === "FOLDER" ? folderIcon : fileIcon}
+                                        src={driveItem.itemType === "FOLDER" ? folderIcon : fileIcon}
                                         sx={{ display: 'inline-block',
-                                            height: driveItem.type === "FOLDER" ? '15px' : '18px',
+                                            height: driveItem.itemType === "FOLDER" ? '15px' : '18px',
                                             width: '15px',
                                             mr: '5px',
                                             mb: '3px',

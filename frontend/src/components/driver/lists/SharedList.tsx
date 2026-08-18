@@ -6,7 +6,7 @@ import noDriveImg from "../../../assets/empty-drive.png";
 import noAuthorizedIcon from "../../../assets/noAuthorized.png";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { useNavigate, useParams, useOutletContext } from "react-router-dom";
+import { useNavigate, useParams, useOutletContext, NavLink } from "react-router-dom";
 import DriveItemMenuModal from "../../modal/DriveItemMenuModal"
 import NewDriveItemModal from "../../modal/NewDriveItemModal"
 import type {DriveItem} from "../../../types/driveitem";
@@ -22,7 +22,7 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
-
+import Breadcrumbs from '@mui/material/Breadcrumbs';
 function SharedList() {
     // 상태(state)들
     const currentFolderId = useParams().folderId ?? null; // useParams()로 조회되는 파라미터가 없다면 null 처리
@@ -45,10 +45,10 @@ function SharedList() {
 
     // 요소 더블클릭 시 발생하는 이벤트 함수
     const elementDoubleClick = (driveItem: DriveItem): void => {
-        if (driveItem.type === "FOLDER") {
-            navigate(`/drive/my-drive/${driveItem.publicId}`);
+        if (driveItem.itemType === "FOLDER") {
+            navigate(`/drive/shared/${driveItem.publicId}`);
         }
-        else if (driveItem.type === "FILE") {
+        else if (driveItem.itemType === "FILE") {
             navigate(`/editor/${driveItem.publicId}`);
         }
         else {
@@ -102,7 +102,7 @@ function SharedList() {
                 "http://localhost:8080/api/permission/sharedItems",
                 {   
                     params: {
-                        parentPublicId: currentFolderId
+                        parentId: currentFolderId
                     },
                     headers: {
                         Authorization: `Bearer ${accessToken}`
@@ -194,7 +194,7 @@ function SharedList() {
             sx={{ width : '100%', height : '100%'}}
             onContextMenu= {(e) => {tableRightClick(e);}}
         >
-            <Box sx={{ display: 'flex', width: '50%', alignItems: 'center' , 
+            <Box sx={{ display: 'flex', width: '70%', alignItems: 'center' , 
                 gap : 0.5, mt : 4, bgcolor: '#eaeefc', borderRadius: '10px'}}>
 
                 {/* Home Button */}
@@ -238,9 +238,35 @@ function SharedList() {
                 </IconButton>
 
                 {/* Path */}
-                <Typography variant="body2" sx={{ fontWeight: 500}}>
-                    공유 문서 / {[...paths].map((path) => path.itemName).join(" / ")}
-                </Typography>
+                <Breadcrumbs
+                    separator="/"
+                    maxItems={4}
+                    sx={{
+                        fontWeight: 500,
+                        fontSize: "14px",
+                        flexWrap: "nowrap",   // 줄바꿈 방지
+                        overflowX: 'auto',
+                    }}
+                >
+                    <Typography variant="body2" sx={{ fontWeight: 500}}>
+                        내 드라이브
+                    </Typography>
+                    {[...paths].map((path) => (
+                        <Box key={path.publicId}>
+                            <Typography
+                                variant="body2"
+                                key={path.publicId}
+                                component={NavLink}
+                                to={`/drive/my-drive/${path.publicId}`}
+                                sx={{color : 'blue',
+                                    flexWrap: "nowrap"
+                                }}    
+                            >
+                                {path.itemName}
+                            </Typography>
+                        </Box>
+                    ))}
+                </Breadcrumbs>
             </Box>
             {/* 폴더/파일이 0건일때 예외처리 */}    
             {[...sharedItems].filter((sharedItem) => sharedItem.isInTrash === false).length === 0 ? (
@@ -288,9 +314,9 @@ function SharedList() {
                                 <TableCell sx={{ py: 1.5, px: 1, fontWeight: 500 }}>
                                     <Box
                                         component="img"
-                                        src={sharedItem.type === "FOLDER" ? folderIcon : fileIcon}
+                                        src={sharedItem.itemType === "FOLDER" ? folderIcon : fileIcon}
                                         sx={{ display: 'inline-block',
-                                            height: sharedItem.type === "FOLDER" ? '15px' : '18px',
+                                            height: sharedItem.itemType === "FOLDER" ? '15px' : '18px',
                                             width: '15px',
                                             mr: '5px',
                                             mb: '3px',

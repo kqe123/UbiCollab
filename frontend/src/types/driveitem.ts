@@ -1,7 +1,7 @@
 export type DriveItem = {
     publicId : string;
     itemName: string;
-    type : "FILE" | "FOLDER";
+    itemType : "FILE" | "FOLDER";
 
     parentId : string | null;
     userId : string;

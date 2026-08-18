@@ -71,8 +71,7 @@ public class FavoriteService {
 		// parentPublicId가 있다면 즐겨찾기 폴더 안 내용물을 반환
 		else {
 			for (DriveItem driveItem : driveItemRepository.findByUserUsernameAndParentPublicId(username, parentPublicId)) {
-				boolean isFavorite = (favoriteRepository.findByUserUsernameAndItem(username, driveItem)
-														.isPresent()) ? true : false; 
+				boolean isFavorite = favoriteRepository.existsByUserUsernameAndItem(username, driveItem);
 				result.add(new DriveItemResponseDto(driveItem, isFavorite));
 			}
 		}

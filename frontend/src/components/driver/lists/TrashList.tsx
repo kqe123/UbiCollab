@@ -127,9 +127,9 @@ function TrashList() {
                                 <TableCell sx={{ py: 1.5, px: 1, fontWeight: 500 }}>
                                     <Box
                                         component="img"
-                                        src={driveItem.type === "FOLDER" ? folderIcon : fileIcon}
+                                        src={driveItem.itemType === "FOLDER" ? folderIcon : fileIcon}
                                         sx={{ display: 'inline-block',
-                                            height: driveItem.type === "FOLDER" ? '15px' : '18px',
+                                            height: driveItem.itemType === "FOLDER" ? '15px' : '18px',
                                             width: '15px',
                                             mr: '5px',
                                             mb: '3px',

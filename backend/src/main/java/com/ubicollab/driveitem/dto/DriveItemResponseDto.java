@@ -12,7 +12,7 @@ import com.ubicollab.driveitem.enums.DriveItemType;
 public record DriveItemResponseDto(
 	    String publicId,
 	    String itemName,
-	    DriveItemType type,
+	    DriveItemType itemType,
 	    String parentId,
 	    UUID userId, 
 	    String content,

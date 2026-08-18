@@ -4,7 +4,7 @@ import fileIcon from "../../../assets/file.png";
 import folderIcon from "../../../assets/folder.png";
 import noFavoriteImg from "../../../assets/empty-favorite.png";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate, useParams, useOutletContext } from "react-router-dom";
+import { useNavigate, useParams, useOutletContext, NavLink } from "react-router-dom";
 import DriveItemMenuModal from "../../modal/DriveItemMenuModal"
 import type {DriveItem} from "../../../types/driveitem";
 import type { DirectoryOutletContext} from "../Directory";
@@ -19,6 +19,7 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
+import Breadcrumbs from '@mui/material/Breadcrumbs';
 
 function FavoriteList() {
    // 상태(state)들
@@ -37,10 +38,10 @@ function FavoriteList() {
 
     // 요소 더블클릭 시 발생하는 이벤트 함수
     const elementDoubleClick = (driveItem: DriveItem): void => {
-        if (driveItem.type === "FOLDER") {
+        if (driveItem.itemType === "FOLDER") {
             navigate(`/drive/favorite/${driveItem.publicId}`);
         }
-        else if (driveItem.type === "FILE") {
+        else if (driveItem.itemType === "FILE") {
             navigate(`/editor/${driveItem.publicId}`);
         }
         else {
@@ -154,7 +155,7 @@ function FavoriteList() {
         <>
         <Typography variant="h5" sx={{ fontWeight: 500, mt: 1}}>즐겨찾기</Typography>
         <Box sx={{ width : '100%', height : '100%'}}>
-            <Box sx={{ display: 'flex', width: '50%', alignItems: 'center' , 
+            <Box sx={{ display: 'flex', width: '70%', alignItems: 'center',
                 gap : 0.5, mt : 4, bgcolor: '#eaeefc', borderRadius: '10px'}}>
 
                 {/* Home Button */}
@@ -198,9 +199,35 @@ function FavoriteList() {
                 </IconButton>
 
                 {/* Path */}
-                <Typography variant="body2" sx={{ fontWeight: 500}}>
-                    즐겨찾기 / {[...paths].map((path) => path.itemName).join(" / ")}
-                </Typography>
+                <Breadcrumbs
+                    separator="/"
+                    maxItems={4}
+                    sx={{
+                        fontWeight: 500,
+                        fontSize: "14px",
+                        flexWrap: "nowrap",   // 줄바꿈 방지
+                        overflowX: 'auto',
+                    }}
+                >
+                    <Typography variant="body2" sx={{ fontWeight: 500}}>
+                        즐겨찾기
+                    </Typography>
+                    {[...paths].map((path) => (
+                        <Box key={path.publicId}>
+                            <Typography
+                                variant="body2"
+                                key={path.publicId}
+                                component={NavLink}
+                                to={`/drive/my-drive/${path.publicId}`}
+                                sx={{color : 'blue',
+                                    flexWrap: "nowrap"
+                                }}    
+                            >
+                                {path.itemName}
+                            </Typography>
+                        </Box>
+                    ))}
+                </Breadcrumbs>
             </Box>
             {/* 폴더/파일이 0건일때 예외처리 */}    
             {[...favorites].filter((favorite) => favorite.isInTrash === false).length === 0 ? (
@@ -248,9 +275,9 @@ function FavoriteList() {
                             <TableCell sx={{ py: 1.5, px: 1, fontWeight: 500 }}>
                                 <Box
                                     component="img"
-                                    src={favorite.type === "FOLDER" ? folderIcon : fileIcon}
+                                    src={favorite.itemType === "FOLDER" ? folderIcon : fileIcon}
                                     sx={{ display: 'inline-block',
-                                        height: favorite.type === "FOLDER" ? '15px' : '18px',
+                                        height: favorite.itemType === "FOLDER" ? '15px' : '18px',
                                         width: '15px',
                                         mr: '5px',
                                         mb: '3px',

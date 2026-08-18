@@ -135,8 +135,7 @@ public class DriveItemService {
 
 		for (DriveItem driveItem : driveRepository.findByTypeAndUserUsername(DriveItemType.FILE, username)) {
 			// 해당 DriveItem이 즐겨찾기에 등록되어 있는지 확인
-			boolean isFavorite = (favoriteRepository.findByUserUsernameAndItem(username, driveItem)
-													.isPresent()) ? true : false; 
+			boolean isFavorite = favoriteRepository.existsByUserUsernameAndItem(username, driveItem);
 		    result.add(new DriveItemResponseDto(driveItem, isFavorite));
 		}
 		
@@ -152,8 +151,7 @@ public class DriveItemService {
 			throw new IllegalArgumentException("오류 : 해당 아이템은 파일이 아닙니다!");
 		}
 		
-		boolean isFavorite = (favoriteRepository.findByUserUsernameAndItem(username, file)
-												.isPresent()) ? true : false; 
+		boolean isFavorite = favoriteRepository.existsByUserUsernameAndItem(username, file);
 		return new DriveItemResponseDto(file, isFavorite);
 	}
 	
@@ -178,8 +176,7 @@ public class DriveItemService {
 		
 		for (DriveItem driveItem :driveItems) {
 			// 해당 DriveItem이 즐겨찾기에 등록되어 있는지 확인
-			boolean isFavorite = (favoriteRepository.findByUserUsernameAndItem(username, driveItem)
-													.isPresent()) ? true : false; 
+			boolean isFavorite = favoriteRepository.existsByUserUsernameAndItem(username, driveItem);
 			result.add(new DriveItemResponseDto(driveItem, isFavorite));
 		}
 		
@@ -197,8 +194,7 @@ public class DriveItemService {
 			if(!(driveItem.isPresent())) 
 				break;
 			
-			boolean isFavorite = (favoriteRepository.findByUserUsernameAndItem(username, driveItem.get())
-													.isPresent()) ? true : false; 
+			boolean isFavorite = favoriteRepository.existsByUserUsernameAndItem(username, driveItem.get());
 			path.add(new DriveItemResponseDto(driveItem.get(), isFavorite));
 			DriveItem parent = driveItem.get().getParent();
 			
@@ -216,8 +212,7 @@ public class DriveItemService {
 		
 		// 휴지통 최상위 요소인지는 IsTrashRoot가 true인지로 판단한다.
 		for ( DriveItem driveItem : driveRepository.findByUserUsernameAndIsTrashRoot(username, true)) {
-			boolean isFavorite = (favoriteRepository.findByUserUsernameAndItem(username, driveItem)
-													.isPresent()) ? true : false; 
+			boolean isFavorite = favoriteRepository.existsByUserUsernameAndItem(username, driveItem);
 			result.add(new DriveItemResponseDto(driveItem, isFavorite));
 		}
 		

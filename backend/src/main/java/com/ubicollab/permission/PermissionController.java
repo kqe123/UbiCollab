@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ubicollab.permission.dto.PermissionRequestDto;
-import com.ubicollab.permission.dto.SharedItemResponse;
+import com.ubicollab.permission.dto.SharedItemResponseDto;
 import com.ubicollab.permission.dto.SharedUserResponse;
 import com.ubicollab.user.dto.UserResponse;
 
@@ -67,14 +67,14 @@ public class PermissionController {
 				.body(permissionService.getSharedUsers(username, publicId));
 	}
 	
-	// 공유된 사용자들 목록 조회 API (GET 'api/permission/shared')
+	// 공유된 사용자들 목록 조회 API (GET 'api/permission/sharedItems')
 	@GetMapping("/sharedItems")
-	public ResponseEntity<List<SharedItemResponse>> getSharedDriveItems(
-			@RequestParam("publicId") String driveItemId,
+	public ResponseEntity<List<SharedItemResponseDto>> getSharedDriveItems(
+			@RequestParam(value = "parentId", required = false) String parentId,
 			Authentication authentication) {
 			String username = authentication.getName();
 			return ResponseEntity.status(HttpStatus.OK)
-				.body(permissionService.getSharedDriveItems(username, driveItemId));
+				.body(permissionService.getSharedDriveItems(username, parentId));
 	}
 	
 	
