@@ -48,11 +48,20 @@ public class FavoriteController {
 	// [즐겨찾기] 즐겨찾기 조회 API (GET '/api/favorite')
 	@GetMapping
 	public ResponseEntity<List<DriveItemResponseDto>> getFavorites(
-			@RequestParam(value = "parentPublicId", required = false) String parentPublicId,
+			@RequestParam(value = "foldId", required = false) String foldId,
 			Authentication authentication) {
 		String username = authentication.getName(); // 현재 사용자 username
 		return ResponseEntity.status(HttpStatus.OK)
-				.body(favoriteService.getFavorites(parentPublicId, username));
+				.body(favoriteService.getFavorites(foldId, username));
+	}
+	
+	// [즐겨찾기] 현재 경로 가져오기 API (GET '/api/favorite/path/{id}')
+	@GetMapping("/path/{foldId}")
+	public ResponseEntity<List<DriveItemResponseDto>> getDrivePath(@PathVariable("foldId") String foldId,
+			Authentication authentication) {
+		String username = authentication.getName();
+		return ResponseEntity.status(HttpStatus.OK)
+				.body(favoriteService.getDrivePath(foldId, username));
 	}
 	
 	// [즐겨찾기] 즐겨찾기 삭제 API (DELETE '/api/favorite/delete/{id}')

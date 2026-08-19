@@ -76,7 +76,7 @@ function FavoriteList() {
     const getFavorites = async () => {
         // 백엔드에 보낼 폴더 ID
         const DriveItemData = {
-            parentPublicId: currentFolderId
+            foldId: currentFolderId
         }
 
         // axios로 백엔드 api 호출
@@ -95,7 +95,7 @@ function FavoriteList() {
     // 백엔드 api(현재 경로 조회)를 호출하는 비동기 함수
     const getDrivePath = async ()  => {
         const response = await axios.get(
-            `http://localhost:8080/api/driveitem/path/${currentFolderId}`,
+            `http://localhost:8080/api/favorite/path/${currentFolderId}`,
             {
                 headers : {
                     Authorization: `Bearer ${accessToken}`
@@ -218,7 +218,7 @@ function FavoriteList() {
                                 variant="body2"
                                 key={path.publicId}
                                 component={NavLink}
-                                to={`/drive/my-drive/${path.publicId}`}
+                                to={`/drive/favorite/${path.publicId}`}
                                 sx={{color : 'blue',
                                     flexWrap: "nowrap"
                                 }}    

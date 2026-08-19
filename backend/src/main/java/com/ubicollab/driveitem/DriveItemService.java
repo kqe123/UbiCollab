@@ -21,6 +21,8 @@ import com.ubicollab.driveitem.enums.DriveItemExtension;
 import com.ubicollab.driveitem.enums.DriveItemType;
 import com.ubicollab.favorite.Favorite;
 import com.ubicollab.favorite.FavoriteRepository;
+import com.ubicollab.permission.PermissionService;
+import com.ubicollab.permission.enums.PermissionType;
 import com.ubicollab.user.User;
 import com.ubicollab.user.UserRepository;
 import static com.aventrix.jnanoid.jnanoid.NanoIdUtils.randomNanoId;
@@ -30,13 +32,16 @@ public class DriveItemService {
 	private final DriveItemRepository driveRepository;
 	private final UserRepository userRepository;
 	private final FavoriteRepository favoriteRepository;
+	private final PermissionService permissionService;
 	
 	public DriveItemService(DriveItemRepository driveRepository,
 							UserRepository userRepository,
-							FavoriteRepository favoriteRepository) {
+							FavoriteRepository favoriteRepository,
+							PermissionService permissionService) {
 		this.driveRepository = driveRepository;
 		this.userRepository = userRepository;
 		this.favoriteRepository = favoriteRepository;
+		this.permissionService = permissionService;
 	}
 	
 	// DriveItem(folder/file) 생성 메서드
@@ -66,7 +71,7 @@ public class DriveItemService {
 		            new IllegalArgumentException(
 		                "존재하지 않는 사용자입니다."));		
 		
-		// "ParentID가 존재한다면" Parent를 찾으면서 유효성 체크
+		// parent O -> 
 		if (request.parentPublicId() != null) {
 	        parent = driveRepository.findByPublicId(request.parentPublicId())
 	            .orElseThrow(() ->
@@ -104,7 +109,7 @@ public class DriveItemService {
 	    else {
 	    	throw new IllegalArgumentException("지원하지 않는 타입입니다.");
 	    }
-	    
+
 		// 랜덤 publicId 생성
 		String publicId = randomNanoId();
 
@@ -129,40 +134,53 @@ public class DriveItemService {
 	}
 	
 	
-	// 현재 사용자의 전체 file를 조회하는 메서드
+	// [최근 문서] 현재 사용자의 전체 file를 조회하는 메서드
 	public List<DriveItemResponseDto> getFiles(String username) { 
 		List<DriveItemResponseDto> result = new ArrayList<>();
 
 		for (DriveItem driveItem : driveRepository.findByTypeAndUserUsername(DriveItemType.FILE, username)) {
 			// 해당 DriveItem이 즐겨찾기에 등록되어 있는지 확인
 			boolean isFavorite = favoriteRepository.existsByUserUsernameAndItem(username, driveItem);
-		    result.add(new DriveItemResponseDto(driveItem, isFavorite));
+		    result.add(new DriveItemResponseDto(driveItem, isFavorite, PermissionType.OWNER));
 		}
 		
 		return result;
 	}
 	
-	// file 하나를 반환하는 메서드
+	// [편집기] file 하나를 반환하는 메서드 (접근 권한 필요)
 	public DriveItemResponseDto getFile(String publicId, String username) {
+		// 1. DriveItem 찾기
 		DriveItem file = driveRepository.findByPublicId(publicId).orElseThrow(
 				() -> new RuntimeException("파일를 찾을 수 없습니다. publicId=" + publicId));
 		
+		// 1-1.DriveItem이 FOLDER라면 예외처리
 		if (file.getType() != DriveItemType.FILE) {
 			throw new IllegalArgumentException("오류 : 해당 아이템은 파일이 아닙니다!");
 		}
 		
+		// 2. 현재 로그인중인 User 찾고, 해당 파일에 대한 권한(Permission)을 찾음.
+		User user = userRepository.findByUsername(username).orElseThrow(
+				() -> new RuntimeException("User를 찾을 수 없습니다. : " + username));
+		PermissionType permissionType = permissionService.getPermission(file,user);
+		
+		// 2-1. 권한이 없는 사용자라면 예외처리
+		if (permissionType == null) {
+			throw new PermissionDeniedException("해당 사용자는 접근할 권한이 없습니다.");
+		}
+
+		// 3. DriveItem 정보 + isFavorite + 해당 DriveItem에 대한 권한 정보를 반환
 		boolean isFavorite = favoriteRepository.existsByUserUsernameAndItem(username, file);
-		return new DriveItemResponseDto(file, isFavorite);
+		return new DriveItemResponseDto(file, isFavorite, permissionType);
 	}
 	
 	
-	// 현재 디렉토리의 DriveItem(folder/file)들을 반환하는 메서드
+	// [내 드라이브] 현재 디렉토리의 DriveItem(folder/file)들을 반환하는 메서드 (OWNER 권한 필요)
 	public List<DriveItemResponseDto> getDriveItems(String parentPublicId, String username) {
 		List<DriveItemResponseDto> result = new ArrayList<>();
 		List<DriveItem> driveItems; // 현재 디렉토리의 DriveItem List를 담을 변수
 		
 		if (parentPublicId == null) {
-			driveItems = driveRepository.findByUserUsernameAndParentPublicId(username, parentPublicId);
+			driveItems = driveRepository.findByUserUsernameAndParentPublicId(username, null);
 		}
 		// 현재 로그인된 유저가 해당 부모 폴더의 소유자가 아니라면 접근 제어
 		else {
@@ -177,28 +195,28 @@ public class DriveItemService {
 		for (DriveItem driveItem :driveItems) {
 			// 해당 DriveItem이 즐겨찾기에 등록되어 있는지 확인
 			boolean isFavorite = favoriteRepository.existsByUserUsernameAndItem(username, driveItem);
-			result.add(new DriveItemResponseDto(driveItem, isFavorite));
+			result.add(new DriveItemResponseDto(driveItem, isFavorite, PermissionType.OWNER));
 		}
 		
 		return result;
 	}
 	
-	// 현재 디렉토리의 경로(path)를 반환하는 메서드
-	public List<DriveItemResponseDto> getDrivePath(String publicId, String username) {
+	// [내 드라이브] 현재 디렉토리의 경로(path)를 반환하는 메서드
+	public List<DriveItemResponseDto> getDrivePath(String foldId, String username) {
 		List<DriveItemResponseDto> path = new ArrayList<>();
 		
 		// 부모로 거슬러 올라가면서 path에 현재 DriveItem 객체를 DriveItemResponse로 바꿔서 저장한다.
 		// 이렇게 되면, 가장 하위 디렉토리부터 저장이 되게 된다. [자식(0), 부모(1), 조부모(2)...] 
 		while (true) {
-			Optional<DriveItem> driveItem = driveRepository.findByPublicId(publicId); 
+			Optional<DriveItem> driveItem = driveRepository.findByPublicId(foldId); 
 			if(!(driveItem.isPresent())) 
 				break;
 			
 			boolean isFavorite = favoriteRepository.existsByUserUsernameAndItem(username, driveItem.get());
-			path.add(new DriveItemResponseDto(driveItem.get(), isFavorite));
+			path.add(new DriveItemResponseDto(driveItem.get(), isFavorite, null));
 			DriveItem parent = driveItem.get().getParent();
 			
-			publicId = (parent == null) ? null : parent.getPublicId();
+			foldId = (parent == null) ? null : parent.getPublicId();
 		}
 		
 		// 역순으로 정렬해서 리스트를 반환
@@ -206,20 +224,20 @@ public class DriveItemService {
 		return path;
 	}
 	
-	// 휴지통 최상위 DriveItem(folder/file)를 가져오는 메서드
+	// 휴지통 최상위 DriveItem(folder/file)를 가져오는 메서드 (권한 불필요)
 	public List<DriveItemResponseDto> getTrash(String username) {
 		List<DriveItemResponseDto> result = new ArrayList<>();
 		
 		// 휴지통 최상위 요소인지는 IsTrashRoot가 true인지로 판단한다.
 		for ( DriveItem driveItem : driveRepository.findByUserUsernameAndIsTrashRoot(username, true)) {
 			boolean isFavorite = favoriteRepository.existsByUserUsernameAndItem(username, driveItem);
-			result.add(new DriveItemResponseDto(driveItem, isFavorite));
+			result.add(new DriveItemResponseDto(driveItem, isFavorite, PermissionType.OWNER));
 		}
 		
 		return result;
 	}
 	
-	// DriveItem(folder/file)를 수정하는 메서드 (파일/폴더명 변경, 파일 내용 변경, 파일/폴더 이동)
+	// DriveItem(folder/file)를 수정하는 메서드 (파일/폴더명 변경, 파일 내용 변경, 파일/폴더 이동) (Permission Required)
 	public void updateDriveItem(String publicId, DriveItemUpdateDto request, String username) {
 		
 		// 변경가능한 필드들 (3개)
@@ -296,7 +314,7 @@ public class DriveItemService {
 		driveRepository.save(driveItem);
 	}
 	
-	// 해당 DriveItem(folder/file)과 모든 자식 요소들을 휴지통으로 보내는 메서드
+	// 해당 DriveItem(folder/file)과 모든 자식 요소들을 휴지통으로 보내는 메서드 (OWNER | MANAGER 권한 필요)
 	@Transactional
 	public void moveToTrash(String publicId, String username) {
 		DriveItem root = driveRepository.findByPublicId(publicId).orElseThrow(
@@ -305,7 +323,7 @@ public class DriveItemService {
 		updateIsInTrash(root, true, username, true);
 	}
 	
-	// 해당 DriveItem(folder/file)과 모든 자식 요소들을 복원하는 메서드
+	// 해당 DriveItem(folder/file)과 모든 자식 요소들을 복원하는 메서드 (OWNER | MANAGER 권한 필요)
 	@Transactional 
 	public void restoreTrash(String publicId, String username) {
 		DriveItem root = driveRepository.findByPublicId(publicId).orElseThrow(
@@ -338,7 +356,7 @@ public class DriveItemService {
 		}	
 	}
 	
-	// DriveItem를 제거하는 메서드
+	// DriveItem를 제거하는 메서드 (OWNER 권한 필요)
 	@Transactional
 	public void deleteDriveItem(String publicId, String username) {
 		DriveItem root = driveRepository.findByPublicId(publicId).orElseThrow(

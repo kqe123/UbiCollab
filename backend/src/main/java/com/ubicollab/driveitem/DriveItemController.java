@@ -80,13 +80,13 @@ public class DriveItemController {
 				.body(driveService.getDriveItems(parentPublicId, username));
 	}
 	
-	// [내 드라이브, 즐겨찾기] 현재 경로 가져오기 API (GET '/api/driveitem/path/{id}')
-	@GetMapping("/path/{id}")
-	public ResponseEntity<List<DriveItemResponseDto>> getDrivePath(@PathVariable("id") String publicId,
+	// [내 드라이브] 현재 경로 가져오기 API (GET '/api/driveitem/path/{id}')
+	@GetMapping("/path/{foldId}")
+	public ResponseEntity<List<DriveItemResponseDto>> getDrivePath(@PathVariable("foldId") String foldId,
 			Authentication authentication) {
 		String username = authentication.getName();
 		return ResponseEntity.status(HttpStatus.OK)
-				.body(driveService.getDrivePath(publicId, username));
+				.body(driveService.getDrivePath(foldId, username));
 	}
 	
 	// [휴지통] 최상위 폴더/파일들만 가져오기 API (GET '/api/driveitem/trash')
@@ -97,7 +97,7 @@ public class DriveItemController {
 				.body(driveService.getTrash(username));
 	}
 	
-	// 폴더/파일 수정 API (PATCH '/api/driveitem/{id}')
+	// [메뉴, 편집기 등] 폴더/파일 수정 API (PATCH '/api/driveitem/{id}')
 	@PatchMapping("/{id}")
 	public ResponseEntity<String> updateDriveItem(@PathVariable("id") String publicId,
 			@Valid @RequestBody DriveItemUpdateDto request,
@@ -108,7 +108,7 @@ public class DriveItemController {
 		return ResponseEntity.status(HttpStatus.OK).build();
 	}
 	
-	// 폴더/파일 휴지통으로 보내기 API (PATCH '/api/driveitem/trash/{id}')
+	// [휴지통으로 보내기 메뉴] 폴더/파일 휴지통으로 보내기 API (PATCH '/api/driveitem/trash/{id}')
 	@PatchMapping("/trash/{id}")
 	public ResponseEntity<String> moveToTrash(@PathVariable("id") String publicId,
 			Authentication authentication) {
@@ -118,7 +118,7 @@ public class DriveItemController {
 		return ResponseEntity.status(HttpStatus.OK).body("휴지통으로 보내기 성공");
 	}
 	
-	// 폴더/파일 복원 API (PATCH '/api/driveitem/restore/{id}')
+	// [휴지통] 폴더/파일 복원 API (PATCH '/api/driveitem/restore/{id}')
 	@PatchMapping("/restore/{id}")
 	public ResponseEntity<String> restoreTrash(@PathVariable("id") String publicId,
 			Authentication authentication) {
@@ -127,7 +127,7 @@ public class DriveItemController {
 		return ResponseEntity.status(HttpStatus.OK).body("복원 완료");
 	}
 	
-	// 폴더/파일 영구 삭제 API (DELETE '/api/driveitem/{id}')
+	// [휴지통] 폴더/파일 영구 삭제 API (DELETE '/api/driveitem/{id}')
 	@DeleteMapping("/delete/{id}")
 	public ResponseEntity<String> deleteDriveItem(@PathVariable("id") String publicId,
 			Authentication authentication) {

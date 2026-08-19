@@ -123,7 +123,7 @@ function SharedList() {
     const getDrivePath = async ()  => {
         try {
             const response = await axios.get(
-                `http://localhost:8080/api/driveitem/path/${currentFolderId}`,
+                `http://localhost:8080/api/permission/path/${currentFolderId}`,
                 {
                     headers : {
                         Authorization: `Bearer ${accessToken}`
@@ -249,7 +249,7 @@ function SharedList() {
                     }}
                 >
                     <Typography variant="body2" sx={{ fontWeight: 500}}>
-                        내 드라이브
+                        공유 문서
                     </Typography>
                     {[...paths].map((path) => (
                         <Box key={path.publicId}>
@@ -257,7 +257,7 @@ function SharedList() {
                                 variant="body2"
                                 key={path.publicId}
                                 component={NavLink}
-                                to={`/drive/my-drive/${path.publicId}`}
+                                to={`/drive/shared/${path.publicId}`}
                                 sx={{color : 'blue',
                                     flexWrap: "nowrap"
                                 }}    

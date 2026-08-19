@@ -8,12 +8,14 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ubicollab.driveitem.dto.DriveItemResponseDto;
 import com.ubicollab.permission.dto.PermissionRequestDto;
 import com.ubicollab.permission.dto.SharedItemResponseDto;
 import com.ubicollab.permission.dto.SharedUserResponse;
@@ -31,7 +33,7 @@ public class PermissionController {
 		this.permissionService = permissionService;
 	}
 
-	// 공유된 사용자들 목록 조회 API (GET 'api/permission/create')
+	// [공유 추가 메뉴] 공유된 사용자들 목록 조회 API (GET 'api/permission/create')
 	@PostMapping("/create")
 	public ResponseEntity<Integer> createPermission(
 		@Valid @RequestBody PermissionRequestDto request,
@@ -44,7 +46,7 @@ public class PermissionController {
 		        .body(permissionCount);
 	}
 	
-	// 
+	// [권한 관리 메뉴] 권한 업데이트 API (PATCH 'api/permission/update')
 	@PatchMapping("/update") 
 	public ResponseEntity<Integer> updatePermission(
 			@Valid @RequestBody PermissionRequestDto request,
@@ -57,7 +59,7 @@ public class PermissionController {
 	}
 		
 	
-	// 공유된 사용자들 목록 조회 API (GET 'api/permission/shared')
+	// [권한 관리 메뉴] 공유된 사용자들 목록 조회 API (GET 'api/permission/sharedUser')
 	@GetMapping("/sharedUser")
 	public ResponseEntity<List<SharedUserResponse>> getSharedUsers(
 			@RequestParam("publicId") String publicId,
@@ -67,7 +69,7 @@ public class PermissionController {
 				.body(permissionService.getSharedUsers(username, publicId));
 	}
 	
-	// 공유된 사용자들 목록 조회 API (GET 'api/permission/sharedItems')
+	// [공유 문서] 공유된 디렉토리 조회 API (GET 'api/permission/sharedItems')
 	@GetMapping("/sharedItems")
 	public ResponseEntity<List<SharedItemResponseDto>> getSharedDriveItems(
 			@RequestParam(value = "parentId", required = false) String parentId,
@@ -77,7 +79,14 @@ public class PermissionController {
 				.body(permissionService.getSharedDriveItems(username, parentId));
 	}
 	
-	
+	// [공유 문서] 현재 경로 가져오기 API (GET '/api/permission/path/{id}')
+	@GetMapping("/path/{foldId}")
+	public ResponseEntity<List<DriveItemResponseDto>> getDrivePath(@PathVariable("foldId") String foldId,
+			Authentication authentication) {
+		String username = authentication.getName();
+		return ResponseEntity.status(HttpStatus.OK)
+				.body(permissionService.getDrivePath(foldId, username));
+	}
 	
 
 }

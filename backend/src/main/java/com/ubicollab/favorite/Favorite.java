@@ -20,8 +20,19 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 
 @Entity
+@Table(
+	name = "favorite",
+	uniqueConstraints = {
+	    @UniqueConstraint(
+	        name = "uk_favorite_user_item",
+	        columnNames = {"user_id", "item_id"} // user + DriveItem 조합이 unique
+	    )
+	}
+)
 public class Favorite {
 	// 기본키
 		@Id
@@ -30,13 +41,14 @@ public class Favorite {
 		
 		// 즐겨찾기에 등록한 DriveItem
 		@ManyToOne(fetch = FetchType.LAZY)
-		@JoinColumn(name = "item_id", unique = true)
+		@JoinColumn(name = "item_id")
 		@OnDelete(action = OnDeleteAction.CASCADE)
 	    private DriveItem item;
 		
 		// 즐겨찾기에 등록한 사용자 (외래키)
 	    @ManyToOne(fetch = FetchType.LAZY)
 	    @JoinColumn(name = "user_id", nullable = false)
+	    @OnDelete(action = OnDeleteAction.CASCADE)
 	    private User user;
 	    
 	    @Column(nullable = false, updatable = false)
