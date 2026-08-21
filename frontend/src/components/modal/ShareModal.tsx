@@ -13,6 +13,7 @@ import Avatar from '@mui/material/Avatar';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
+import IconButton from  '@mui/material/IconButton';
 
 function  ShareModal ({
     driveItem,
@@ -62,7 +63,9 @@ function  ShareModal ({
         // cleanup 함수
         return () => clearTimeout(timer);
     }, [text]);
-    
+
+
+    // 공유 추가 메서드
     const shareDriveItem = async () => {
         try {
             if (sharedUsers.length === 0) {
@@ -295,6 +298,15 @@ function  ShareModal ({
                                             <MenuItem value="MANAGER">관리자</MenuItem>
                                         </Select>
                                     </Box>
+                                    <IconButton 
+                                        size="small"
+                                        onClick={() => {
+                                            setSharedUsers((prev) =>
+                                                prev.filter((user) => user.publicId !== sharedUser.publicId)
+                                            );
+                                        }}
+                                    >   <CloseIcon color="error" fontSize="small"/>
+                                    </IconButton>
                                 </Box>
                             ))}
                         </Box>

@@ -20,7 +20,7 @@ function LoadButton({onClick} : {onClick : () => void}) {
                 }}
                 title="불러오기"
             >
-                <LoadIcon sx={{ color: 'grey.600'}} />
+                <LoadIcon sx={{ color: '#007FFF'}} />
             </IconButton>
         </>
     )

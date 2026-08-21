@@ -31,6 +31,7 @@ function SharedList() {
         x: 0,
         y: 0,
     });
+
     const {
         selectedDriveItem, 
         setSelectedDriveItem,
@@ -147,7 +148,7 @@ function SharedList() {
         isLoading : isSharedItemsLoading,    // 현재 요청 중인지 여부
         isError : isSharedItemsError,        // 요청이 실패했는지 여부
         error : sharedItemsError,            // 실패했을 때 오류 정보
-    } = useQuery({
+    } = useQuery<DriveItem[]>({
         queryKey: ["driveItems", "shared" ,currentFolderId], // 서버 데이터를 해당 이름으로 관리
         queryFn: getSharedItems,   // getDriveItems() 실행
     });
@@ -346,7 +347,7 @@ function SharedList() {
             />
         )}
 
-        {tableMenu.isOpen && (
+        {tableMenu.isOpen && currentFolderId && (
             <NewDriveItemModal
             x={tableMenu.x}
             y={tableMenu.y}

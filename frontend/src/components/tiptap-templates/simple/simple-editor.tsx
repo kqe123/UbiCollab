@@ -79,6 +79,7 @@ import LoadButton from "@/components/editor/toolbar/LoadButton"
 import axios from "axios";
 import toast from "react-hot-toast";
 import LoadDocumentModal from "@/components/modal/LoadDocumentModal";
+import Text from '@mui/material/Typography';
 import DOMPurify from "dompurify";
 
 const MainToolbarContent = ({
@@ -87,12 +88,14 @@ const MainToolbarContent = ({
   onSave,
   isSaving,
   isMobile,
+  canEdit
 }: {
   onHighlighterClick: () => void
   onLinkClick: () => void
   onSave : () => Promise<void>
   isSaving : boolean
   isMobile: boolean
+  canEdit : boolean
 }) => {
   const [isLoadModalOpen, setIsLoadModalOpen] = useState<boolean>(false);
 
@@ -111,7 +114,8 @@ const MainToolbarContent = ({
         <LoadButton onClick={openLoadModal} />
         <SaveButton 
           onSave={onSave}
-          isSaving={isSaving}/>
+          isSaving={isSaving}
+          canEdit={canEdit}/>
       </ToolbarGroup>
       <ToolbarSeparator />
       <ToolbarGroup>
@@ -158,12 +162,17 @@ const MainToolbarContent = ({
       <ToolbarGroup>
         <ImageUploadButton text="Add" />
       </ToolbarGroup>
+      {!canEdit && (
+          <Text 
+            variant="body2"
+            sx={{color : 'red', ml : 2, fontWeight : 500}}>※ 현재 읽기 모드입니다.</Text>
+      )}
       <Spacer />
       {isMobile && <ToolbarSeparator />}
       {/* isLoadModalOpen이 true일때 LoadDocumentModal 컴포넌트 반환 */}
-            {isLoadModalOpen && (
-              <LoadDocumentModal onClose={closeLoadModal} />
-            )}
+          {isLoadModalOpen && (
+             <LoadDocumentModal onClose={closeLoadModal} />
+          )}
       <ToolbarGroup>
         <ThemeToggle />
       </ToolbarGroup>
@@ -203,11 +212,13 @@ const MobileToolbarContent = ({
 export function SimpleEditor({
   fileName,
   fileId,
-  initialContent
+  initialContent,
+  permission,
   } : { 
     fileName: string;
     fileId : string | undefined;
     initialContent: string;
+    permission : "VIEWER" | "COMMENTOR" | "EDITOR" |"MANAGER" | "OWNER" | null;
   }) {
   const isMobile = useIsBreakpoint()
   const { height } = useWindowSize()
@@ -216,10 +227,12 @@ export function SimpleEditor({
   )
   const [isSaving, setIsSaving] = useState<boolean>(false); // 저장 상태를 나타내는 isSaving 추가
   const toolbarRef = useRef<HTMLDivElement>(null)
+  const canEdit = permission === "OWNER" || permission === "MANAGER" || permission === "EDITOR";
   const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
 
   const editor = useEditor({
     immediatelyRender: false,
+    editable : canEdit,
     editorProps: {
       attributes: {
         autocomplete: "off",
@@ -351,6 +364,7 @@ export function SimpleEditor({
               onSave={handleSave}   // MainToolbarContent에 onSave 이름으로 저장 로직 전달
               isSaving={isSaving}   // MainToolbarContent에 isSaving도 전달
               isMobile={isMobile}
+              canEdit={canEdit}
             />
           ) : (
             <MobileToolbarContent

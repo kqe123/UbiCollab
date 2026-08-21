@@ -24,6 +24,7 @@ function RecentList() {
         closeDriveItemMenu,
         formatDate
     } = useOutletContext<DirectoryOutletContext>();
+    
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
     const navigate = useNavigate();
 

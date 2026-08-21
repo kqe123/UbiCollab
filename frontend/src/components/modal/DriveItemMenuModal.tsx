@@ -180,12 +180,13 @@ function DriveItemMenuModal({
                         onClick={() => {setMenuMode("RENAME")}}
                         sx={{ width : '100%', justifyContent: 'flex-start', px : 2, color : 'black'}}
                         startIcon={<EditIcon sx={{ mb : '3px'}} />}
-                        disabled={!(driveItem.permissionType === "OWNER" || driveItem.permissionType === "MANAGER")}
+                        disabled={!(driveItem.permissionType === "OWNER" || driveItem.permissionType === "MANAGER" ||
+                                    driveItem.permissionType === "EDITOR")}
                     >
                         <Typography 
                             variant="body2"
-                            sx={{color: !(driveItem.permissionType === "OWNER" ||
-                                driveItem.permissionType === "MANAGER") ? 'text.disabled' : 'black' }}>
+                            sx={{color: !(driveItem.permissionType === "OWNER" || driveItem.permissionType === "MANAGER"
+                                    || driveItem.permissionType === "EDITOR") ? 'text.disabled' : 'black' }}>
                             이름 변경
                         </Typography>
                     </Button>
@@ -264,11 +265,12 @@ function DriveItemMenuModal({
                             },
                         }}
                         startIcon={<DeleteIcon sx={{ mb : '3px'}}/>}
-                        disabled={!(driveItem.permissionType === "OWNER")}
+                        disabled={!(driveItem.permissionType === "OWNER" || driveItem.permissionType === "MANAGER")}
                     >
                         <Typography 
                             variant="body2"
-                            sx={{color: !(driveItem.permissionType === "OWNER") ? 'text.disabled' : 'red' }}
+                            sx={{color: !(driveItem.permissionType === "OWNER" ||
+                                 driveItem.permissionType === "MANAGER") ? 'text.disabled' : 'red' }}
                         >
                             휴지통으로 이동
                         </Typography>

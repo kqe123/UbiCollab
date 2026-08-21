@@ -3,14 +3,16 @@ import InputBase from '@mui/material/InputBase';
 import Typography from '@mui/material/Typography';
 function DocumentName({
     fileName,
-    setFileName 
+    setFileName,
+    permission
 } : {
     fileName : string;
     setFileName : React.Dispatch<React.SetStateAction<string>>;
+    permission : "VIEWER" | "COMMENTOR" | "EDITOR" |"MANAGER" | "OWNER" | null;
 }) {
+
     const defaultName = "제목 없는 문서"; // 기본 파일명
     const maxNameLength = 150; // 글자 수 제한
-
     const [editing, setEditing] = useState(false); // 편집 상태
 
     // 포커스가 해제됬을때 할 동작들
@@ -36,9 +38,12 @@ function DocumentName({
         }
     };
 
+    // 권한이 OWNER | MANAGER | EDITOR이면 True
+    const canRename = permission === "OWNER" || permission === "MANAGER" || permission === "EDITOR";
+
     return (
-        <>
-            {editing ? (
+        <>  
+            {canRename && editing ? (
                 <InputBase
                     value={fileName}
                     onChange={(e) => setFileName(e.target.value)}
@@ -64,7 +69,7 @@ function DocumentName({
                 />
             ) : (
                 <Typography
-                    onClick={() => setEditing(true)}
+                    onClick={canRename ? () => setEditing(true) : undefined}
                     title={fileName}
                     sx={{
                         display: 'inline-block',

@@ -114,7 +114,7 @@ public class PermissionService {
 		User currentUser = userRepository.findByUsername(username).orElseThrow(
 					() -> new RuntimeException("User를 찾을 수 없습니다. : " + username));
 
-		// result에 소유자 추가
+		// 공유할 대상(DriveItem)
 		DriveItem driveItem = driveRepository.findByPublicId(publicId).orElseThrow(
 				() -> new RuntimeException("문서를 찾을 수 없습니다. publicId="+ publicId));
 
@@ -122,7 +122,8 @@ public class PermissionService {
 		if (getPermission(driveItem, currentUser) == null) {
 			throw new PermissionDeniedException("해당 사용자는 접근할 권한이 없습니다.");
 		}
-
+		
+		// result에 소유자 추가
 		User owner = driveItem.getUser(); // 파일/폴더 소유자
 		result.add(new SharedUserResponse(owner,PermissionType.OWNER));
 			

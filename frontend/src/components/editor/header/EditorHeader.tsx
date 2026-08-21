@@ -2,12 +2,15 @@ import fileIcon from "../../../assets/file.png";
 import DocumentName from "./DocumentName";
 import Box from '@mui/material/Box';
 import Avatar from '@mui/material/Avatar';
+
 function EditorHeader({
     fileName,
-    setFileName 
+    setFileName,
+    permission,
 } : {
     fileName : string;
     setFileName : React.Dispatch<React.SetStateAction<string>>;
+    permission : "VIEWER" | "COMMENTOR" | "EDITOR" |"MANAGER" | "OWNER" | null;
 }) {
 return (
 <>
@@ -30,7 +33,8 @@ return (
             {/* FileName */}
             <DocumentName 
                 fileName={fileName}
-                setFileName={setFileName}/>
+                setFileName={setFileName}
+                permission={permission}/>
         </Box>
 
 

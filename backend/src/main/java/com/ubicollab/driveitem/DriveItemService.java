@@ -44,18 +44,24 @@ public class DriveItemService {
 		this.permissionService = permissionService;
 	}
 	
-	// DriveItem(folder/file) 생성 메서드
+	// DriveItem(folder/file) 생성 메서드 (MANAGER | OWNER 권한 필요)
 	public String createDriveItem(DriveItemCreateDto request, String username) {
 		// 프론트에서 보내지 않은 값은 Jackson이 모두 null로 처리해준다.
 		String itemName = request.itemName(); // 무조건 필수
 		DriveItemType type = request.type(); // 무조건 필수
 		DriveItem parent = null; // null 허용
-		User user = null; // 무조건 필수
 		String content = request.content(); // 파일은 O, 폴더는 null
 		DriveItemExtension extension = request.extension(); // 파일은 O, 폴더는 null
 		Long size = null; // 파일은 O, 폴더는 null
 		
-		// 기본적인 유효성 검사 (itemName, type, User, Parent)
+		// 현재 유저(필수)
+		User user = userRepository.findByUsername(username)
+		        .orElseThrow(() ->
+		            new IllegalArgumentException(
+		                "존재하지 않는 사용자입니다."));
+
+
+		// 기본적인 유효성 검사 (itemName, type)
 		if (itemName == null || itemName.isBlank()) 
 			throw new IllegalArgumentException("오류 : itemName은 필수입니다.");
 		
@@ -66,12 +72,8 @@ public class DriveItemService {
 		if (type == null) 
 			throw new IllegalArgumentException("오류 : type은 필수입니다.");
 		
-		user = userRepository.findByUsername(username)
-		        .orElseThrow(() ->
-		            new IllegalArgumentException(
-		                "존재하지 않는 사용자입니다."));		
 		
-		// parent O -> 
+		// parent O -> 현재 유저의 권한을 따져서 예외처리
 		if (request.parentPublicId() != null) {
 	        parent = driveRepository.findByPublicId(request.parentPublicId())
 	            .orElseThrow(() ->
@@ -81,9 +83,10 @@ public class DriveItemService {
 	            throw new IllegalArgumentException("부모는 폴더여야 합니다.");
 	        }
 
-	        if (!parent.getUser().getId().equals(user.getId())) {
-	            throw new SecurityException(
-	                "다른 사용자의 폴더에는 아이템을 생성할 수 없습니다.");
+	        // [권한 제어] OWNER | MANAGER만 
+	        PermissionType permissionType = permissionService.getPermission(parent, user);
+	        if (permissionType != PermissionType.OWNER && permissionType != PermissionType.MANAGER) {
+	            throw new PermissionDeniedException("해당 위치에 DriveItem를 생성할 권한이 없습니다.");
 	        }
 	    }
 		
@@ -163,7 +166,7 @@ public class DriveItemService {
 				() -> new RuntimeException("User를 찾을 수 없습니다. : " + username));
 		PermissionType permissionType = permissionService.getPermission(file,user);
 		
-		// 2-1. 권한이 없는 사용자라면 예외처리
+		// 2-1. [권한 제어] 모든 권한 중 하나 필요
 		if (permissionType == null) {
 			throw new PermissionDeniedException("해당 사용자는 접근할 권한이 없습니다.");
 		}
@@ -179,17 +182,27 @@ public class DriveItemService {
 		List<DriveItemResponseDto> result = new ArrayList<>();
 		List<DriveItem> driveItems; // 현재 디렉토리의 DriveItem List를 담을 변수
 		
+		// 현재 유저
+		User user = userRepository.findByUsername(username).orElseThrow(
+	            () -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+		
+		// 루트 O : 내가 소유한 최상위 아이템만 
 		if (parentPublicId == null) {
 			driveItems = driveRepository.findByUserUsernameAndParentPublicId(username, null);
 		}
-		// 현재 로그인된 유저가 해당 부모 폴더의 소유자가 아니라면 접근 제어
+		
+		// 루트 X: 내가 소유하거나, MANAGER가 따로 만든 아이템들
 		else {
 			DriveItem parentItem = driveRepository.findByPublicId(parentPublicId).orElseThrow(
 					() -> new RuntimeException("파일을 찾을 수 없습니다. publicId=" + parentPublicId));
-			if (!parentItem.getUser().getUsername().equals(username)) {
-				throw new PermissionDeniedException("해당 사용자는 접근할 권한이 없습니다.");
-			}
-			driveItems = driveRepository.findByUserUsernameAndParentPublicId(username, parentPublicId);
+			
+			// [권한 제어] OWNER 권한 필요
+	        if (permissionService.getPermission(parentItem, user) != PermissionType.OWNER) {
+	            throw new PermissionDeniedException("해당 사용자는 접근할 권한이 없습니다.");
+	        }
+			
+			// 소유자 조건 없이, 물리적 위치(parent)만으로 조회
+	        driveItems = driveRepository.findByParentPublicId(parentPublicId);
 		}
 		
 		for (DriveItem driveItem :driveItems) {
@@ -201,22 +214,34 @@ public class DriveItemService {
 		return result;
 	}
 	
-	// [내 드라이브] 현재 디렉토리의 경로(path)를 반환하는 메서드
+	// [내 드라이브] 현재 디렉토리의 경로(path)를 반환하는 메서드 (Owner 권한 필요)
 	public List<DriveItemResponseDto> getDrivePath(String foldId, String username) {
 		List<DriveItemResponseDto> path = new ArrayList<>();
 		
-		// 부모로 거슬러 올라가면서 path에 현재 DriveItem 객체를 DriveItemResponse로 바꿔서 저장한다.
+		// parent X -> 빈 path 반환
+		if (foldId == null) {
+			return path;
+		}
+								
+		// 부모 폴더(parent)
+		DriveItem parent = driveRepository.findByPublicId(foldId)
+				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이템입니다."));	
+		
+		// 현재 유저
+		User user = userRepository.findByUsername(username).orElseThrow(() ->
+		     new IllegalArgumentException("존재하지 않는 사용자입니다."));
+		
+		// [권한 제어] OWNER 권한 필요
+		if (permissionService.getPermission(parent, user) != PermissionType.OWNER) {
+		    throw new PermissionDeniedException("해당 사용자는 접근할 권한이 없습니다.");
+		}
+		
+		// parent O -> 부모로 거슬러 올라가면서 path를 쌓는다.
 		// 이렇게 되면, 가장 하위 디렉토리부터 저장이 되게 된다. [자식(0), 부모(1), 조부모(2)...] 
-		while (true) {
-			Optional<DriveItem> driveItem = driveRepository.findByPublicId(foldId); 
-			if(!(driveItem.isPresent())) 
-				break;
-			
-			boolean isFavorite = favoriteRepository.existsByUserUsernameAndItem(username, driveItem.get());
-			path.add(new DriveItemResponseDto(driveItem.get(), isFavorite, null));
-			DriveItem parent = driveItem.get().getParent();
-			
-			foldId = (parent == null) ? null : parent.getPublicId();
+		while (parent != null) {
+			boolean isFavorite = favoriteRepository.existsByUserUsernameAndItem(username, parent);
+			path.add(new DriveItemResponseDto(parent, isFavorite, null));
+			parent = parent.getParent();
 		}
 		
 		// 역순으로 정렬해서 리스트를 반환
@@ -247,16 +272,18 @@ public class DriveItemService {
 	    
 	    // 현재 로그인 사용자
 	    User user = userRepository.findByUsername(username)
-	            .orElseThrow(() ->
-	                new IllegalArgumentException(
-	                    "존재하지 않는 사용자입니다."
-	                )
-	            );
+	        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 	    
 	    // 수정 대상 driveItem
 		DriveItem driveItem = driveRepository.findByPublicId(publicId).orElseThrow(
 				() -> new RuntimeException("해당 아이템을 찾을 수 없습니다. publicId="+ publicId));
 		
+		// 현재 갖고있는 권한(OWNER, MANAGER 등...)
+		PermissionType permissionType = permissionService.getPermission(driveItem, user);
+		
+		boolean canEdit = (permissionType == PermissionType.OWNER || permissionType == PermissionType.MANAGER 
+						|| permissionType == PermissionType.EDITOR);
+
 		// 수정 대상 driveItem의 type
 		DriveItemType type = driveItem.getType(); 
 		
@@ -272,10 +299,15 @@ public class DriveItemService {
 		        throw new IllegalArgumentException("fileName은 100자 이하여야 합니다.");
 		    }
 
+			// [권한 제어] OWNER | MANAGER | EDITOR 권한 필요
+			if (!canEdit) {
+				throw new PermissionDeniedException("아이템명을 변경할 권한이 없습니다.");
+			}
+
 		    driveItem.setItemName(trimmedItemName);
 		}
 		
-		// 부모 폴더 변경
+		// 부모 폴더 변경 (추후 권한 설정 추가할 예정)
 	    if (request.parentId() != null) {
 	        parent = driveRepository
 	            .findById(request.parentId())
@@ -307,6 +339,11 @@ public class DriveItemService {
 	            );
 	        }
 	        
+			// [권한 제어] OWNER | MANAGER | EDITOR 권한 필요
+	        if (!canEdit) {
+				throw new PermissionDeniedException("파일 내용을 변경할 권한이 없습니다.");
+			}
+	        
 	        driveItem.setContent(content);
 	        long size = content.getBytes(StandardCharsets.UTF_8).length;
 	        driveItem.setSize(size);
@@ -317,17 +354,41 @@ public class DriveItemService {
 	// 해당 DriveItem(folder/file)과 모든 자식 요소들을 휴지통으로 보내는 메서드 (OWNER | MANAGER 권한 필요)
 	@Transactional
 	public void moveToTrash(String publicId, String username) {
+		// 휴지통 대상 driveItem
 		DriveItem root = driveRepository.findByPublicId(publicId).orElseThrow(
 				() -> new RuntimeException("해당 아이템을 찾을 수 없습니다. publicId="+ publicId));
+		
+		// 현재 유저
+		User user = userRepository.findByUsername(username).orElseThrow(() ->
+			new IllegalArgumentException("존재하지 않는 사용자입니다."));
+		
+		//  [권한 제어] OWNER | MANAGER 권한 필요
+		PermissionType permissionType = permissionService.getPermission(root, user);
+		if (permissionType != PermissionType.OWNER && permissionType != PermissionType.MANAGER) {
+			throw new PermissionDeniedException("휴지통으로 보낼 권한이 없습니다.");
+		}
+		
 		root.setIsTrashRoot(true);
 		updateIsInTrash(root, true, username, true);
 	}
 	
-	// 해당 DriveItem(folder/file)과 모든 자식 요소들을 복원하는 메서드 (OWNER | MANAGER 권한 필요)
+	// 해당 DriveItem(folder/file)과 모든 자식 요소들을 복원하는 메서드 (OWNER 권한 필요)
 	@Transactional 
 	public void restoreTrash(String publicId, String username) {
+		// 복원 대상 driveItem
 		DriveItem root = driveRepository.findByPublicId(publicId).orElseThrow(
 				() -> new RuntimeException("해당 아이템을 찾을 수 없습니다. publicId=" + publicId));
+		
+		// 현재 유저
+		User user = userRepository.findByUsername(username).orElseThrow(() ->
+			new IllegalArgumentException("존재하지 않는 사용자입니다."));
+				
+		// [권한 제어] OWNER 권한 필요
+		PermissionType permissionType = permissionService.getPermission(root, user);
+		if (permissionType != PermissionType.OWNER) {
+			throw new PermissionDeniedException("해당 아이템을 복원할 권한이 없습니다.");
+		}
+		
 		root.setIsTrashRoot(false);
 		
 		// 만약 root의 부모가 현재 휴지통에 있다면 루트에 복구를 한다.
@@ -345,7 +406,7 @@ public class DriveItemService {
 		
 		driveItem.setIsInTrash(isInTrash); // 현재 요소 복원 또는 휴지통으로 보냄.
 		List<DriveItem> childDriveItems = driveRepository.
-				findByUserUsernameAndParentPublicId(username,driveItem.getPublicId());
+				findByParentPublicId(driveItem.getPublicId());
 		
 		// 자식 요소를 탐색하면서 폴더면 함수를 재귀하고, 파일이면 바로 복원 또는 휴지통으로 보냄.
 		for (DriveItem child : childDriveItems) {
@@ -359,8 +420,19 @@ public class DriveItemService {
 	// DriveItem를 제거하는 메서드 (OWNER 권한 필요)
 	@Transactional
 	public void deleteDriveItem(String publicId, String username) {
+		// 제거 대상 driveItem
 		DriveItem root = driveRepository.findByPublicId(publicId).orElseThrow(
 				() -> new RuntimeException("문서를 찾을 수 없습니다. publicId="+ publicId));
+		// 현재 유저
+		User user = userRepository.findByUsername(username).orElseThrow(() ->
+			new IllegalArgumentException("존재하지 않는 사용자입니다."));
+						
+		// [권한 제어] OWNER 권한 필요
+		PermissionType permissionType = permissionService.getPermission(root, user);
+		if (permissionType != PermissionType.OWNER) {
+			throw new PermissionDeniedException("해당 아이템을 복원할 권한이 없습니다.");
+		}
+		
 		RecursiveDelete(root, username, true);
 	}
 	
@@ -371,7 +443,7 @@ public class DriveItemService {
 			return;
 		}
 		
-		List<DriveItem> childDriveItems = driveRepository.findByUserUsernameAndParentPublicId(username, driveItem.getPublicId());
+		List<DriveItem> childDriveItems = driveRepository.findByParentPublicId(driveItem.getPublicId());
 		
 		for (DriveItem child : childDriveItems) {
 			RecursiveDelete(child, username, false);
