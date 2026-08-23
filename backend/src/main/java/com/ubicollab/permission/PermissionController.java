@@ -1,6 +1,7 @@
 package com.ubicollab.permission;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,10 +17,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ubicollab.driveitem.dto.DriveItemResponseDto;
-import com.ubicollab.permission.dto.PermissionRequestDto;
+import com.ubicollab.permission.dto.PermissionCreateDto;
+import com.ubicollab.permission.dto.PermissionResponseDto;
+import com.ubicollab.permission.dto.PermissionUpdateDto;
 import com.ubicollab.permission.dto.SharedItemResponseDto;
-import com.ubicollab.permission.dto.SharedUserResponse;
-import com.ubicollab.user.dto.UserResponse;
 
 import jakarta.validation.Valid;
 
@@ -36,7 +37,7 @@ public class PermissionController {
 	// [공유 추가 메뉴] 공유된 사용자들 목록 조회 API (GET 'api/permission/create')
 	@PostMapping("/create")
 	public ResponseEntity<Integer> createPermission(
-		@Valid @RequestBody PermissionRequestDto request,
+		@Valid @RequestBody PermissionCreateDto request,
 		Authentication authentication) {
 		
 		String username = authentication.getName();
@@ -49,7 +50,7 @@ public class PermissionController {
 	// [권한 관리 메뉴] 권한 업데이트 API (PATCH 'api/permission/update')
 	@PatchMapping("/update") 
 	public ResponseEntity<Integer> updatePermission(
-			@Valid @RequestBody PermissionRequestDto request,
+			@Valid @RequestBody PermissionUpdateDto request,
 			Authentication authentication) {
 		String username = authentication.getName();
 		int permissionCount = permissionService.updatePermission(username, request);
@@ -61,8 +62,8 @@ public class PermissionController {
 	
 	// [권한 관리 메뉴] 공유된 사용자들 목록 조회 API (GET 'api/permission/sharedUser')
 	@GetMapping("/sharedUser")
-	public ResponseEntity<List<SharedUserResponse>> getSharedUsers(
-			@RequestParam("publicId") String publicId,
+	public ResponseEntity<List<PermissionResponseDto>> getSharedUsers(
+			@RequestParam("publicId") UUID publicId,
 			Authentication authentication) {
 		String username = authentication.getName();
 		return ResponseEntity.status(HttpStatus.OK)
@@ -72,7 +73,7 @@ public class PermissionController {
 	// [공유 문서] 공유된 디렉토리 조회 API (GET 'api/permission/sharedItems')
 	@GetMapping("/sharedItems")
 	public ResponseEntity<List<SharedItemResponseDto>> getSharedDriveItems(
-			@RequestParam(value = "parentId", required = false) String parentId,
+			@RequestParam(value = "parentId", required = false) UUID parentId,
 			Authentication authentication) {
 			String username = authentication.getName();
 			return ResponseEntity.status(HttpStatus.OK)
@@ -81,7 +82,7 @@ public class PermissionController {
 	
 	// [공유 문서] 현재 경로 가져오기 API (GET '/api/permission/path/{id}')
 	@GetMapping("/path/{foldId}")
-	public ResponseEntity<List<DriveItemResponseDto>> getDrivePath(@PathVariable("foldId") String foldId,
+	public ResponseEntity<List<DriveItemResponseDto>> getDrivePath(@PathVariable("foldId") UUID foldId,
 			Authentication authentication) {
 		String username = authentication.getName();
 		return ResponseEntity.status(HttpStatus.OK)

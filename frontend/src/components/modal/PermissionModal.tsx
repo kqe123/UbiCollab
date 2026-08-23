@@ -1,9 +1,9 @@
 import axios from "axios";
 import toast from "react-hot-toast";
 import type {DriveItem} from "../../types/driveitem";
-import type {sharedUser} from "../../types/sharedUser";
+import type {permission} from "../../types/permission";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
@@ -23,11 +23,18 @@ function  PermissionModal ({
 
     const queryClient = useQueryClient(); // QueryClient 가져옴
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
-    const initialUsers = useRef<sharedUser[]>([]); // 공유된 사용자들의 권한 초기 상태 스냅샷
+    const initialPermissions = useRef<permission[]>([]); // 공유된 사용자들의 권한 초기 상태 스냅샷
+    const [editedPermissions, setEditedPermissions] = useState<permission[]>([]);
     const hasSnapshot = useRef(false);   // Snapshot을 찍었는지 안찍었는지 여부
 
+    // 화면 표시용으로 닉네임 기준 가나다/ABC 순 정렬 (editedPermissions 원본 순서/상태는 그대로 둠)
+    const sortedPermissions = useMemo(
+        () => [...editedPermissions].sort((a, b) => a.nickname.localeCompare(b.nickname, "ko")),
+        [editedPermissions]
+    );
+
     // 현재 공유된 사용자 목록 불러오는 함수
-    const getSharedUser = async () => {
+    const getPermissions = async () => {
         try {
             const response = await axios.get("http://localhost:8080/api/permission/sharedUser",
                 {   
@@ -63,30 +70,31 @@ function  PermissionModal ({
 
     // useQuery로 DriveItem이 바뀔때마다 새로운 공유 사용자를 불러옴.
     const {
-        data : sharedUsers = [],
-        isLoading,            // 현재 요청 중인지 여부
+        data : permissions = [],
+        isLoading,            // 이 쿼리를 한 번도 받아온 적 없는지 여부 (캐시가 있으면 바로 false)
+        isFetching,           // 지금 실제로 네트워크 요청 중인지 여부 (캐시가 있어도 백그라운드 재조회면 true)
         isError,            // 요청이 실패했는지 여부
         error                // 실패했을 때 오류 정보
     } = useQuery({
-        queryKey : ["users", driveItem.publicId],
-        queryFn : getSharedUser,
+        queryKey : ["permissions", driveItem.publicId],
+        queryFn : getPermissions,
     })
     
     // 권한이 업데이트된 사용자들을 뽑아내는 함수
     const updateUser = () => {
         // 1단계: initialUsers를 publicId 기준으로 즉시 조회 가능한 Map으로 변환
-        const initialUserMap = new Map(
-            initialUsers.current.map((user) => [user.publicId, user])
+        const initialPermissionMap = new Map(
+            initialPermissions.current.map((permission) => [permission.userId, permission])
         );
 
-        // 2단계: sharedUsers를 한 번만 순회하면서, 타입이 바뀐 사람만 필터링해서 반환
-        const changedUsers = sharedUsers
-            .filter((sharedUser : sharedUser) => {
-                const initialUser = initialUserMap.get(sharedUser.publicId); // 키 조회(없으면 undefined)
-                return initialUser && initialUser.type !== sharedUser.type;
-            })
+        // 2단계: editedPermissions를 한 번만 순회하면서, 타입이 바뀐 사람만 필터링해서 반환
+        const changedPermissions = editedPermissions
+            .filter((permission : permission) => {
+                const initialPermission = initialPermissionMap.get(permission.userId); // 키 조회(없으면 undefined)
+                return initialPermission && initialPermission.type !== permission.type;
+        })
 
-        return changedUsers;
+        return changedPermissions;
     }
 
     // 권한 업데이트 함수
@@ -102,10 +110,11 @@ function  PermissionModal ({
             const response = await axios.patch(
                 "http://localhost:8080/api/permission/update",
                 {
-                    driveItemId: driveItem.publicId,
-                    userList: updateUsers.map((user : sharedUser) => ({
-                        userId: user.publicId,
-                        type: user.type,
+                    currentItemId: driveItem.publicId,
+                    permissionList: updateUsers.map((permission : permission) => ({
+                        driveItemId : permission.driveItemId,
+                        userId: permission.userId,
+                        type: permission.type,
                     })),
                 },
                 {
@@ -117,6 +126,9 @@ function  PermissionModal ({
                 
             console.log(`알림 : ${response.data}명 권한 업데이트 성공`);
             toast.success("권한 업데이트에 성공하였습니다!");
+            await queryClient.invalidateQueries({
+                queryKey: ["permissions"]
+            });
             onClose();
         } catch (error: unknown) {
             console.error("권한 업데이트 실패... : ", error);
@@ -141,16 +153,17 @@ function  PermissionModal ({
 
     // 초기 스냅샷 찍음.
     useEffect(() => {
-        {/* 현재 로딩중이 아니고, 스냅샷을 안찍은 상태일때*/}
-        if (!hasSnapshot.current &&!isLoading) {
-            initialUsers.current = sharedUsers;
+        {/* 로딩중도 아니고, 백그라운드 재조회도 끝났고(=진짜 최신 데이터), 스냅샷을 안찍은 상태일때*/}
+        if (!hasSnapshot.current && !isLoading && !isFetching) {
+            initialPermissions.current = permissions; // 초기 스냅샷
+            setEditedPermissions(permissions);   // 화면 표시/수정은 이 state로
             hasSnapshot.current = true;
-            console.log(initialUsers);
-        }
-    }, [isLoading, sharedUsers]);
 
-    // 로딩 처리
-    if (isLoading) {
+        }
+    }, [isLoading, isFetching, permissions]);
+
+    // 로딩 처리 (최초 로딩 + 스냅샷 찍기 전 캐시 재조회 중일 때 모두 대기)
+    if (isLoading || (isFetching && !hasSnapshot.current)) {
         return (
             <Box sx={{ minHeight: '100vh', alignItems: 'center', justifyContent: 'center'}}>
                 <Typography>권한 정보를 불러오는 중입니다...</Typography>
@@ -201,13 +214,14 @@ function  PermissionModal ({
                     <Button type="button" onClick={onClose}><CloseIcon sx={{color: 'black'}}/></Button>
                 </Box>
                 
+                {/* 현재 공유된 사용자 목록 */}
                 <Box sx={{mt : 4}}>
                     <Typography variant="body1" sx={{ fontWeight: 500}}>현재 공유된 사용자</Typography>
-                    {sharedUsers.length > 0 && (
+                    {sortedPermissions.length > 0 && (
                         <Box sx={{width: '100%', maxHeight : 'min(300px, 35vh)', overflowY: 'auto', mt : 1 }}>
-                            {sharedUsers.map((sharedUser : sharedUser) => (
+                            {sortedPermissions.map((permission : permission) => (
                                 <Box 
-                                    key={sharedUser.publicId}
+                                    key={permission.userId}
                                     sx={{
                                         display : 'flex',
                                         height : 'min(60px, 7vh)',
@@ -215,33 +229,27 @@ function  PermissionModal ({
                                             bgcolor: '#e8f2fd'
                                         },
                                         alignItems : 'center',
-                                        
                                     }}
                                 >
-                                    {sharedUser.profileImageKey === null ? 
+                                    {permission.profileImageKey === null ? 
                                     (<Avatar alt="기본프로필사진" sx={{ width: 32, height: 32}} />)
-                                    : (<Avatar src={sharedUser.profileImageKey} alt="프로필사진" sx={{ width: 32, height: 32}} />)
+                                    : (<Avatar src={permission.profileImageKey} alt="프로필사진" sx={{ width: 32, height: 32}} />)
                                     }
                                     <Box sx={{ display : 'flex', flexDirection : "column", ml : 2 }}>
-                                        <Typography variant="body2" sx={{ fontWeight : 500, flex : 1}}>{sharedUser.nickname}</Typography>
-                                        <Typography variant="body2" sx={{ color : 'gray', flex : 1}}>{sharedUser.username}</Typography>
+                                        <Typography variant="body2" sx={{ fontWeight : 500, flex : 1}}>{permission.nickname}</Typography>
+                                        <Typography variant="body2" sx={{ color : 'gray', flex : 1}}>{permission.username}</Typography>
                                     </Box>
-                                    {sharedUser.type === "OWNER" ? (
+                                    {permission.type === "OWNER" ? (
                                         <Typography variant="body2" sx={{ color : 'gray', m : 2, ml: 'auto'}}>소유자</Typography>
                                     ) : (
                                         <Box sx={{ml: 'auto'}}>
                                         <Select
-                                            value={sharedUser.type}
+                                            value={permission.type}
                                             size="small"
                                             onChange={(e: SelectChangeEvent) => {
-                                                queryClient.setQueryData<sharedUser[]>(["users", driveItem.publicId], (prev) =>
-                                                    (prev ?? []).map((user) =>
-                                                        user.publicId === sharedUser.publicId
-                                                            ? { ...user, type: e.target.value }
-                                                            : user
-                                                    )
-                                                );
-                                                }
+                                                setEditedPermissions(prev =>
+                                                    prev.map(u => u.userId === permission.userId ? { ...u, type: e.target.value } : u)
+                                                );}
                                             }
                                             sx={{
                                                 fontSize: '13px', // text-sm

@@ -27,5 +27,5 @@ public interface UserRepository extends CrudRepository<User, Long>{
 	""")
 	List<User> searchByUsername(@Param("keyword") String keyword,
 								@Param("ownerUsername") String ownerUsername,
-								@Param("itemPublicId") String itemPublicId);
+								@Param("itemPublicId") UUID itemPublicId);
 }

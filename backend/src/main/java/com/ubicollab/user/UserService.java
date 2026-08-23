@@ -3,6 +3,7 @@ package com.ubicollab.user;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -63,7 +64,7 @@ public class UserService {
 	}
 	
 	// username 검색 엔진 메서드
-	public List<UserResponse> searchUsers(String username, String keyword, String publicId) {
+	public List<UserResponse> searchUsers(String username, String keyword, UUID publicId) {
 		List<UserResponse> result = new ArrayList<>();
 		
 		// 현재 DriveItem

@@ -1,7 +1,8 @@
-export type sharedUser = {
-    publicId : string;
+export type permission = {
+    userId : string;
     username: string;
     nickname : string;
     profileImageKey: string | null;
+    driveItemId : string;
     type : string;
 };

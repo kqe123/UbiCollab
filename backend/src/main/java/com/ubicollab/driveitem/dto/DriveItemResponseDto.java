@@ -11,10 +11,10 @@ import com.ubicollab.permission.enums.PermissionType;
 // DriveItem에 User, Parent는 객체 그대로 프론트에 보내면 
 // 성능이 느려지고, 불필요한 정보들까지 내려올수 있으므로 parentID, userId만 내려보낸다.
 public record DriveItemResponseDto(
-	    String publicId,
+		UUID publicId,
 	    String itemName,
 	    DriveItemType itemType,
-	    String parentId,
+	    UUID parentId,
 	    UUID userId, 
 	    String content,
 	    DriveItemExtension extension,

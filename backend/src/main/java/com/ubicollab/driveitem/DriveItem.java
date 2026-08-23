@@ -10,9 +10,11 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Column;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
+import org.hibernate.annotations.UuidGenerator;
 
 import com.ubicollab.driveitem.enums.DriveItemExtension;
 import com.ubicollab.driveitem.enums.DriveItemType;
@@ -26,9 +28,10 @@ public class DriveItem {
 	private Long id;
 	
 	// URL에 노출할 랜덤 ID
-    @Column(nullable = false, unique = true, updatable = false, length = 21)
-    private String publicId;
-	
+	@UuidGenerator 
+    @Column(nullable = false, unique = true, updatable = false, length = 50)
+    private UUID publicId;
+    
 	// 아이템 이름 (폴더명/파일명)
 	@Column(nullable=false,length=100)
 	private String itemName;
@@ -74,7 +77,7 @@ public class DriveItem {
 	//생성자
 	public DriveItem() {}
 	
-	public DriveItem(String publicId, String itemName,
+	public DriveItem(UUID publicId, String itemName,
 					DriveItemType type, DriveItem parent, User user,
 		    		String content, DriveItemExtension extension, Long size,
 		    		LocalDateTime createdDate, Boolean isInTrash, Boolean isTrashRoot) {
@@ -95,11 +98,11 @@ public class DriveItem {
 		return id;
 	}
 	
-	public String getPublicId() {
+	public UUID getPublicId() {
 		return publicId;
 	}
 
-	public void setPublicId(String publicId) {
+	public void setPublicId(UUID publicId) {
 		this.publicId = publicId;
 	}
 

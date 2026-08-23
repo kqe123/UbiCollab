@@ -2,30 +2,24 @@ package com.ubicollab.driveitem;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
-import org.springframework.http.ResponseEntity;
+import java.util.UUID;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ubicollab.common.exception.PermissionDeniedException;
-import com.ubicollab.driveitem.DriveItem;
-import com.ubicollab.driveitem.DriveItemRepository;
 import com.ubicollab.driveitem.dto.DriveItemCreateDto;
 import com.ubicollab.driveitem.dto.DriveItemResponseDto;
 import com.ubicollab.driveitem.dto.DriveItemUpdateDto;
 import com.ubicollab.driveitem.enums.DriveItemExtension;
 import com.ubicollab.driveitem.enums.DriveItemType;
-import com.ubicollab.favorite.Favorite;
 import com.ubicollab.favorite.FavoriteRepository;
 import com.ubicollab.permission.PermissionService;
 import com.ubicollab.permission.enums.PermissionType;
 import com.ubicollab.user.User;
 import com.ubicollab.user.UserRepository;
-import static com.aventrix.jnanoid.jnanoid.NanoIdUtils.randomNanoId;
 
 @Service
 public class DriveItemService {
@@ -45,7 +39,7 @@ public class DriveItemService {
 	}
 	
 	// DriveItem(folder/file) 생성 메서드 (MANAGER | OWNER 권한 필요)
-	public String createDriveItem(DriveItemCreateDto request, String username) {
+	public UUID createDriveItem(DriveItemCreateDto request, String username) {
 		// 프론트에서 보내지 않은 값은 Jackson이 모두 null로 처리해준다.
 		String itemName = request.itemName(); // 무조건 필수
 		DriveItemType type = request.type(); // 무조건 필수
@@ -113,12 +107,9 @@ public class DriveItemService {
 	    	throw new IllegalArgumentException("지원하지 않는 타입입니다.");
 	    }
 
-		// 랜덤 publicId 생성
-		String publicId = randomNanoId();
-
-	    // 새로운 DriveItem 객체 생성
+	    // 새로운 DriveItem 객체 생성 (publicId는 @UuidGenerator가 저장 시 자동 생성)
 	    DriveItem newDriveItem = new DriveItem(
-	    	publicId,
+	    	null,
 	        itemName.trim(),
 	        type,
 	        parent,
@@ -130,10 +121,10 @@ public class DriveItemService {
 	        false,
 	        false
 	    );
-	    
-	    // 저장 + publicId 반환
+
+	    // 저장 + 자동 생성된 publicId 반환
 	    driveRepository.save(newDriveItem);
-		return publicId;
+		return newDriveItem.getPublicId();
 	}
 	
 	
@@ -151,7 +142,7 @@ public class DriveItemService {
 	}
 	
 	// [편집기] file 하나를 반환하는 메서드 (접근 권한 필요)
-	public DriveItemResponseDto getFile(String publicId, String username) {
+	public DriveItemResponseDto getFile(UUID publicId, String username) {
 		// 1. DriveItem 찾기
 		DriveItem file = driveRepository.findByPublicId(publicId).orElseThrow(
 				() -> new RuntimeException("파일를 찾을 수 없습니다. publicId=" + publicId));
@@ -178,7 +169,7 @@ public class DriveItemService {
 	
 	
 	// [내 드라이브] 현재 디렉토리의 DriveItem(folder/file)들을 반환하는 메서드 (OWNER 권한 필요)
-	public List<DriveItemResponseDto> getDriveItems(String parentPublicId, String username) {
+	public List<DriveItemResponseDto> getDriveItems(UUID parentPublicId, String username) {
 		List<DriveItemResponseDto> result = new ArrayList<>();
 		List<DriveItem> driveItems; // 현재 디렉토리의 DriveItem List를 담을 변수
 		
@@ -215,7 +206,7 @@ public class DriveItemService {
 	}
 	
 	// [내 드라이브] 현재 디렉토리의 경로(path)를 반환하는 메서드 (Owner 권한 필요)
-	public List<DriveItemResponseDto> getDrivePath(String foldId, String username) {
+	public List<DriveItemResponseDto> getDrivePath(UUID foldId, String username) {
 		List<DriveItemResponseDto> path = new ArrayList<>();
 		
 		// parent X -> 빈 path 반환
@@ -263,7 +254,7 @@ public class DriveItemService {
 	}
 	
 	// DriveItem(folder/file)를 수정하는 메서드 (파일/폴더명 변경, 파일 내용 변경, 파일/폴더 이동) (Permission Required)
-	public void updateDriveItem(String publicId, DriveItemUpdateDto request, String username) {
+	public void updateDriveItem(UUID publicId, DriveItemUpdateDto request, String username) {
 		
 		// 변경가능한 필드들 (3개)
 		String itemName = request.itemName();
@@ -353,7 +344,7 @@ public class DriveItemService {
 	
 	// 해당 DriveItem(folder/file)과 모든 자식 요소들을 휴지통으로 보내는 메서드 (OWNER | MANAGER 권한 필요)
 	@Transactional
-	public void moveToTrash(String publicId, String username) {
+	public void moveToTrash(UUID publicId, String username) {
 		// 휴지통 대상 driveItem
 		DriveItem root = driveRepository.findByPublicId(publicId).orElseThrow(
 				() -> new RuntimeException("해당 아이템을 찾을 수 없습니다. publicId="+ publicId));
@@ -374,7 +365,7 @@ public class DriveItemService {
 	
 	// 해당 DriveItem(folder/file)과 모든 자식 요소들을 복원하는 메서드 (OWNER 권한 필요)
 	@Transactional 
-	public void restoreTrash(String publicId, String username) {
+	public void restoreTrash(UUID publicId, String username) {
 		// 복원 대상 driveItem
 		DriveItem root = driveRepository.findByPublicId(publicId).orElseThrow(
 				() -> new RuntimeException("해당 아이템을 찾을 수 없습니다. publicId=" + publicId));
@@ -419,7 +410,7 @@ public class DriveItemService {
 	
 	// DriveItem를 제거하는 메서드 (OWNER 권한 필요)
 	@Transactional
-	public void deleteDriveItem(String publicId, String username) {
+	public void deleteDriveItem(UUID publicId, String username) {
 		// 제거 대상 driveItem
 		DriveItem root = driveRepository.findByPublicId(publicId).orElseThrow(
 				() -> new RuntimeException("문서를 찾을 수 없습니다. publicId="+ publicId));

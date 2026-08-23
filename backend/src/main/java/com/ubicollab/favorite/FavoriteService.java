@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import com.ubicollab.common.exception.PermissionDeniedException;
@@ -41,7 +42,7 @@ public class FavoriteService {
 	}
 	
 	// [즐겨찾기] 즐겨찾기 추가 메서드 (접근 권한 필요)
-	public void createFavorite(String username, String publicId ) { 
+	public void createFavorite(String username, UUID publicId ) {
 		// 현재 유저 가져옴
 		User user = userRepository.findByUsername(username).orElseThrow(() ->
         	new IllegalArgumentException("존재하지 않는 사용자입니다."));
@@ -62,7 +63,7 @@ public class FavoriteService {
 	}
 	
 	// [즐겨찾기] 즐겨찾기 조회 메서드 (접근 권한 필요)
-	public List<DriveItemResponseDto> getFavorites(String foldId, String username) {
+	public List<DriveItemResponseDto> getFavorites(UUID foldId, String username) {
 		List<DriveItemResponseDto> result = new ArrayList<>();
 			
 		// foldId X -> 현재 로그인 유저의 Favorite 엔티티 데이터들을 반환
@@ -103,7 +104,7 @@ public class FavoriteService {
 	}
 	
 	// [즐겨찾기] 현재 즐겨찾기의 경로(path)를 반환하는 메서드 (접근 권한 필요)
-	public List<DriveItemResponseDto> getDrivePath(String foldId, String username) {
+	public List<DriveItemResponseDto> getDrivePath(UUID foldId, String username) {
 		List<DriveItemResponseDto> path = new ArrayList<>();
 			
 		// parent X -> 빈 path 반환
@@ -141,7 +142,7 @@ public class FavoriteService {
 	}
 	
 	// [즐겨찾기] 즐겨찾기 제거 메서드 (권한 불필요)
-	public void deleteFavorite(String publicId, String username) {
+	public void deleteFavorite(UUID publicId, String username) {
 			
 		// 현재 아이템(폴더/파일) 가져옴
 		DriveItem driveItem = driveRepository.findByPublicId(publicId).orElseThrow(() ->

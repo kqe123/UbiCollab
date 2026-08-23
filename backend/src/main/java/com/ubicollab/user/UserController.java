@@ -1,6 +1,7 @@
 package com.ubicollab.user;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -47,7 +48,7 @@ public class UserController {
 	@GetMapping("/search")
 	public ResponseEntity<List<UserResponse>> searchUsers(
 			@RequestParam("keyword") String keyword,
-			@RequestParam("publicId") String publicId,
+			@RequestParam("publicId") UUID publicId,
 			Authentication authentication) {
 		String username = authentication.getName(); // 현재 로그인 username
 		return ResponseEntity.status(HttpStatus.OK)

@@ -6,14 +6,13 @@ import java.util.UUID;
 import com.ubicollab.driveitem.DriveItem;
 import com.ubicollab.driveitem.enums.DriveItemExtension;
 import com.ubicollab.driveitem.enums.DriveItemType;
-import com.ubicollab.permission.Permission;
 import com.ubicollab.permission.enums.PermissionType;
 
 public record SharedItemResponseDto(
-		String publicId,
+		UUID publicId,
 	    String itemName,
 	    DriveItemType itemType,
-	    String parentId,
+	    UUID parentId,
 	    UUID userId, 
 	    String content,
 	    DriveItemExtension extension,
