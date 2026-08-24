@@ -92,13 +92,13 @@ function TrashList() {
                     <Typography variant="h5" sx={{ mt : 2.5, textAlign: 'center', }}>휴지통이 비어 있음</Typography>
                 </>
             ) : (
-            <TableContainer>
-                <Table sx={{ mt: 2.5, width: '100%', tableLayout: 'fixed', textAlign: 'left'}}>
+            <TableContainer sx={{maxHeight: 'calc(100vh - 250px)', overflowY: 'auto'}}>
+                <Table sx={{ mt: 2.5, width: '100%', tableLayout: 'fixed', textAlign: 'left', borderCollapse: 'separate', borderSpacing: 0}}>
                     <TableHead>
-                        <TableRow sx={{ borderBottom: '1px solid #DBDBDB'}}>
-                            <TableCell sx={{ width : '50%', py: 1}}>이름</TableCell>
-                            <TableCell sx={{ width : '30%', py: 1}}>생성 일자</TableCell>
-                            <TableCell sx={{ width : '20%', py: 1}}>파일 크기</TableCell>
+                        <TableRow>
+                            <TableCell sx={{ width : '50%', py: 1, position: 'sticky', top: 0, bgcolor: 'white', zIndex: 1, borderBottom: '1px solid #DBDBDB'}}>이름</TableCell>
+                            <TableCell sx={{ width : '30%', py: 1, position: 'sticky', top: 0, bgcolor: 'white', zIndex: 1, borderBottom: '1px solid #DBDBDB'}}>생성 일자</TableCell>
+                            <TableCell sx={{ width : '20%', py: 1, position: 'sticky', top: 0, bgcolor: 'white', zIndex: 1, borderBottom: '1px solid #DBDBDB'}}>파일 크기</TableCell>
                         </TableRow>
                     </TableHead>
 
@@ -106,7 +106,7 @@ function TrashList() {
                         {[...driveItems].filter((driveItem) => driveItem.isInTrash === true)
                         .sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()) // 생성 날짜 내림차순 정렬
                         .map((driveItem) => (
-                            <TableRow key={driveItem.id}
+                            <TableRow key={driveItem.publicId}
                                 onClick= {() => setSelectedDriveItem(driveItem)}
                                 onContextMenu= {(e) => {
                                     e.preventDefault();
@@ -116,20 +116,19 @@ function TrashList() {
                                     }
                                 }
                                 sx={{
-                                    borderBottom: '1px solid #DBDBDB',
-                                    bgcolor: selectedDriveItem?.id === driveItem.id ? '#e8f2fd' : 'transparent', // bg-blue-100
+                                    bgcolor: selectedDriveItem?.publicId === driveItem.publicId ? '#e8f2fd' : 'transparent', // bg-blue-100
                                     '&:hover': {
-                                        bgcolor: selectedDriveItem?.id === driveItem.id ? '#e8f2fd' : '#f3f4f6', // hover:bg-gray-100
+                                        bgcolor: selectedDriveItem?.publicId === driveItem.publicId ? '#e8f2fd' : '#f3f4f6', // hover:bg-gray-100
                                     },
                                 }}
                             >
-                                
-                                <TableCell sx={{ py: 1.5, px: 1, fontWeight: 500 }}>
+
+                                <TableCell sx={{ py: 1.5, px: 1, fontWeight: 500, borderBottom: '1px solid #DBDBDB' }}>
                                     <Box
                                         component="img"
-                                        src={driveItem.type === "FOLDER" ? folderIcon : fileIcon}
+                                        src={driveItem.itemType === "FOLDER" ? folderIcon : fileIcon}
                                         sx={{ display: 'inline-block',
-                                            height: driveItem.type === "FOLDER" ? '15px' : '18px',
+                                            height: driveItem.itemType === "FOLDER" ? '15px' : '18px',
                                             width: '15px',
                                             mr: '5px',
                                             mb: '3px',
@@ -138,8 +137,8 @@ function TrashList() {
                                     {driveItem.itemName}
                                     {driveItem.extension === "UC" || driveItem.extension === null ? "" : `.${driveItem.extension}`}
                                     {driveItem.isFavorite === true && " ★"}</TableCell>
-                                <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666'}}>{formatDate(driveItem.createdDate)}</TableCell>
-                                <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666'}}>
+                                <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666', borderBottom: '1px solid #DBDBDB' }}>{formatDate(driveItem.createdDate)}</TableCell>
+                                <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666', borderBottom: '1px solid #DBDBDB' }}>
                                     {driveItem.size === null ?
                                     "--" : `${driveItem.size} Byte`}</TableCell>
                             </TableRow>

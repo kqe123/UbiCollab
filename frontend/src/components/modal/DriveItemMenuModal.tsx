@@ -41,7 +41,7 @@ function DriveItemMenuModal({
     const addFavorite = async () => {
         try {
             // Backend API 호출
-            const response = await axios.post(`http://localhost:8080/api/favorite/create/${driveItem.publicId}`,
+            await axios.post(`http://localhost:8080/api/favorite/create/${driveItem.publicId}`,
             null,
             {
                 headers: {
@@ -50,7 +50,7 @@ function DriveItemMenuModal({
             }
             );
         
-            console.log("즐겨찾기 추가 성공", response.data);
+            console.log("알림 : 즐겨찾기 추가 성공");
             await queryClient.invalidateQueries({
                 queryKey: ["driveItems"]
             });
@@ -81,7 +81,7 @@ function DriveItemMenuModal({
     const deleteFavorite = async () => {
         try {
             // Backend API 호출
-            const response = await axios.delete(`http://localhost:8080/api/favorite/delete/${driveItem.publicId}`,
+            await axios.delete(`http://localhost:8080/api/favorite/delete/${driveItem.publicId}`,
             {
                 headers: {
                     Authorization: `Bearer ${accessToken}`
@@ -89,7 +89,7 @@ function DriveItemMenuModal({
             }
             );
         
-            console.log("즐겨찾기 해제 성공", response.data);
+            console.log("알림 : 즐겨찾기 해제 성공");
             await queryClient.invalidateQueries({
                 queryKey: ["driveItems"]
             });
@@ -129,19 +129,19 @@ function DriveItemMenuModal({
             }
             );
         
-            console.log("문서를 휴지통으로 보내기 성공", response.data);
+            console.log(response.data);
             await queryClient.invalidateQueries({
                 queryKey: ["driveItems"]
             });
-            toast.success("파일이 휴지통으로 이동되었습니다.");
+            toast.success("알림 : 파일/폴더가 휴지통으로 이동되었습니다.");
             onClose();
         } catch (error: unknown) {
-            console.error("문서를 휴지통으로 보내기 실패.. : ", error);
+            console.error("파일/폴더를 휴지통으로 보내기 실패.. : ", error);
 
             // axios에서 발생한 오류인 경우
             if (axios.isAxiosError(error)) {
                 console.error("백엔드 응답:", error.response?.data);
-                toast.error(error.response?.data?.message ?? "문서를 휴지통으로 보내기에 실패했습니다.");
+                toast.error(error.response?.data?.message ?? "파일/폴더를 휴지통으로 보내기에 실패했습니다.");
             } 
             // 일반 오류인 경우
             else if (error instanceof Error) {
@@ -180,8 +180,15 @@ function DriveItemMenuModal({
                         onClick={() => {setMenuMode("RENAME")}}
                         sx={{ width : '100%', justifyContent: 'flex-start', px : 2, color : 'black'}}
                         startIcon={<EditIcon sx={{ mb : '3px'}} />}
+                        disabled={!(driveItem.permissionType === "OWNER" || driveItem.permissionType === "MANAGER" ||
+                                    driveItem.permissionType === "EDITOR")}
                     >
-                        <Typography variant="body2" sx={{color: 'black' }}>이름 변경</Typography>
+                        <Typography 
+                            variant="body2"
+                            sx={{color: !(driveItem.permissionType === "OWNER" || driveItem.permissionType === "MANAGER"
+                                    || driveItem.permissionType === "EDITOR") ? 'text.disabled' : 'black' }}>
+                            이름 변경
+                        </Typography>
                     </Button>
                     {driveItem.isFavorite === true ? (
                         <Button 
@@ -189,8 +196,14 @@ function DriveItemMenuModal({
                             onClick={deleteFavorite}
                             sx={{width : '100%', justifyContent: 'flex-start', px : 2, color : 'black'}}
                             startIcon={<StarIcon sx={{ mb : '3px'}}/>}
+                            disabled={driveItem.permissionType === null}
                         >
-                            <Typography variant="body2" sx={{color: 'black' }}>즐겨찾기 해제</Typography>
+                            <Typography 
+                                variant="body2" 
+                                sx={{color: (driveItem.permissionType === null) ? 'text.disabled' : 'black' }}
+                            >
+                                즐겨찾기 해제
+                            </Typography>
                         </Button>
                     ) : 
                         <Button 
@@ -198,8 +211,14 @@ function DriveItemMenuModal({
                             onClick={addFavorite}
                             sx={{width : '100%', justifyContent: 'flex-start', px : 2, color : 'black'}}
                             startIcon={<StarIcon sx={{ mb : '3px'}}/>}
+                            disabled={driveItem.permissionType === null}
                         >
-                            <Typography variant="body2" sx={{color: 'black' }}>즐겨찾기 추가</Typography>
+                            <Typography 
+                                variant="body2"
+                                sx={{color: (driveItem.permissionType === null) ? 'text.disabled' : 'black' }}
+                            >
+                                즐겨찾기 추가
+                            </Typography>
                         </Button>
                     }
                     <Button 
@@ -207,16 +226,30 @@ function DriveItemMenuModal({
                         onClick={() => {setMenuMode("SHARE")}}
                         sx={{width : '100%', justifyContent: 'flex-start', px : 2, color : 'black'}}
                         startIcon={<ShareIcon sx={{ mb : '3px'}}/>}
+                        disabled={!(driveItem.permissionType === "OWNER" || driveItem.permissionType === "MANAGER")}
                     >
-                        <Typography variant="body2" sx={{color: 'black' }}>공유 추가</Typography>
+                        <Typography 
+                            variant="body2"
+                            sx={{color: !(driveItem.permissionType === "OWNER" ||
+                                driveItem.permissionType === "MANAGER") ? 'text.disabled' : 'black' }}
+                        >
+                            공유 추가
+                        </Typography>
                     </Button>
                     <Button 
                         type="button" 
                         onClick={() => {setMenuMode("PERMISSION")}}
                         sx={{width : '100%', justifyContent: 'flex-start', px : 2, color : 'black'}}
                         startIcon={<PermissionIcon sx={{ mb : '3px'}}/>}
+                        disabled={!(driveItem.permissionType === "OWNER" || driveItem.permissionType === "MANAGER")}
                     >
-                        <Typography variant="body2" sx={{color: 'black' }}>권한 관리</Typography>
+                        <Typography 
+                            variant="body2"
+                            sx={{color: !(driveItem.permissionType === "OWNER" ||
+                                driveItem.permissionType === "MANAGER") ? 'text.disabled' : 'black' }}
+                        >
+                            권한 관리
+                        </Typography>
                     </Button>
                     <Divider sx={{my : 0.5}}/>
                     <Button 
@@ -232,8 +265,15 @@ function DriveItemMenuModal({
                             },
                         }}
                         startIcon={<DeleteIcon sx={{ mb : '3px'}}/>}
+                        disabled={!(driveItem.permissionType === "OWNER" || driveItem.permissionType === "MANAGER")}
                     >
-                        <Typography variant="body2" sx={{color: 'red', fontWeight: 600 }}>휴지통으로 이동</Typography>
+                        <Typography 
+                            variant="body2"
+                            sx={{color: !(driveItem.permissionType === "OWNER" ||
+                                 driveItem.permissionType === "MANAGER") ? 'text.disabled' : 'red' }}
+                        >
+                            휴지통으로 이동
+                        </Typography>
                     </Button>
                 </Paper>
             </Box>

@@ -3,9 +3,10 @@ import toast from "react-hot-toast";
 import fileIcon from "../../../assets/file.png";
 import folderIcon from "../../../assets/folder.png";
 import noDriveImg from "../../../assets/empty-drive.png";
+import noAuthorizedIcon from "../../../assets/noAuthorized.png";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { useNavigate, useParams, useOutletContext } from "react-router-dom";
+import { useNavigate, useParams, useOutletContext, NavLink } from "react-router-dom";
 import DriveItemMenuModal from "../../modal/DriveItemMenuModal"
 import NewDriveItemModal from "../../modal/NewDriveItemModal"
 import type {DriveItem} from "../../../types/driveitem";
@@ -21,6 +22,7 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
+import Breadcrumbs from '@mui/material/Breadcrumbs';
 
 function MyDriveList() {
     // 상태(state)들
@@ -44,10 +46,10 @@ function MyDriveList() {
 
     // 요소 더블클릭 시 발생하는 이벤트 함수
     const elementDoubleClick = (driveItem: DriveItem): void => {
-        if (driveItem.type === "FOLDER") {
+        if (driveItem.itemType === "FOLDER") {
             navigate(`/drive/my-drive/${driveItem.publicId}`);
         }
-        else if (driveItem.type === "FILE") {
+        else if (driveItem.itemType === "FILE") {
             navigate(`/editor/${driveItem.publicId}`);
         }
         else {
@@ -95,34 +97,49 @@ function MyDriveList() {
 
     // 백엔드 api(디렉토리 조회)를 호출하는 비동기 함수
     const getDriveItems = async () => {
-
-        // axios로 백엔드 api 호출
-        const response = await axios.get(
-            "http://localhost:8080/api/driveitem/driveitems",
-            {   
-                params: {
-                    parentPublicId: currentFolderId
-                },
-                headers: {
-                    Authorization: `Bearer ${accessToken}`
+        try {
+            // axios로 백엔드 api 호출
+            const response = await axios.get(
+                "http://localhost:8080/api/driveitem/driveitems",
+                {   
+                    params: {
+                        parentPublicId: currentFolderId
+                    },
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`
+                    }
                 }
+            );
+            return response.data;
+        } catch (error: unknown) {
+            if (axios.isAxiosError(error)) {
+                const message = error.response?.data?.message ?? "디렉토리 조회에 실패했습니다.";
+                throw new Error(message); // 여기서 백엔드 메시지를 담은 새 Error로 교체
             }
-        );
-        return response.data;
+            throw error;
+        }
     };
 
     // 백엔드 api(현재 경로 조회)를 호출하는 비동기 함수
     const getDrivePath = async ()  => {
-        const response = await axios.get(
-            `http://localhost:8080/api/driveitem/path/${currentFolderId}`,
-            {
-                headers : {
-                    Authorization: `Bearer ${accessToken}`
+        try {
+            const response = await axios.get(
+                `http://localhost:8080/api/driveitem/path/${currentFolderId}`,
+                {
+                    headers : {
+                        Authorization: `Bearer ${accessToken}`
+                    }
                 }
+            )
+            console.log(response.data)
+            return response.data;
+        } catch (error: unknown) {
+            if (axios.isAxiosError(error)) {
+                const message = error.response?.data?.message ?? "경로 조회에 실패했습니다.";
+                throw new Error(message); // 여기서 백엔드 메시지를 담은 새 Error로 교체
             }
-        )
-        console.log(response.data)
-        return response.data;
+            throw error;
+        }
     };
 
     // useQuery 실행 (첫 렌더링 시, queryKey가 변경될 시에 실행한다.)
@@ -163,7 +180,8 @@ function MyDriveList() {
     if (isDriveItemsError) {
         return (
             <Box sx={{ minHeight: '100vh', alignItems: 'center', justifyContent: 'center'}}>
-                <Typography sx={{ color: 'error.main' }}>문서를 불러오지 못했습니다 : {driveItemsError.message}</Typography>
+                <Box component="img" src={noAuthorizedIcon} sx={{ width: '40%', height: '35%', mx: 'auto', mt: 5}}/>
+                <Typography variant="h5" sx={{ color: 'error.main' ,textAlign: 'center',}}>{driveItemsError.message}</Typography>
             </Box>
         )
     }
@@ -177,7 +195,7 @@ function MyDriveList() {
             sx={{ width : '100%', height : '100%'}}
             onContextMenu= {(e) => {tableRightClick(e);}}
         >
-            <Box sx={{ display: 'flex', width: '50%', alignItems: 'center' , 
+            <Box sx={{ display: 'flex', width: '70%', alignItems: 'center' , 
                 gap : 0.5, mt : 4, bgcolor: '#eaeefc', borderRadius: '10px'}}>
 
                 {/* Home Button */}
@@ -221,9 +239,35 @@ function MyDriveList() {
                 </IconButton>
 
                 {/* Path */}
-                <Typography variant="body2" sx={{ fontWeight: 500}}>
-                    내 드라이브 / {[...paths].map((path) => path.itemName).join(" / ")}
-                </Typography>
+                <Breadcrumbs
+                    separator="/"
+                    maxItems={4}
+                    sx={{
+                        fontWeight: 500,
+                        fontSize: "14px",
+                        flexWrap: "nowrap",   // 줄바꿈 방지
+                        overflowX: 'auto',
+                    }}
+                >
+                    <Typography variant="body2" sx={{ fontWeight: 500}}>
+                        내 드라이브
+                    </Typography>
+                    {[...paths].map((path) => (
+                        <Box key={path.publicId}>
+                            <Typography
+                                variant="body2"
+                                key={path.publicId}
+                                component={NavLink}
+                                to={`/drive/my-drive/${path.publicId}`}
+                                sx={{color : 'blue',
+                                    flexWrap: "nowrap"
+                                }}    
+                            >
+                                {path.itemName}
+                            </Typography>
+                        </Box>
+                    ))}
+                </Breadcrumbs>
             </Box>
             {/* 폴더/파일이 0건일때 예외처리 */}    
             {[...driveItems].filter((driveItem) => driveItem.isInTrash === false).length === 0 ? (
@@ -232,13 +276,13 @@ function MyDriveList() {
                     <Typography variant="h5" sx={{ mt : 2.5, textAlign: 'center', }}>우클릭으로 폴더/파일을 생성해 보세요!</Typography>
                 </>
             ) : (
-            <TableContainer>
-                <Table sx={{ mt: 2.5, width: '100%', tableLayout: 'fixed', textAlign: 'left', }}>
+            <TableContainer sx={{maxHeight: 'calc(100vh - 250px)', overflowY: 'auto'}}>
+                <Table sx={{ mt: 2.5, width: '100%', tableLayout: 'fixed', textAlign: 'left', borderCollapse: 'separate', borderSpacing: 0}}>
                     <TableHead>
-                        <TableRow sx={{ borderBottom: '1px solid #DBDBDB'}}>
-                            <TableCell sx={{ width : '50%', py: 1}}>이름</TableCell>
-                            <TableCell sx={{ width : '30%', py: 1}}>생성 일자</TableCell>
-                            <TableCell sx={{ width : '20%', py: 1}}>파일 크기</TableCell>
+                        <TableRow>
+                            <TableCell sx={{ width : '50%', py: 1, position: 'sticky', top: 0, bgcolor: 'white', zIndex: 1, borderBottom: '1px solid #DBDBDB'}}>이름</TableCell>
+                            <TableCell sx={{ width : '30%', py: 1, position: 'sticky', top: 0, bgcolor: 'white', zIndex: 1, borderBottom: '1px solid #DBDBDB'}}>생성 일자</TableCell>
+                            <TableCell sx={{ width : '20%', py: 1, position: 'sticky', top: 0, bgcolor: 'white', zIndex: 1, borderBottom: '1px solid #DBDBDB'}}>파일 크기</TableCell>
                         </TableRow>
                     </TableHead>
 
@@ -246,7 +290,7 @@ function MyDriveList() {
                         {[...driveItems].filter((driveItem) => driveItem.isInTrash === false)
                         .sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()) // 생성 날짜 내림차순 정렬
                         .map((driveItem) => (
-                            <TableRow key={driveItem.id}
+                            <TableRow key={driveItem.publicId}
                                 onClick= {() => setSelectedDriveItem(driveItem)}
                                 onContextMenu= {(e) => {
                                     e.preventDefault();
@@ -260,20 +304,19 @@ function MyDriveList() {
                                     elementDoubleClick(driveItem);
                                 }}
                                 sx={{
-                                    borderBottom: '1px solid #DBDBDB',
-                                    bgcolor: selectedDriveItem?.id === driveItem.id ? '#e8f2fd' : 'transparent', // bg-blue-100
+                                    bgcolor: selectedDriveItem?.publicId === driveItem.publicId ? '#e8f2fd' : 'transparent', // bg-blue-100
                                     '&:hover': {
-                                        bgcolor: selectedDriveItem?.id === driveItem.id ? '#e8f2fd' : '#f3f4f6', // hover:bg-gray-100
+                                        bgcolor: selectedDriveItem?.publicId === driveItem.publicId ? '#e8f2fd' : '#f3f4f6', // hover:bg-gray-100
                                     },
                                 }}
                             >
-                                
-                                <TableCell sx={{ py: 1.5, px: 1, fontWeight: 500 }}>
+
+                                <TableCell sx={{ py: 1.5, px: 1, fontWeight: 500, borderBottom: '1px solid #DBDBDB' }}>
                                     <Box
                                         component="img"
-                                        src={driveItem.type === "FOLDER" ? folderIcon : fileIcon}
+                                        src={driveItem.itemType === "FOLDER" ? folderIcon : fileIcon}
                                         sx={{ display: 'inline-block',
-                                            height: driveItem.type === "FOLDER" ? '15px' : '18px',
+                                            height: driveItem.itemType === "FOLDER" ? '15px' : '18px',
                                             width: '15px',
                                             mr: '5px',
                                             mb: '3px',
@@ -282,8 +325,8 @@ function MyDriveList() {
                                     {driveItem.itemName}
                                     {driveItem.extension === "UC" || driveItem.extension === null ? "" : `.${driveItem.extension}`}
                                     {driveItem.isFavorite === true && " ★"}</TableCell>
-                                <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666'}}>{formatDate(driveItem.createdDate)}</TableCell>
-                                <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666'}}>
+                                <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666', borderBottom: '1px solid #DBDBDB' }}>{formatDate(driveItem.createdDate)}</TableCell>
+                                <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666', borderBottom: '1px solid #DBDBDB' }}>
                                     {driveItem.size === null ?
                                     "--" : `${driveItem.size} Byte`}</TableCell>
                             </TableRow>

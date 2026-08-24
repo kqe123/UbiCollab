@@ -13,7 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 
 @Component
 public class JwtService {
-	static final long EXPIRATIONTIME = 3_600_000L;
+	static final long EXPIRATIONTIME = 10_800_000L;
 	static final String PREFIX = "Bearer ";
 	
 	private final SecretKey KEY;

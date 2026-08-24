@@ -2,11 +2,8 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import type {DriveItem} from "../../types/driveitem";
 import type {User} from "../../types/user";
-import type {sharedUser} from "../../types/sharedUser";
-import fileIcon from "../../assets/file.png";
-import folderIcon from "../../assets/folder.png";
+import type {permission} from "../../types/permission";
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
@@ -16,6 +13,7 @@ import Avatar from '@mui/material/Avatar';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
+import IconButton from  '@mui/material/IconButton';
 
 function  ShareModal ({
     driveItem,
@@ -27,7 +25,7 @@ function  ShareModal ({
 
     const [text, setText] = useState<string>(""); // 입력값
     const [users, setUsers] = useState<User[]>([]); // 검색 결과 유저들
-    const [sharedUsers, setSharedUsers] = useState<sharedUser[]>([]); // 공유 대상에 추가한 유저들
+    const [sharedUsers, setSharedUsers] = useState<permission[]>([]); // 공유 대상에 추가한 유저들
     const [isUserListOpen, setIsUserListOpen] = useState(false); // 자동완성 열림/닫힘
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
 
@@ -65,7 +63,9 @@ function  ShareModal ({
         // cleanup 함수
         return () => clearTimeout(timer);
     }, [text]);
-    
+
+
+    // 공유 추가 메서드
     const shareDriveItem = async () => {
         try {
             if (sharedUsers.length === 0) {
@@ -76,9 +76,9 @@ function  ShareModal ({
             const response = await axios.post(
                 "http://localhost:8080/api/permission/create",
                 {
-                    publicId: driveItem.publicId,
+                    driveItemId: driveItem.publicId,
                     userList: sharedUsers.map((user) => ({
-                        userId: user.id,
+                        userId: user.userId,
                         type: user.type,
                     })),
                 },
@@ -89,7 +89,7 @@ function  ShareModal ({
                 }
             );
             
-            console.log("공유 성공 : ", response.data);
+            console.log(`알림 : ${response.data}명 공유 성공!`);
             toast.success("공유 성공하였습니다!");
             onClose();
         } catch (error: unknown) {
@@ -184,7 +184,7 @@ function  ShareModal ({
                             }} 
                         >
                             {users.map((user) => (
-                                <Box key={user.id}
+                                <Box key={user.publicId}
                                     sx={{
                                         height : 'min(60px, 7vh)',
                                         display: 'flex',
@@ -198,7 +198,7 @@ function  ShareModal ({
                                     onClick={() => {
                                         // 선택한 사용자가 이미 중복 선택된 경우 예외처리
                                         const isDuplicate = sharedUsers.some(
-                                            (sharedUser) => sharedUser.id === user.id
+                                            (sharedUser) => sharedUser.userId === user.publicId
                                         );
 
                                         if (isDuplicate) {
@@ -210,10 +210,11 @@ function  ShareModal ({
                                         setSharedUsers((prev) => [
                                             ...prev,
                                             {
-                                                id: user.id,
+                                                userId : user.publicId,
                                                 username: user.username,
                                                 nickname: user.nickname,
                                                 profileImageKey: user.profileImageKey,
+                                                driveItemId : driveItem.publicId,
                                                 type: "VIEWER",
                                             }
                                         ])
@@ -241,9 +242,9 @@ function  ShareModal ({
                     <Typography variant="body1" sx={{ fontWeight: 500, mt: 1, flexShrink: 0}}>추가된 공유 사용자</Typography>
                     {sharedUsers.length > 0 && (
                         <Box sx={{width: '100%', flex: 1, minHeight: 0, overflowY: 'auto'}}>
-                            {sharedUsers.map((sharedUser : sharedUser) => (
+                            {sharedUsers.map((sharedUser : permission) => (
                                 <Box
-                                    key={sharedUser.id}
+                                    key={sharedUser.userId}
                                     sx={{
                                         display : 'flex',
                                         height : 'min(60px, 7vh)',
@@ -270,7 +271,7 @@ function  ShareModal ({
                                             onChange={(e) => {
                                             setSharedUsers((prev) =>
                                                 prev.map((user) =>
-                                                user.id === sharedUser.id
+                                                user.userId === sharedUser.userId
                                                     ? { ...user, type: e.target.value }
                                                     : user
                                                 )
@@ -298,6 +299,15 @@ function  ShareModal ({
                                             <MenuItem value="MANAGER">관리자</MenuItem>
                                         </Select>
                                     </Box>
+                                    <IconButton 
+                                        size="small"
+                                        onClick={() => {
+                                            setSharedUsers((prev) =>
+                                                prev.filter((user) => user.userId !== sharedUser.userId)
+                                            );
+                                        }}
+                                    >   <CloseIcon color="error" fontSize="small"/>
+                                    </IconButton>
                                 </Box>
                             ))}
                         </Box>

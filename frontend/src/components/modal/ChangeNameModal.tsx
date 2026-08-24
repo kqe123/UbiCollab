@@ -35,7 +35,7 @@ function ChangeNameModal ({
 
         try {
             // 문서 변경 Backend API 호출  
-            const response = await axios.patch(
+            await axios.patch(
                 `http://localhost:8080/api/driveitem/${driveItem.publicId}`,
                 driveItemData,
                 {
@@ -45,7 +45,7 @@ function ChangeNameModal ({
                 }
             );
         
-            console.log("파일명 변경 성공", response.data);
+            console.log("알림 : 파일명 변경 성공");
             await queryClient.invalidateQueries({
                 queryKey: ["driveItems"]
             });

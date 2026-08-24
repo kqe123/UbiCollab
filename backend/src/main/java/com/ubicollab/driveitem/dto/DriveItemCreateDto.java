@@ -1,5 +1,6 @@
 package com.ubicollab.driveitem.dto;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import com.ubicollab.driveitem.DriveItem;
 import com.ubicollab.driveitem.enums.DriveItemExtension;
@@ -29,7 +30,7 @@ public record DriveItemCreateDto(
 	    DriveItemType type,
 
 	    // parent는 string | null일 수도 있으므로 검증 X
-	    String parentPublicId,
+	    UUID parentPublicId,
 
 	    // content도 null일 수도 있으므로 검증 X
 	    String content,

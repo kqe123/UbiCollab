@@ -8,12 +8,13 @@ import Paper from '@mui/material/Paper';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 function NewDriveItemModal({
-    x, y, onClose, currentFolderId
+    x, y, onClose, currentFolderId, disabled = false
 } : {
     x : number;
     y : number;
     onClose : () => void;
-    currentFolderId : string | null
+    currentFolderId : string | null;
+    disabled? : boolean; // true면 이 위치에 생성할 권한이 없다는 뜻 (OWNER | MANAGER만 생성 가능)
 }) {
 
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
@@ -21,6 +22,12 @@ function NewDriveItemModal({
 
     // 새 파일 생성 버튼 클릭 시 이벤트
     const createFile = async () => {
+        // [권한 제어] 방어적으로 한 번 더 체크 (버튼은 disabled로 막혀있지만, 우회 클릭 대비)
+        if (disabled) {
+            toast.error("해당 위치에 생성할 권한이 없습니다.");
+            return;
+        }
+
         const fileData = {
             itemName: "제목 없는 문서",
             type : "FILE",
@@ -40,7 +47,7 @@ function NewDriveItemModal({
                 }
             );
 
-            console.log("파일 생성 성공:", response.data);
+            console.log("알림 : 파일 생성 성공 : ", response.data);
             await queryClient.invalidateQueries({
                 queryKey: ["driveItems"]
             });
@@ -65,8 +72,14 @@ function NewDriveItemModal({
         }
     }
 
-    // 새 파일 생성 버튼 클릭 시 이벤트
+    // 새 폴더 생성 버튼 클릭 시 이벤트
     const createFolder = async () => {
+        // [권한 제어] 방어적으로 한 번 더 체크 (버튼은 disabled로 막혀있지만, 우회 클릭 대비)
+        if (disabled) {
+            toast.error("해당 위치에 생성할 권한이 없습니다.");
+            return;
+        }
+
         const folderData = {
             itemName: "새 폴더",
             type : "FOLDER",
@@ -85,7 +98,7 @@ function NewDriveItemModal({
                 }
             );
 
-            console.log("폴더 생성 성공:", response.data);
+            console.log("알림 : 폴더 생성 성공 : ", response.data);
             await queryClient.invalidateQueries({
                 queryKey: ["driveItems"]
             });
@@ -127,29 +140,31 @@ function NewDriveItemModal({
                         top: `${y}px`,
                     }}
                 >   
-                    <Button 
+                    <Button
                         type="button"
                         onClick={() => {createFolder()}}
+                        disabled={disabled}
                         sx={{width : '100%', justifyContent: 'flex-start', px : 2}}
                     >
-                        <Box 
+                        <Box
                             component="img"
                             src={folderIcon}
                             sx={{ width: '15px', height: '15px', mr : '5px', mb : '3px'}}
                         />
-                        <Typography variant="body2" sx={{color: 'black' }}>새 폴더 만들기</Typography>
+                        <Typography variant="body2" sx={{color: disabled ? 'text.disabled' : 'black' }}>새 폴더 만들기</Typography>
                     </Button>
-                    <Button 
-                        type="button" 
+                    <Button
+                        type="button"
                         onClick={() => {createFile()}}
+                        disabled={disabled}
                         sx={{width : '100%', justifyContent: 'flex-start', px : 2}}
-                    >   
-                        <Box 
+                    >
+                        <Box
                             component="img"
                             src={fileIcon}
                             sx={{ width: '15px', height: '18px', mr : '5px', mb : '3px'}}
                         />
-                        <Typography variant="body2" sx={{color: 'black' }}>새 파일 만들기</Typography>
+                        <Typography variant="body2" sx={{color: disabled ? 'text.disabled' : 'black' }}>새 파일 만들기</Typography>
                     </Button>
                 </Paper>
             </Box>

@@ -37,7 +37,8 @@ function App() {
           <Route path="recent" element={<RecentList />} />
           <Route path="favorite" element={<FavoriteList />} />  {/* folderId : null */}
           <Route path="favorite/:folderId" element={<FavoriteList />} /> {/* folderId : string */}
-          <Route path="shared" element={<SharedList />} /> 
+          <Route path="shared" element={<SharedList />} />            {/* folderId : null */}
+          <Route path="shared/:folderId" element={<SharedList />} />  {/* folderId : string */}
           <Route path="trash" element={<TrashList />} /> 
         </Route>
         <Route path="/editor/:fileId" element={<EditorPage />} />

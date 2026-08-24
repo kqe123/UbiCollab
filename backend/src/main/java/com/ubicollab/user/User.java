@@ -6,6 +6,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Column;
 import java.time.LocalDateTime;
+import java.util.UUID;
+import org.hibernate.annotations.UuidGenerator;
 
 @Entity
 @Table(name = "users") // PostgreSQL에서 user는 예약어(reserved keyword)이므로 users로 변경
@@ -16,6 +18,10 @@ public class User {
 	private Long id;
 	
 	// 필드들
+	@UuidGenerator
+	@Column(nullable = false, unique = true, updatable = false, length = 50)
+	private UUID publicId; 
+	
 	@Column(nullable=false, unique=true, length=50)
 	private String username;
 	
@@ -48,10 +54,15 @@ public class User {
 	}
 	
 	//접근자들, 설정자들
+	// ID, PublicId는 불변하므로 setter가 없음.
 	public Long getId() {
 		return id;
 	}
-		
+	
+	public UUID getPublicId() {
+		return publicId;
+	}
+	
 	public String getUsername() {
 		return username;
 	}

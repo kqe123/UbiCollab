@@ -1,11 +1,10 @@
 export type DriveItem = {
-    id: number;
     publicId : string;
     itemName: string;
-    type : "FILE" | "FOLDER";
+    itemType : "FILE" | "FOLDER";
 
-    parentId : number | null;
-    userId : number ;
+    parentId : string | null;
+    userId : string;
 
     content: string|null;
     extension: string|null;
@@ -14,5 +13,6 @@ export type DriveItem = {
     createdDate: string;
     isInTrash : boolean;
     isFavorite : boolean;
+    permissionType : "VIEWER" | "COMMENTOR" | "EDITOR" | "MANAGER" | "OWNER" | null;
 };
 

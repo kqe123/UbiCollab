@@ -4,7 +4,7 @@ import fileIcon from "../../../assets/file.png";
 import folderIcon from "../../../assets/folder.png";
 import noFavoriteImg from "../../../assets/empty-favorite.png";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate, useParams, useOutletContext } from "react-router-dom";
+import { useNavigate, useParams, useOutletContext, NavLink } from "react-router-dom";
 import DriveItemMenuModal from "../../modal/DriveItemMenuModal"
 import type {DriveItem} from "../../../types/driveitem";
 import type { DirectoryOutletContext} from "../Directory";
@@ -19,6 +19,7 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
+import Breadcrumbs from '@mui/material/Breadcrumbs';
 
 function FavoriteList() {
    // 상태(state)들
@@ -37,10 +38,10 @@ function FavoriteList() {
 
     // 요소 더블클릭 시 발생하는 이벤트 함수
     const elementDoubleClick = (driveItem: DriveItem): void => {
-        if (driveItem.type === "FOLDER") {
+        if (driveItem.itemType === "FOLDER") {
             navigate(`/drive/favorite/${driveItem.publicId}`);
         }
-        else if (driveItem.type === "FILE") {
+        else if (driveItem.itemType === "FILE") {
             navigate(`/editor/${driveItem.publicId}`);
         }
         else {
@@ -75,7 +76,7 @@ function FavoriteList() {
     const getFavorites = async () => {
         // 백엔드에 보낼 폴더 ID
         const DriveItemData = {
-            parentPublicId: currentFolderId
+            foldId: currentFolderId
         }
 
         // axios로 백엔드 api 호출
@@ -94,7 +95,7 @@ function FavoriteList() {
     // 백엔드 api(현재 경로 조회)를 호출하는 비동기 함수
     const getDrivePath = async ()  => {
         const response = await axios.get(
-            `http://localhost:8080/api/driveitem/path/${currentFolderId}`,
+            `http://localhost:8080/api/favorite/path/${currentFolderId}`,
             {
                 headers : {
                     Authorization: `Bearer ${accessToken}`
@@ -154,7 +155,7 @@ function FavoriteList() {
         <>
         <Typography variant="h5" sx={{ fontWeight: 500, mt: 1}}>즐겨찾기</Typography>
         <Box sx={{ width : '100%', height : '100%'}}>
-            <Box sx={{ display: 'flex', width: '50%', alignItems: 'center' , 
+            <Box sx={{ display: 'flex', width: '70%', alignItems: 'center',
                 gap : 0.5, mt : 4, bgcolor: '#eaeefc', borderRadius: '10px'}}>
 
                 {/* Home Button */}
@@ -198,9 +199,35 @@ function FavoriteList() {
                 </IconButton>
 
                 {/* Path */}
-                <Typography variant="body2" sx={{ fontWeight: 500}}>
-                    즐겨찾기 / {[...paths].map((path) => path.itemName).join(" / ")}
-                </Typography>
+                <Breadcrumbs
+                    separator="/"
+                    maxItems={4}
+                    sx={{
+                        fontWeight: 500,
+                        fontSize: "14px",
+                        flexWrap: "nowrap",   // 줄바꿈 방지
+                        overflowX: 'auto',
+                    }}
+                >
+                    <Typography variant="body2" sx={{ fontWeight: 500}}>
+                        즐겨찾기
+                    </Typography>
+                    {[...paths].map((path) => (
+                        <Box key={path.publicId}>
+                            <Typography
+                                variant="body2"
+                                key={path.publicId}
+                                component={NavLink}
+                                to={`/drive/favorite/${path.publicId}`}
+                                sx={{color : 'blue',
+                                    flexWrap: "nowrap"
+                                }}    
+                            >
+                                {path.itemName}
+                            </Typography>
+                        </Box>
+                    ))}
+                </Breadcrumbs>
             </Box>
             {/* 폴더/파일이 0건일때 예외처리 */}    
             {[...favorites].filter((favorite) => favorite.isInTrash === false).length === 0 ? (
@@ -209,13 +236,13 @@ function FavoriteList() {
                     <Typography variant="h5" sx={{ mt : 2.5, textAlign: 'center', }}>즐겨찾기에 등록한 항목이 없습니다!</Typography>
                 </>
             ) : (
-            <TableContainer>
-                <Table sx={{ mt: 2.5, width: '100%', tableLayout: 'fixed', textAlign: 'left'}}>
+            <TableContainer sx={{maxHeight: 'calc(100vh - 250px)', overflowY: 'auto'}}>
+                <Table sx={{ mt: 2.5, width: '100%', tableLayout: 'fixed', textAlign: 'left', borderCollapse: 'separate', borderSpacing: 0}}>
                     <TableHead>
-                        <TableRow sx={{ borderBottom: '1px solid #DBDBDB'}}>
-                            <TableCell sx={{ width : '50%', py: 1}}>이름</TableCell>
-                            <TableCell sx={{ width : '30%', py: 1}}>생성 일자</TableCell>
-                            <TableCell sx={{ width : '20%', py: 1}}>파일 크기</TableCell>
+                        <TableRow>
+                            <TableCell sx={{ width : '50%', py: 1, position: 'sticky', top: 0, bgcolor: 'white', zIndex: 1, borderBottom: '1px solid #DBDBDB'}}>이름</TableCell>
+                            <TableCell sx={{ width : '30%', py: 1, position: 'sticky', top: 0, bgcolor: 'white', zIndex: 1, borderBottom: '1px solid #DBDBDB'}}>생성 일자</TableCell>
+                            <TableCell sx={{ width : '20%', py: 1, position: 'sticky', top: 0, bgcolor: 'white', zIndex: 1, borderBottom: '1px solid #DBDBDB'}}>파일 크기</TableCell>
                         </TableRow>
                     </TableHead>
 
@@ -223,7 +250,7 @@ function FavoriteList() {
                         {[...favorites].filter((favorite) => favorite.isInTrash === false)
                         .sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()) // 생성 날짜 내림차순 정렬
                         .map((favorite) => (
-                        <TableRow key={favorite.id}
+                        <TableRow key={favorite.publicId}
                             onClick= {() => setSelectedDriveItem(favorite)}
                             onContextMenu= {(e) => {
                                 e.preventDefault();
@@ -237,20 +264,19 @@ function FavoriteList() {
                                 elementDoubleClick(favorite);
                             }}
                             sx={{
-                                borderBottom: '1px solid #DBDBDB',
-                                bgcolor: selectedDriveItem?.id === favorite.id ? '#e8f2fd' : 'transparent', // bg-blue-100
+                                bgcolor: selectedDriveItem?.publicId === favorite.publicId ? '#e8f2fd' : 'transparent', // bg-blue-100
                                 '&:hover': {
-                                    bgcolor: selectedDriveItem?.id === favorite.id ? '#e8f2fd' : '#f3f4f6', // hover:bg-gray-100
+                                    bgcolor: selectedDriveItem?.publicId === favorite.publicId ? '#e8f2fd' : '#f3f4f6', // hover:bg-gray-100
                                 },
                             }}
                         >
-                                
-                            <TableCell sx={{ py: 1.5, px: 1, fontWeight: 500 }}>
+
+                            <TableCell sx={{ py: 1.5, px: 1, fontWeight: 500, borderBottom: '1px solid #DBDBDB' }}>
                                 <Box
                                     component="img"
-                                    src={favorite.type === "FOLDER" ? folderIcon : fileIcon}
+                                    src={favorite.itemType === "FOLDER" ? folderIcon : fileIcon}
                                     sx={{ display: 'inline-block',
-                                        height: favorite.type === "FOLDER" ? '15px' : '18px',
+                                        height: favorite.itemType === "FOLDER" ? '15px' : '18px',
                                         width: '15px',
                                         mr: '5px',
                                         mb: '3px',
@@ -259,8 +285,8 @@ function FavoriteList() {
                                 {favorite.itemName}
                                 {favorite.extension === "UC" || favorite.extension === null ? "" : `.${favorite.extension}`}
                                 {favorite.isFavorite === true && " ★"}</TableCell>
-                            <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666'}}>{formatDate(favorite.createdDate)}</TableCell>
-                            <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666'}}>
+                            <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666', borderBottom: '1px solid #DBDBDB' }}>{formatDate(favorite.createdDate)}</TableCell>
+                            <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666', borderBottom: '1px solid #DBDBDB' }}>
                                 {favorite.size === null ?
                                 "--" : `${favorite.size} Byte`}</TableCell>
                         </TableRow>

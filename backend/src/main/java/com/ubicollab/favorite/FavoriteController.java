@@ -1,6 +1,8 @@
 package com.ubicollab.favorite;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,7 +37,7 @@ public class FavoriteController {
 	
 	// [즐겨찾기] 즐겨찾기 생성 API (POST '/api/favorite/create')
 	@PostMapping("/create/{id}")
-	public ResponseEntity<Favorite> createFavorite(@PathVariable("id") String publicId,
+	public ResponseEntity<Favorite> createFavorite(@PathVariable("id") UUID publicId,
 			Authentication authentication) {
 		String username = authentication.getName();
 		favoriteService.createFavorite(username, publicId);
@@ -46,20 +48,30 @@ public class FavoriteController {
 	
 	// [즐겨찾기] 즐겨찾기 조회 API (GET '/api/favorite')
 	@GetMapping
-	public Iterable<DriveItemResponseDto> getFavorites(
-			@RequestParam(value = "parentPublicId", required = false) String parentPublicId,
+	public ResponseEntity<List<DriveItemResponseDto>> getFavorites(
+			@RequestParam(value = "foldId", required = false) UUID foldId,
 			Authentication authentication) {
 		String username = authentication.getName(); // 현재 사용자 username
-		return favoriteService.getFavorites(parentPublicId, username);
+		return ResponseEntity.status(HttpStatus.OK)
+				.body(favoriteService.getFavorites(foldId, username));
+	}
+	
+	// [즐겨찾기] 현재 경로 가져오기 API (GET '/api/favorite/path/{id}')
+	@GetMapping("/path/{foldId}")
+	public ResponseEntity<List<DriveItemResponseDto>> getDrivePath(@PathVariable("foldId") UUID foldId,
+			Authentication authentication) {
+		String username = authentication.getName();
+		return ResponseEntity.status(HttpStatus.OK)
+				.body(favoriteService.getDrivePath(foldId, username));
 	}
 	
 	// [즐겨찾기] 즐겨찾기 삭제 API (DELETE '/api/favorite/delete/{id}')
 		@DeleteMapping("/delete/{id}")
-		public ResponseEntity<String> deleteFavorite(@PathVariable("id") String publicId,
+		public ResponseEntity<String> deleteFavorite(@PathVariable("id") UUID publicId,
 				Authentication authentication) {
 			String username = authentication.getName();
 			favoriteService.deleteFavorite(publicId,username);
-		    return ResponseEntity.ok("삭제 완료");
+		    return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
 		}
 	
 	

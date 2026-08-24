@@ -24,6 +24,7 @@ function RecentList() {
         closeDriveItemMenu,
         formatDate
     } = useOutletContext<DirectoryOutletContext>();
+    
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
     const navigate = useNavigate();
 
@@ -75,7 +76,7 @@ function RecentList() {
     // 문서 리스트를 정상적으로 받아왔을 때
     return (
         <>
-        <Typography variant="h5" sx={{ fontWeight: 500, mt: 1}}>최근 문서</Typography>
+        <Typography variant="h5" sx={{ fontWeight: 500, mt: 1}}>내 문서</Typography>
         {[...files].filter((file) => file.isInTrash === false).length === 0 ? (
             <>  
                 <Box component="img" src={noFilesImg} sx={{ width: '40%', height: '35%', mx: 'auto', mt: 5}}/>
@@ -86,13 +87,13 @@ function RecentList() {
                 </Typography>
             </>
         ) : (
-        <TableContainer>
-            <Table sx={{ mt: 2.5, width: '100%', tableLayout: 'fixed', textAlign: 'left', }}>
+        <TableContainer sx={{maxHeight: 'calc(100vh - 250px)', overflowY: 'auto'}}>
+            <Table sx={{ mt: 2.5, width: '100%', tableLayout: 'fixed', textAlign: 'left', borderCollapse: 'separate', borderSpacing: 0}}>
                 <TableHead>
-                    <TableRow sx={{ borderBottom: '1px solid #DBDBDB'}}>
-                        <TableCell sx={{ width : '50%', py: 1}}>이름</TableCell>
-                        <TableCell sx={{ width : '30%', py: 1}}>생성 시각</TableCell>
-                        <TableCell sx={{ width : '20%', py: 1}}>파일 크기</TableCell>
+                    <TableRow>
+                        <TableCell sx={{ width : '50%', py: 1, position: 'sticky', top: 0, bgcolor: 'white', zIndex: 1, borderBottom: '1px solid #DBDBDB'}}>이름</TableCell>
+                        <TableCell sx={{ width : '30%', py: 1, position: 'sticky', top: 0, bgcolor: 'white', zIndex: 1, borderBottom: '1px solid #DBDBDB'}}>생성 일자</TableCell>
+                        <TableCell sx={{ width : '20%', py: 1, position: 'sticky', top: 0, bgcolor: 'white', zIndex: 1, borderBottom: '1px solid #DBDBDB'}}>파일 크기</TableCell>
                     </TableRow>
                 </TableHead>
 
@@ -100,7 +101,7 @@ function RecentList() {
                     {[...files].filter((driveItem) => driveItem.isInTrash === false)
                     .sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()) // 생성 날짜 내림차순 정렬
                     .map((file) => (
-                    <TableRow key={file.id}
+                    <TableRow key={file.publicId}
                         onClick= {() => setSelectedDriveItem(file)}
                         onContextMenu= {(e) => {
                             setSelectedDriveItem(file);
@@ -109,14 +110,13 @@ function RecentList() {
                         }
                         onDoubleClick = {() => navigate(`/editor/${file.publicId}`)}
                         sx={{
-                            borderBottom: '1px solid #DBDBDB',
-                            bgcolor: selectedDriveItem?.id === file.id ? '#e8f2fd' : 'transparent', // bg-blue-100
+                            bgcolor: selectedDriveItem?.publicId === file.publicId ? '#e8f2fd' : 'transparent', // bg-blue-100
                             '&:hover': {
-                                bgcolor: selectedDriveItem?.id === file.id ? '#e8f2fd' : '#f3f4f6', // hover:bg-gray-100
+                                bgcolor: selectedDriveItem?.publicId === file.publicId ? '#e8f2fd' : '#f3f4f6', // hover:bg-gray-100
                             },
                         }}
                     >
-                        <TableCell sx={{ py: 1.5, px: 1, fontWeight: 500 }}>
+                        <TableCell sx={{ py: 1.5, px: 1, fontWeight: 500, borderBottom: '1px solid #DBDBDB' }}>
                             <Box
                                 component="img"
                                 src={fileIcon}
@@ -125,8 +125,8 @@ function RecentList() {
                             {file.itemName}
                             {file.extension === "UC" || file.extension === null ? "" : `.${file.extension}`}
                             {file.isFavorite === true && " ★"}</TableCell>
-                        <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666'}}>{formatDate(file.createdDate)}</TableCell>
-                        <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666'}}>{file.size} B</TableCell>
+                        <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666', borderBottom: '1px solid #DBDBDB' }}>{formatDate(file.createdDate)}</TableCell>
+                        <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666', borderBottom: '1px solid #DBDBDB' }}>{file.size} B</TableCell>
                     </TableRow>
                     ))}
                 </TableBody>
