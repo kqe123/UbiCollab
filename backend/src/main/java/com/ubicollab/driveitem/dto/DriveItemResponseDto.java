@@ -40,6 +40,5 @@ public record DriveItemResponseDto(
     			isFavorite,
     			permissionType
     	);
-
     }
 }

@@ -77,11 +77,9 @@ public class DriveItem {
 	//생성자
 	public DriveItem() {}
 	
-	public DriveItem(UUID publicId, String itemName,
-					DriveItemType type, DriveItem parent, User user,
-		    		String content, DriveItemExtension extension, Long size,
-		    		LocalDateTime createdDate, Boolean isInTrash, Boolean isTrashRoot) {
-		this.publicId = publicId;
+	public DriveItem(String itemName, DriveItemType type, DriveItem parent, User user,
+		    		 String content, DriveItemExtension extension, Long size,
+		    		 LocalDateTime createdDate, Boolean isInTrash, Boolean isTrashRoot) {
 		this.itemName = itemName;
 		this.type = type;
 		this.parent = parent;
@@ -100,10 +98,6 @@ public class DriveItem {
 	
 	public UUID getPublicId() {
 		return publicId;
-	}
-
-	public void setPublicId(UUID publicId) {
-		this.publicId = publicId;
 	}
 
 	public String getItemName() {

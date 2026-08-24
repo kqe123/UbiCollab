@@ -51,7 +51,7 @@ public class FavoriteService {
 		DriveItem driveItem = driveRepository.findByPublicId(publicId)
 				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이템입니다."));
 		
-		// 소유자(Owner) 또는 권한이 있는게 아니라면 접근 제어 
+		// [권한 제어] 모든 권한 중 하나 필요
 		PermissionType permissionType = permissionService.getPermission(driveItem, user);
 		if (permissionType == null) {
 			throw new PermissionDeniedException("해당 사용자는 접근할 권한이 없습니다.");
@@ -88,7 +88,7 @@ public class FavoriteService {
 			DriveItem parent = driveRepository.findByPublicId(foldId)
 					.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이템입니다."));
 			
-			// 소유자(Owner) 또는 권한이 있는게 아니라면 접근 제어 
+			// [권한 제어] 모든 권한 중 하나 필요
 			PermissionType permissionType = permissionService.getPermission(parent, user);
 			if (permissionType == null) {
 				throw new PermissionDeniedException("해당 사용자는 접근할 권한이 없습니다.");
@@ -120,7 +120,7 @@ public class FavoriteService {
 		User user = userRepository.findByUsername(username).orElseThrow(() ->
         	new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
-		// 접근 권한이 없을 시 예외 처리 
+		// [권한 제어] 모든 권한 중 하나 필요
 		if (permissionService.getPermission(parent, user) == null) {
     		throw new PermissionDeniedException("해당 사용자는 접근할 권한이 없습니다.");
 		}

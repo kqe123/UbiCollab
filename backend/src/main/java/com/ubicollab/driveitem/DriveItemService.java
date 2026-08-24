@@ -109,7 +109,6 @@ public class DriveItemService {
 
 	    // 새로운 DriveItem 객체 생성 (publicId는 @UuidGenerator가 저장 시 자동 생성)
 	    DriveItem newDriveItem = new DriveItem(
-	    	null,
 	        itemName.trim(),
 	        type,
 	        parent,
@@ -271,7 +270,6 @@ public class DriveItemService {
 		
 		// 현재 갖고있는 권한(OWNER, MANAGER 등...)
 		PermissionType permissionType = permissionService.getPermission(driveItem, user);
-		
 		boolean canEdit = (permissionType == PermissionType.OWNER || permissionType == PermissionType.MANAGER 
 						|| permissionType == PermissionType.EDITOR);
 
@@ -301,7 +299,7 @@ public class DriveItemService {
 		// 부모 폴더 변경 (추후 권한 설정 추가할 예정)
 	    if (request.parentId() != null) {
 	        parent = driveRepository
-	            .findById(request.parentId())
+	            .findByPublicId(request.parentId())
 	            .orElseThrow(() ->
 	                new IllegalArgumentException(
 	                    "이동할 부모 폴더가 존재하지 않습니다."
@@ -314,11 +312,18 @@ public class DriveItemService {
 	            );
 	        }
 
-	        if (!parent.getUser().getId().equals(user.getId())) {
-	            throw new AccessDeniedException(
-	                "다른 사용자의 폴더로 이동할 수 없습니다."
-	            );
-	        }
+		    // [권한 제어] 이동 대상 아이템 자체에 대해 OWNER | MANAGER 권한 필요
+		    if (!(permissionType == PermissionType.OWNER || permissionType == PermissionType.MANAGER)) {
+		        throw new PermissionDeniedException("부모를 변경할 권한이 없습니다.");
+		    }
+
+		    // [권한 제어] 이동할 목적지 폴더에도 OWNER | MANAGER 권한 필요 (createDriveItem과 동일한 기준)
+		    // 이 검사가 없으면, 권한이 전혀 없는 임의의 폴더 안으로 아이템을 옮겨 넣을 수 있게 됨.
+		    PermissionType destPermissionType = permissionService.getPermission(parent, user);
+		    if (destPermissionType != PermissionType.OWNER && destPermissionType != PermissionType.MANAGER) {
+		        throw new PermissionDeniedException("이동할 위치에 대한 권한이 없습니다.");
+		    }
+
 	        driveItem.setParent(parent);
 	    }
 

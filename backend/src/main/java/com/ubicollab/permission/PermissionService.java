@@ -59,7 +59,7 @@ public class PermissionService {
 		// 공유할 사용자(userid, permissionType)
 		List<UserDto> userList = request.userList();
 		
-		// OWNER | MANAGER가 아니면 예외처리
+		// [권한 제어] OWNER | MANAGER 필요
 		PermissionType permissionType = getPermission(driveItem, currentUser);
 		if (permissionType != PermissionType.OWNER &&
 			permissionType != PermissionType.MANAGER) {
@@ -90,7 +90,7 @@ public class PermissionService {
 		// 공유할 사용자(userid, permissionType)		
 		List<PermissionDto> permissionList = request.permissionList();
 
-		// OWNER | MANAGER가 아니면 예외처리
+		// [권한 제어] OWNER | MANAGER 필요
 		PermissionType permissionType = getPermission(current, currentUser);
 		if (permissionType != PermissionType.OWNER &&
 			permissionType != PermissionType.MANAGER) {
@@ -103,6 +103,15 @@ public class PermissionService {
 					() -> new RuntimeException("권한 대상 User를 찾을 수 없습니다. : " + permissionInfo.userId()));
 			DriveItem driveItem = driveRepository.findByPublicId(permissionInfo.driveItemId()).orElseThrow(
 					() -> new RuntimeException("권한 대상 DriveItem을 찾을 수 없습니다. publicId=" + permissionInfo.driveItemId()));
+
+			// [권한 제어] driveItemId는 클라이언트가 보내는 값이라, currentItemId와 다를 수 있음(상위 폴더에서 상속된 권한 수정 등).
+			// 그래서 항목마다 실제로 이 driveItem에 대한 OWNER | MANAGER 권한이 있는지 반드시 재검증해야 함.
+			PermissionType itemPermissionType = getPermission(driveItem, currentUser);
+			if (itemPermissionType != PermissionType.OWNER &&
+				itemPermissionType != PermissionType.MANAGER) {
+				throw new PermissionDeniedException("해당 항목의 권한을 변경할 권한이 없습니다. driveItemId=" + driveItem.getPublicId());
+			}
+
 			Permission permission = permissionRepository.findByItemAndUser(driveItem, user).orElseThrow(
 					() -> new RuntimeException("권한 변경할 Permission를 찾을 수 없습니다. : " + permissionInfo.userId() + driveItem.getPublicId()));
 			permission.setType(permissionInfo.type());
@@ -194,7 +203,7 @@ public class PermissionService {
 			// 현재 사용자가 권한이 있는 사용자인지 Permission 체크를 함.
 			PermissionType permissionType = getPermission(parent,user);
 			
-			// 권한 X -> 예외 처리
+			// 권한  X -> [권한 제어] OWNER | MANAGER 필요
 			if (permissionType == null) {
 				throw new PermissionDeniedException("해당 사용자는 접근할 권한이 없습니다.");
 			}

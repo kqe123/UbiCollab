@@ -27,9 +27,13 @@ function  PermissionModal ({
     const [editedPermissions, setEditedPermissions] = useState<permission[]>([]);
     const hasSnapshot = useRef(false);   // Snapshot을 찍었는지 안찍었는지 여부
 
-    // 화면 표시용으로 닉네임 기준 가나다/ABC 순 정렬 (editedPermissions 원본 순서/상태는 그대로 둠)
+    // 화면 표시용 정렬: 소유자(OWNER)를 맨 위로, 나머지는 닉네임 가나다/ABC 순 (editedPermissions 원본 순서/상태는 그대로 둠)
     const sortedPermissions = useMemo(
-        () => [...editedPermissions].sort((a, b) => a.nickname.localeCompare(b.nickname, "ko")),
+        () => [...editedPermissions].sort((a, b) => {
+            if (a.type === "OWNER" && b.type !== "OWNER") return -1;
+            if (a.type !== "OWNER" && b.type === "OWNER") return 1;
+            return a.nickname.localeCompare(b.nickname, "ko");
+        }),
         [editedPermissions]
     );
 

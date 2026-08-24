@@ -276,13 +276,13 @@ function SharedList() {
                     <Typography variant="h5" sx={{ mt : 2.5, textAlign: 'center', }}>우클릭으로 폴더/파일을 생성해 보세요!</Typography>
                 </>
             ) : (
-            <TableContainer>
-                <Table sx={{ mt: 2.5, width: '100%', tableLayout: 'fixed', textAlign: 'left', }}>
+            <TableContainer sx={{maxHeight: 'calc(100vh - 250px)', overflowY: 'auto'}}>
+                <Table sx={{ mt: 2.5, width: '100%', tableLayout: 'fixed', textAlign: 'left', borderCollapse: 'separate', borderSpacing: 0}}>
                     <TableHead>
-                        <TableRow sx={{ borderBottom: '1px solid #DBDBDB'}}>
-                            <TableCell sx={{ width : '50%', py: 1}}>이름</TableCell>
-                            <TableCell sx={{ width : '30%', py: 1}}>생성 일자</TableCell>
-                            <TableCell sx={{ width : '20%', py: 1}}>파일 크기</TableCell>
+                        <TableRow>
+                            <TableCell sx={{ width : '50%', py: 1, position: 'sticky', top: 0, bgcolor: 'white', zIndex: 1, borderBottom: '1px solid #DBDBDB'}}>이름</TableCell>
+                            <TableCell sx={{ width : '30%', py: 1, position: 'sticky', top: 0, bgcolor: 'white', zIndex: 1, borderBottom: '1px solid #DBDBDB'}}>생성 일자</TableCell>
+                            <TableCell sx={{ width : '20%', py: 1, position: 'sticky', top: 0, bgcolor: 'white', zIndex: 1, borderBottom: '1px solid #DBDBDB'}}>파일 크기</TableCell>
                         </TableRow>
                     </TableHead>
 
@@ -304,15 +304,14 @@ function SharedList() {
                                     elementDoubleClick(sharedItem);
                                 }}
                                 sx={{
-                                    borderBottom: '1px solid #DBDBDB',
                                     bgcolor: selectedDriveItem?.publicId === sharedItem.publicId ? '#e8f2fd' : 'transparent', // bg-blue-100
                                     '&:hover': {
                                         bgcolor: selectedDriveItem?.publicId === sharedItem.publicId ? '#e8f2fd' : '#f3f4f6', // hover:bg-gray-100
                                     },
                                 }}
                             >
-                                
-                                <TableCell sx={{ py: 1.5, px: 1, fontWeight: 500 }}>
+
+                                <TableCell sx={{ py: 1.5, px: 1, fontWeight: 500, borderBottom: '1px solid #DBDBDB' }}>
                                     <Box
                                         component="img"
                                         src={sharedItem.itemType === "FOLDER" ? folderIcon : fileIcon}
@@ -326,8 +325,8 @@ function SharedList() {
                                     {sharedItem.itemName}
                                     {sharedItem.extension === "UC" || sharedItem.extension === null ? "" : `.${sharedItem.extension}`}
                                     {sharedItem.isFavorite === true && " ★"}</TableCell>
-                                <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666'}}>{formatDate(sharedItem.createdDate)}</TableCell>
-                                <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666'}}>
+                                <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666', borderBottom: '1px solid #DBDBDB' }}>{formatDate(sharedItem.createdDate)}</TableCell>
+                                <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666', borderBottom: '1px solid #DBDBDB' }}>
                                     {sharedItem.size === null ?
                                     "--" : `${sharedItem.size} Byte`}</TableCell>
                             </TableRow>

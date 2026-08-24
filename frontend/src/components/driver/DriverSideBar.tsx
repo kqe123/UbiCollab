@@ -32,7 +32,7 @@ function DriverSideBar() {
                 }}
             >
                 <NavLink to="/drive/my-drive" className={getButtonStyle}>내 드라이브</NavLink>
-                <NavLink to="/drive/recent" className={getButtonStyle}>최근 문서</NavLink>
+                <NavLink to="/drive/recent" className={getButtonStyle}>내 문서</NavLink>
                 <NavLink to="/drive/favorite" className={getButtonStyle}>즐겨찾기</NavLink>
                 <NavLink to="/drive/shared" className={getButtonStyle}>공유 문서</NavLink>
                 <NavLink to="/drive/trash" className={getButtonStyle}>휴지통</NavLink>
