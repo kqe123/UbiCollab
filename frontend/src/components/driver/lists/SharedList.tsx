@@ -164,7 +164,11 @@ function SharedList() {
         queryFn: getDrivePath,   // getDrivePath() 실행
         enabled: currentFolderId !== null, // 루트 디렉터리에서는 경로 API를 실행하지 않음
     });
-    
+
+    // paths의 마지막 요소 = 현재 폴더(currentFolderId) 자신이므로, 여기서 현재 폴더에 대한 내 권한을 가져온다.
+    // (루트에서는 애초에 NewDriveItemModal을 렌더링하지 않으므로 여기서 별도 처리하지 않음)
+    const currentPermission = paths.length > 0 ? paths[paths.length - 1].permissionType : null;
+
 
     // 로딩 처리
     if (isSharedItemsLoading) {
@@ -352,6 +356,7 @@ function SharedList() {
             y={tableMenu.y}
             onClose={closeTableMenu}
             currentFolderId={currentFolderId}
+            disabled={!(currentPermission === "OWNER" || currentPermission === "MANAGER")}
             />
         )}
     </>

@@ -263,7 +263,10 @@ public class PermissionService {
 		// Parent O -> 부모로 거슬러 올라가면서 경로를 추적한다.(단, "공유 경계"까지만!)
 		while (parent != null) {
 			boolean isFavorite = favoriteRepository.existsByUserUsernameAndItem(username, parent);
-			path.add(new DriveItemResponseDto(parent, isFavorite, null));
+			// 프론트에서 "현재 폴더에 새 폴더/파일을 만들 권한이 있는지" 등을 판단할 수 있도록
+			// 각 경로 노드마다 실제 권한 타입을 계산해서 내려준다. (기존에는 null 고정)
+			PermissionType nodePermissionType = getPermission(parent, user);
+			path.add(new DriveItemResponseDto(parent, isFavorite, nodePermissionType));
 
 			// 공유 경계 판단
 			// 1) 나에게 직접 Permission이 부여된 지점이거나,

@@ -16,6 +16,7 @@ import com.ubicollab.driveitem.dto.DriveItemUpdateDto;
 import com.ubicollab.driveitem.enums.DriveItemExtension;
 import com.ubicollab.driveitem.enums.DriveItemType;
 import com.ubicollab.favorite.FavoriteRepository;
+import com.ubicollab.permission.PermissionRepository;
 import com.ubicollab.permission.PermissionService;
 import com.ubicollab.permission.enums.PermissionType;
 import com.ubicollab.user.User;
@@ -26,15 +27,18 @@ public class DriveItemService {
 	private final DriveItemRepository driveRepository;
 	private final UserRepository userRepository;
 	private final FavoriteRepository favoriteRepository;
+	private final PermissionRepository permissionRepository;
 	private final PermissionService permissionService;
 	
 	public DriveItemService(DriveItemRepository driveRepository,
 							UserRepository userRepository,
 							FavoriteRepository favoriteRepository,
+							PermissionRepository permissionRepository,
 							PermissionService permissionService) {
 		this.driveRepository = driveRepository;
 		this.userRepository = userRepository;
 		this.favoriteRepository = favoriteRepository;
+		this.permissionRepository = permissionRepository;
 		this.permissionService = permissionService;
 	}
 	
@@ -358,11 +362,12 @@ public class DriveItemService {
 		User user = userRepository.findByUsername(username).orElseThrow(() ->
 			new IllegalArgumentException("존재하지 않는 사용자입니다."));
 		
-		//  [권한 제어] OWNER | MANAGER 권한 필요
+		// [권한 제어] OWNER | MANAGER 권한 필요
 		PermissionType permissionType = permissionService.getPermission(root, user);
 		if (permissionType != PermissionType.OWNER && permissionType != PermissionType.MANAGER) {
 			throw new PermissionDeniedException("휴지통으로 보낼 권한이 없습니다.");
 		}
+		
 		
 		root.setIsTrashRoot(true);
 		updateIsInTrash(root, true, username, true);
