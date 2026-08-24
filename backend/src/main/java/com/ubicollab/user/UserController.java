@@ -54,6 +54,15 @@ public class UserController {
 		return ResponseEntity.status(HttpStatus.OK)
 				.body(userService.searchUsers(username, keyword, publicId));
 	}
+	
+	// 현재 로그인중인 유저 반환하는 API (GET 'api/user/currentUser')
+	@GetMapping("/currentUser")
+	public ResponseEntity<UserResponse> getCurrentUser(
+			Authentication authentication) {
+			String username = authentication.getName(); // 현재 로그인 username
+			return ResponseEntity.status(HttpStatus.OK)
+					.body(userService.getCurrentUser(username));
+	}
 
 	
 }

@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -87,6 +88,16 @@ public class PermissionController {
 		String username = authentication.getName();
 		return ResponseEntity.status(HttpStatus.OK)
 				.body(permissionService.getDrivePath(foldId, username));
+	}
+	
+	// [권한 관리 메뉴] 권한 삭제  API (DELETE '/api/driveitem/{}')
+		@DeleteMapping("/delete/{userId}/{driveItemId}")
+		public ResponseEntity<String> deletePermission(@PathVariable("userId") UUID userId,
+				@PathVariable("driveItemId") UUID driveItemId,
+				Authentication authentication) {
+			String username = authentication.getName();
+			permissionService.deletePermission(userId, driveItemId, username);
+			return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
 	}
 	
 

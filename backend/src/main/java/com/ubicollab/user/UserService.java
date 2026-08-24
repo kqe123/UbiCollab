@@ -98,6 +98,15 @@ public class UserService {
 		}
 		return result;
 	}
-
+	
+	// 현재 로그인중인 유저 반환 메서드
+	public UserResponse getCurrentUser(String username) {
+		// 현재 로그인 유저
+		User user = userRepository.findByUsername(username).orElseThrow(
+				() -> new RuntimeException("User를 찾을 수 없습니다. : " + username));
+		
+		UserResponse result = new UserResponse(user);
+		return result;
+	}
 	
 }

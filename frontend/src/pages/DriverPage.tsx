@@ -2,10 +2,6 @@ import Header from "../components/driver/DriverHeader.tsx";
 import DriverSideBar from "../components/driver/DriverSideBar.tsx";
 import Directory from "../components/driver/Directory.tsx";
 import Box from '@mui/material/Box';
-import axios from "axios";
-import { useQuery } from "@tanstack/react-query";
-import toast from "react-hot-toast";
-import type {User} from "../types/user";
 
 function DriverPage() {
 	const accessToken = localStorage.getItem("accessToken");

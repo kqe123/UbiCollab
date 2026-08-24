@@ -111,7 +111,7 @@ function TrashMenu({
 
         await deleteTrash();
         onClose();
-        };
+    };
 
     return (
         <>

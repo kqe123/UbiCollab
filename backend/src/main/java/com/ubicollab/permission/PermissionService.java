@@ -286,4 +286,33 @@ public class PermissionService {
 		Collections.reverse(path);
 		return path;
 	}
+	
+	// 해당 Permission를 제거하는 메서드 (OWNER | MANAGER 권한 필요)
+	@Transactional
+	public void deletePermission(UUID userId, UUID driveItemId, String username) {
+	    // 현재 로그인 사용자
+	    User currentUser = userRepository.findByUsername(username).orElseThrow(
+	        () -> new RuntimeException("User를 찾을 수 없습니다. : " + username));
+
+	    // 권한 대상 driveItem
+	    DriveItem driveItem = driveRepository.findByPublicId(driveItemId).orElseThrow(
+	        () -> new RuntimeException("문서를 찾을 수 없습니다. publicId=" + driveItemId));
+
+	    // [권한 제어] OWNER | MANAGER 필요
+	    PermissionType permissionType = getPermission(driveItem, currentUser);
+	    if (permissionType != PermissionType.OWNER && permissionType != PermissionType.MANAGER) {
+	        throw new PermissionDeniedException("권한을 삭제할 권한이 없습니다.");
+	    }
+
+	    // 권한 대상 User
+	    User user = userRepository.findByPublicId(userId).orElseThrow(() ->
+	        new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+	    // 해당 Permission 찾기
+	    Permission permission = permissionRepository.findByItemAndUser(driveItem, user).orElseThrow(
+	        () -> new RuntimeException("삭제할 Permission를 찾을 수 없습니다. : " + userId + driveItemId));
+
+	    permissionRepository.delete(permission);
+	}
+	
 }

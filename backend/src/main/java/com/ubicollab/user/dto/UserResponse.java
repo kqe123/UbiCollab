@@ -18,5 +18,4 @@ public record UserResponse (
 			user.getProfileImageKey()
 		);
 	}
-		
 }
