@@ -1,10 +1,12 @@
 package com.ubicollab.user;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -13,7 +15,13 @@ import com.ubicollab.driveitem.DriveItem;
 import com.ubicollab.driveitem.DriveItemRepository;
 import com.ubicollab.permission.PermissionService;
 import com.ubicollab.permission.enums.PermissionType;
+import com.ubicollab.user.dto.PresignedUrlRequest;
+import com.ubicollab.user.dto.PresignedUrlResponse;
 import com.ubicollab.user.dto.UserResponse;
+
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
 
 @Service
@@ -22,25 +30,28 @@ public class UserService {
 	private final DriveItemRepository driveRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final PermissionService permissionService;
-
+	private final S3Presigner presigner;
+    private final String bucket;
 
 	public UserService (UserRepository userRepository,
 			DriveItemRepository driveRepository,
 			PasswordEncoder passwordEncoder,
-			PermissionService permissionService) {
+			PermissionService permissionService,
+			S3Presigner presigner,
+			@Value("${AWS_S3_BUCKET}") String bucket) {
 		this.userRepository = userRepository;
 		this.driveRepository = driveRepository;
 		this.passwordEncoder = passwordEncoder;
 		this.permissionService = permissionService;
-
+		this.presigner = presigner;
+        this.bucket = bucket;
 	}
 	
 	// User를 생성하는 메서드
-	public void createUser(User user) {
+	public UUID createUser(User user) {
 		String username = user.getUsername();
 		String password = user.getPassword();
 		String nickname = user.getNickname();
-		String profileImageKey = user.getProfileImageKey();
 		
 		// 유효성 검사
 		if (username == null || username.isBlank()) {
@@ -58,10 +69,48 @@ public class UserService {
 		// User 객체 생성 (username, password, nickname, createdDate, role, profileImageKey)
 		// password는 Bean으로 등록된 passwordEncoder를 사용해 암호화한다.
 		User newUser = new User(username, passwordEncoder.encode(password), nickname,
-								LocalDateTime.now(),"USER", profileImageKey);
+								LocalDateTime.now(),"USER", null);
 		
-		// User 저장
+		// User 저장 + User의 PublicId 반환
 		userRepository.save(newUser);
+		return newUser.getPublicId();
+	}
+	
+	// 프로필 사진을 올릴 presigned URI를 반환하는 메서드
+	public PresignedUrlResponse createAvatarUploadUrl(PresignedUrlRequest request) {
+        // 경로 :  profiles/(User의 UUID)/profile.png
+		int dotIndex = request.fileName().lastIndexOf('.');
+		String extension = (dotIndex == -1) ? "" : request.fileName().substring(dotIndex);
+        String key = "profiles/" + request.userId() + "/" + "profile" + extension;
+        
+        // "S3의 어느 버킷, 어느 경로(key)에, 어떤 타입(image/png 등)으로 파일을 넣을 것인가"를 정의하는 요청 객체
+        // 아직 실제로 업로드하는 게 아니라 "이런 업로드가 있을 예정"이라는 명세만 만드는 단계이다.
+        PutObjectRequest objectRequest = PutObjectRequest.builder()
+                .bucket(bucket)
+                .key(key)
+                .contentType(request.contentType())
+                .build();
+        
+        // 위에서 만든 업로드 명세(objectRequest)를 감싸서, 
+        // "이 업로드 요청에 서명(presign)해줘, 유효시간은 5분으로"라는 요청을 만듭니다.
+        PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
+                .signatureDuration(Duration.ofMinutes(5))
+                .putObjectRequest(objectRequest)
+                .build();
+
+        String url = presigner.presignPutObject(presignRequest).url().toString();
+        return new PresignedUrlResponse(url, key);
+    }
+	
+	// 방금 회원가입한 User에 프로필사진 경로를 업데이트하는 메서드
+	public void updateProfileImageKey(String profileImageKey, UUID userId) {
+		// 방금 회원가입한 유저가 존재하는지 확인
+		User user = userRepository.findByPublicId(userId).orElseThrow(
+				() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+		
+		// 입력받은  profileImageKey 그대로 해당 유저에게 부여 + 저장
+		user.setProfileImageKey(profileImageKey);
+		userRepository.save(user);
 	}
 	
 	// 중복 username 검사 메서드 

@@ -281,12 +281,12 @@ function SharedList() {
                 </>
             ) : (
             <TableContainer sx={{maxHeight: 'calc(100vh - 250px)', overflowY: 'auto'}}>
-                <Table sx={{ mt: 2.5, width: '100%', tableLayout: 'fixed', textAlign: 'left', borderCollapse: 'separate', borderSpacing: 0}}>
+                <Table stickyHeader sx={{ mt: 2.5, width: '100%', tableLayout: 'fixed', textAlign: 'left'}}>
                     <TableHead>
                         <TableRow>
-                            <TableCell sx={{ width : '50%', py: 1, position: 'sticky', top: 0, bgcolor: 'white', zIndex: 1, borderBottom: '1px solid #DBDBDB'}}>이름</TableCell>
-                            <TableCell sx={{ width : '30%', py: 1, position: 'sticky', top: 0, bgcolor: 'white', zIndex: 1, borderBottom: '1px solid #DBDBDB'}}>생성 일자</TableCell>
-                            <TableCell sx={{ width : '20%', py: 1, position: 'sticky', top: 0, bgcolor: 'white', zIndex: 1, borderBottom: '1px solid #DBDBDB'}}>파일 크기</TableCell>
+                            <TableCell sx={{ width : '50%', py: 1}}>이름</TableCell>
+                            <TableCell sx={{ width : '30%', py: 1}}>생성 일자</TableCell>
+                            <TableCell sx={{ width : '20%', py: 1}}>파일 크기</TableCell>
                         </TableRow>
                     </TableHead>
 

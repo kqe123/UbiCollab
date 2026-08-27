@@ -73,6 +73,8 @@ public class SecurityConfig {
 					.requestMatchers(HttpMethod.POST,"/api/login").permitAll() // 로그인 요청 API
 					.requestMatchers(HttpMethod.POST,"/api/user").permitAll() // 회원가입 API
 					.requestMatchers(HttpMethod.GET, "/api/user/check-username").permitAll() // 아이디 중복 검사 API
+					.requestMatchers(HttpMethod.POST, "/api/user/s3-profile").permitAll() // S3 Presigned URI 반환 API
+					.requestMatchers(HttpMethod.PATCH, "/api/user/profileImageKey/{userId}").permitAll() // 회원가입된 User에 프사 경로 업데이트 API
 					.anyRequest().authenticated())
 			.addFilterBefore(authenticationFilter,
 					UsernamePasswordAuthenticationFilter.class)

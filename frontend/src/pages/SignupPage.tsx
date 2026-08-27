@@ -8,31 +8,39 @@ import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import Avatar from '@mui/material/Avatar';
-import ButtonBase from '@mui/material/ButtonBase';
+import Badge from '@mui/material/Badge';
+import IconButton from  '@mui/material/IconButton';
+import AddIcon from '@mui/icons-material/Add';
 
 function SignupPage () {
     const [user, setUser] = useState({
         username : "",
         password : "",
+        confirmPassword : "",
         nickname : "",
         profileImageKey : null
     });
 
-    const [avatarSrc, setAvatarSrc] = useState<string | undefined>(undefined);
+    const [avatarSrc, setAvatarSrc] = useState<string | null>(null); // 이미지 -> BASE64 문자열
+    const [avatarFile, setAvatarFile] = useState<File | null>(null); // 실제 업로드용 이미지(File 객체)
+
+    // 입력된 이미지 파일을 미리보기(Base64 문자열)와 실제 업로드용 File 객체로 저장함.
     const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
             if (file) {
                 // Read the file as a data URL
+                setAvatarFile(file);
                 const reader = new FileReader();
                 reader.onload = () => {
                     setAvatarSrc(reader.result as string);
                 };
                 reader.readAsDataURL(file);
-            }
-        };
+        }
+    };
     
     const navigate = useNavigate();
-
+    
+    // State 변경 함수
     const handleChange = (event : React.ChangeEvent<HTMLInputElement>) => {
         setUser({
             ...user, [event.target.name] : event.target.value
@@ -40,8 +48,8 @@ function SignupPage () {
     }
 
     
-
-    const validCheck = (username: string, password: string, nickname: string): boolean => {
+    // 아이디, 비밀번호, 닉네임 유효성 체크하는 함수
+    const validCheck = (username: string, password: string, confirmPassword : string, nickname: string): boolean => {
         // 아이디: 5~20자, 소문자, 숫자, _, -
         const usernameRegex = /^[a-z0-9_-]{5,20}$/;
 
@@ -58,6 +66,11 @@ function SignupPage () {
             return false;
         }
 
+        if (password !== confirmPassword) {
+            toast.error("비밀번호와 비밀번호 확인이 일치하지 않습니다.");
+            return false;
+        }
+
         if (nickname.trim().length < 2) {
             toast.error("닉네임 : 2자 이상 입력해주세요.");
             return false;
@@ -65,6 +78,8 @@ function SignupPage () {
         return true;
     };
 
+
+    // 아이디 중복 체크하는 함수
     const checkDuplicateUsername = async (username : string) : Promise<boolean> => {
         try {
             const response = await axios.get<boolean>(
@@ -85,11 +100,40 @@ function SignupPage () {
             }
     }
 
+    // S3 presigned URI를 발급받는 함수
+    const getAvatarUploadUrl = async (file: File, userId : string | null): Promise<{ uploadUrl: string; key: string }> => {
+        const response = await axios.post("http://localhost:8080/api/user/s3-profile", {
+            fileName: file.name,
+            contentType: file.type,
+            userId : userId
+        });
+        return response.data;
+    };
+
+    // S3 presigned URI에 프로필 사진을 올리는 함수
+    const uploadToS3 = async (uploadUrl: string, file: File) => {
+        await axios.put(uploadUrl, file, {
+            headers: { "Content-Type": file.type },
+        });
+    };
+
+    // S3의 키(경로)를 백엔드 해당 User에게 부여하는 함수
+    const updateProfileImageKey = async (key: string, userId : string | null) => {
+        const response = await axios.patch(`http://localhost:8080/api/user/profileImageKey/${userId}`, 
+            {
+                profileImageKey : key
+            }
+        );
+        return response.data;
+    };
+
+
+    // 회원가입 함수 
     const signup = async (e : React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         
         // 1. 유효성 검사
-        if (!validCheck(user.username, user.password, user.nickname)) {
+        if (!validCheck(user.username, user.password, user.confirmPassword ,user.nickname)) {
             return;
         }
 
@@ -107,7 +151,6 @@ function SignupPage () {
             username : user.username,
             password : user.password,
             nickname : user.nickname,
-            profileImageKey : user.profileImageKey
         };
 
         try {
@@ -116,29 +159,41 @@ function SignupPage () {
                 `http://localhost:8080/api/user`,
                 credentials
             );
-                
+            
             console.log("회원가입 성공");
-            console.log(response.data);
+            const userId = response.data;  // User의 publicId를 임시 저장
+            console.log(userId);
             toast.success("회원가입에 성공하였습니다!")
-            navigate('/login');
-            } catch (error: unknown) {
-                console.error("회원가입 실패 :", error);
-                // axios에서 발생한 오류인 경우
-                if (axios.isAxiosError(error)) {
-                    console.error("백엔드 응답:", error.response?.data);
-                    toast.error(error.response?.data?.message ?? "회원가입에 실패했습니다.");
-                } 
-                // 일반 오류인 경우
-                else if (error instanceof Error) {
-                    console.error("일반 오류:", error.message);
-                    toast.error(error.message);
-                } 
-                // 그 외의 오류인 경우
-                else {
-                    console.error("알 수 없는 오류:", error);
-                    toast.error("알 수 없는 오류가 발생했습니다.");
+            
+            // 4. (선택사항) 프로필 사진이 있다면, S3 Presigned URI를 받아온 뒤,
+            //    해당 URI에 이미지 파일을 업로드해서 S3 버킷에 추가함.
+            if (avatarFile) {
+                try {
+                    const { uploadUrl, key } = await getAvatarUploadUrl(avatarFile, userId ?? null);
+                    await uploadToS3(uploadUrl, avatarFile);
+                    await updateProfileImageKey(key, userId);
+                    toast.success("프로필 사진 업데이트에 성공하였습니다!")
+                } catch (uploadError) {
+                    // 계정은 이미 생성됐으니 회원가입은 성공으로 처리하고
+                    // "프로필 사진 업로드는 실패했습니다" 정도로 별도 안내
+                    console.error("아바타 업로드 실패:", uploadError);
+                    toast.error("프로필 사진 업로드에 실패했습니다. 설정에서 추후에 변경가능합니다.");
                 }
             }
+            navigate('/login');
+        } catch (error: unknown) {
+            console.error("회원가입 실패 :", error);
+            // axios에서 발생한 오류인 경우
+            if (axios.isAxiosError(error)) {
+                console.error("백엔드 응답:", error.response?.data);
+                toast.error(error.response?.data?.message ?? "회원가입에 실패했습니다.");
+            } 
+            // 그 외의 오류인 경우
+            else {
+                console.error("알 수 없는 오류:", error);
+                toast.error("알 수 없는 오류가 발생했습니다.");
+            }
+        }
     } 
     
 
@@ -169,36 +224,26 @@ function SignupPage () {
                     </Typography>
 
                     {/* Profile Image */}
-                    <ButtonBase
-                        component="label"
-                        role={undefined}
-                        tabIndex={-1} // prevent label from tab focus
-                        aria-label="Avatar image"
-                        sx={{ borderRadius: '40px', mt : 3, mb : 3,
-                            '&:has(:focus-visible)': {
-                                outline: '2px solid',
-                                outlineOffset: '2px',
-                            },
-                        }}
-                    >
-                        <Avatar alt="Upload new avatar" src={avatarSrc} sx={{ width: 56, height: 56}} />
-                        <input
-                            type="file"
-                            accept="image/*"
-                            style={{
-                            border: 0,
-                            clip: 'rect(0 0 0 0)',
-                            height: '1px',
-                            margin: '-1px',
-                            overflow: 'hidden',
-                            padding: 0,
-                            position: 'absolute',
-                            whiteSpace: 'nowrap',
-                            width: '1px',
-                            }}
-                            onChange={handleAvatarChange}
-                        />
-                    </ButtonBase>
+                    <Box sx={{display: 'flex', justifyContent: 'center'}}>
+                        <Badge
+                            overlap="circular"
+                            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                            badgeContent={
+                            <IconButton component="label" size="large">
+                                <AddIcon sx={{ color: 'white', bgcolor: 'blue', borderRadius: '6px', width : 25, height : 25}} />
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    hidden
+                                    onChange={handleAvatarChange}
+                                />
+                            </IconButton>
+                            }
+                        >
+                            <Avatar alt="Upload new avatar" src={avatarSrc} sx={{ width: 100, height: 100 }} />
+                        </Badge>
+                    </Box>
+
                     {/* ID */}
                     <TextField
                         required
@@ -225,6 +270,20 @@ function SignupPage () {
                         placeholder="8~16자의 영문 대/소문자, 숫자, 특수문자 포함"
                         sx={{'& .MuiInputBase-input': { fontSize: '15px'} }}
                     />
+                    {/* confirm PW */}
+                    <TextField
+                        required
+                        variant="standard"
+                        type="password"
+                        size="small"
+                        name="confirmPassword"
+                        onChange={handleChange}
+                        value={user.confirmPassword}
+                        label="비밀번호 확인"
+                        placeholder="8~16자의 영문 대/소문자, 숫자, 특수문자 포함"
+                        sx={{'& .MuiInputBase-input': { fontSize: '15px'} }}
+                    />
+
                     {/* nickname */}
                     <TextField
                         required
