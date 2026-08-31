@@ -11,10 +11,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.ubicollab.common.exception.PermissionDeniedException;
+import com.ubicollab.common.exception.ResourceNotFoundException;
 import com.ubicollab.driveitem.DriveItem;
 import com.ubicollab.driveitem.DriveItemRepository;
 import com.ubicollab.permission.PermissionService;
-import com.ubicollab.permission.enums.PermissionType;
 import com.ubicollab.user.dto.PresignedUrlRequest;
 import com.ubicollab.user.dto.PresignedUrlResponse;
 import com.ubicollab.user.dto.UserResponse;
@@ -105,34 +105,31 @@ public class UserService {
 	// 방금 회원가입한 User에 프로필사진 경로를 업데이트하는 메서드
 	public void updateProfileImageKey(String profileImageKey, UUID userId) {
 		// 방금 회원가입한 유저가 존재하는지 확인
-		User user = userRepository.findByPublicId(userId).orElseThrow(
-				() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
-		
+		User user = getUserByPublicIdOrThrow(userId);
+
 		// 입력받은  profileImageKey 그대로 해당 유저에게 부여 + 저장
 		user.setProfileImageKey(profileImageKey);
 		userRepository.save(user);
 	}
-	
-	// 중복 username 검사 메서드 
+
+	// 중복 username 검사 메서드
 	public Boolean checkSameUsername(String username) {
 	    return userRepository.findByUsername(username).isPresent();
 	}
-	
+
 	// username 검색 엔진 메서드
 	public List<UserResponse> searchUsers(String username, String keyword, UUID publicId) {
 		List<UserResponse> result = new ArrayList<>();
 
 		// 현재 로그인 유저
-		User currentUser = userRepository.findByUsername(username).orElseThrow(
-				() -> new RuntimeException("User를 찾을 수 없습니다. : " + username));
+		User currentUser = getUserOrThrow(username);
 
 		// 현재 DriveItem
 		DriveItem driveItem = driveRepository.findByPublicId(publicId).orElseThrow(
-				() -> new RuntimeException("해당 아이템을 찾을 수 없습니다. publicId="+ publicId));
+				() -> new ResourceNotFoundException("해당 아이템을 찾을 수 없습니다. publicId="+ publicId));
 
 		// [권한 제어] 공유 대상을 검색하는 API이므로, createPermission과 동일하게 OWNER | MANAGER 권한 필요
-		PermissionType permissionType = permissionService.getPermission(driveItem, currentUser);
-		if (permissionType != PermissionType.OWNER && permissionType != PermissionType.MANAGER) {
+		if (!permissionService.isOwnerOrManager(driveItem, currentUser)) {
 			throw new PermissionDeniedException("사용자를 검색할 권한이 없습니다.");
 		}
 
@@ -143,19 +140,25 @@ public class UserService {
 				continue;
 			}
 			result.add(new UserResponse(user));
-			System.out.println("유저명 : " + user.getUsername());
 		}
 		return result;
 	}
-	
+
 	// 현재 로그인중인 유저 반환 메서드
 	public UserResponse getCurrentUser(String username) {
-		// 현재 로그인 유저
-		User user = userRepository.findByUsername(username).orElseThrow(
-				() -> new RuntimeException("User를 찾을 수 없습니다. : " + username));
-		
-		UserResponse result = new UserResponse(user);
-		return result;
+		return new UserResponse(getUserOrThrow(username));
 	}
-	
+
+	// username으로 User를 조회하는 공통 헬퍼
+	private User getUserOrThrow(String username) {
+		return userRepository.findByUsername(username).orElseThrow(
+				() -> new ResourceNotFoundException("User를 찾을 수 없습니다. : " + username));
+	}
+
+	// publicId로 User를 조회하는 공통 헬퍼
+	private User getUserByPublicIdOrThrow(UUID userId) {
+		return userRepository.findByPublicId(userId).orElseThrow(
+				() -> new ResourceNotFoundException("존재하지 않는 사용자입니다."));
+	}
+
 }

@@ -172,7 +172,7 @@ function SignupPage () {
                     const { uploadUrl, key } = await getAvatarUploadUrl(avatarFile, userId ?? null);
                     await uploadToS3(uploadUrl, avatarFile);
                     await updateProfileImageKey(key, userId);
-                    toast.success("프로필 사진 업데이트에 성공하였습니다!")
+                    toast.success("프로필 사진 업데이트에 성공하였습니다!" )
                 } catch (uploadError) {
                     // 계정은 이미 생성됐으니 회원가입은 성공으로 처리하고
                     // "프로필 사진 업로드는 실패했습니다" 정도로 별도 안내
