@@ -14,6 +14,11 @@ import Select, { type SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import { useCurrentUser } from "../../hooks/use-current-user";
 import IconButton from  '@mui/material/IconButton';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+import DeletePopup from '../popup/DeletePopup';
 function  PermissionModal ({
     driveItem,
     onClose
@@ -28,6 +33,7 @@ function  PermissionModal ({
     const initialPermissions = useRef<permission[]>([]); // 공유된 사용자들의 권한 초기 상태 스냅샷
     const [editedPermissions, setEditedPermissions] = useState<permission[]>([]);
     const hasSnapshot = useRef(false);   // Snapshot을 찍었는지 안찍었는지 여부
+    const [deleteTarget, setDeleteTarget] = useState<{ userId: string; driveItemId: string } | null>(null); // 권한 삭제 대상 (x버튼 클릭 시)
 
     // 화면 표시용 정렬: 소유자(OWNER)를 맨 위로, 나머지는 닉네임 가나다/ABC 순 (editedPermissions 원본 순서/상태는 그대로 둠)
     const sortedPermissions = useMemo(
@@ -60,11 +66,6 @@ function  PermissionModal ({
             if (axios.isAxiosError(error)) {
                 console.error("백엔드 응답:", error.response?.data);
                 toast.error(error.response?.data?.message ?? "공유 사용자 불러오기에 실패했습니다.");
-            }
-            // 일반 오류인 경우
-            else if (error instanceof Error) {
-                console.error("일반 오류:", error.message);
-                toast.error(error.message);
             }
             // 그 외의 오류인 경우
             else {
@@ -138,16 +139,10 @@ function  PermissionModal ({
             onClose();
         } catch (error: unknown) {
             console.error("권한 업데이트 실패... : ", error);
-
             // axios에서 발생한 오류인 경우
             if (axios.isAxiosError(error)) {
                 console.error("백엔드 응답:", error.response?.data);
                 toast.error(error.response?.data?.message ?? "권한 업데이트에 실패했습니다.");
-            }
-            // 일반 오류인 경우
-            else if (error instanceof Error) {
-                console.error("일반 오류:", error.message);
-                toast.error(error.message);
             }
             // 그 외의 오류인 경우
             else {
@@ -186,15 +181,7 @@ function  PermissionModal ({
     }
 
     // Confirm창으로 간략하게 물어보고 삭제
-    const handlePermanentDelete = async (userId : string, driveItemId : string) => {
-        const confirmed = window.confirm(
-            "해당 권한을 영구 삭제하시겠습니까?\n[완료] 버튼과 관계없이 바로 삭제됩니다."
-        );
-
-        if (!confirmed) 
-            return;
-        
-
+    const doDelete = async (userId : string, driveItemId : string) => {
         await deletePermission(userId,driveItemId);
         await queryClient.invalidateQueries({
             queryKey: ["permissions", driveItem.publicId]
@@ -209,6 +196,7 @@ function  PermissionModal ({
         initialPermissions.current = initialPermissions.current.filter(
             p => !(p.userId === userId && p.driveItemId === driveItemId)
         );
+        setDeleteTarget(null);
     };
 
     // 초기 스냅샷 찍음.
@@ -241,125 +229,105 @@ function  PermissionModal ({
     }
 
     return (
-        <Box
-            sx={{
-                position: 'fixed', // fixed
-                inset: 0, // inset-0
-                zIndex: 50, // z-50
-                display: 'flex',
-                bgcolor: 'rgba(0, 0, 0, 0.4)', // bg-black/40
-                alignItems: 'center',
-                justifyContent: 'center',
-            }}
-            onClick={onClose}
+        <>
+        <Dialog
+            open={true}
+            onClose={onClose}
+            fullWidth
+            maxWidth="xs"
         >
-            {/* 모달창 */}
-            <Box
-                sx={{
-                    width : '40%',
-                    height : '65%',
-                    bgcolor: 'white',
-                    p : 3,
-                    borderRadius: '8px',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                }}
-                onClick={(e) => e.stopPropagation()}
-            >
-                {/* 메뉴명 */}
-                <Box sx={{display : 'flex' }}>
-                    <Typography variant="h6" sx={{ fontWeight: 500, mt: 1, flex : 1}}>
-                        <PermissionIcon sx={{mb : '3px'}}/> "{driveItem.itemName}" 권한 관리</Typography>
-                    <Button type="button" onClick={onClose}><CloseIcon sx={{color: 'black'}}/></Button>
-                </Box>
-
-                {/* 현재 공유된 사용자 목록 */}
-                <Box sx={{mt : 4}}>
-                    <Typography variant="body1" sx={{ fontWeight: 500}}>현재 공유된 사용자</Typography>
-                    {sortedPermissions.length > 0 && (
-                        <Box sx={{width: '100%', maxHeight : 'min(300px, 35vh)', overflowY: 'auto', mt : 1 }}>
-                            {sortedPermissions.map((permission : permission) => (
-                                <Box
-                                    key={permission.userId}
-                                    sx={{
-                                        display : 'flex',
-                                        height : 'min(60px, 7vh)',
-                                        '&:hover': {
-                                            bgcolor: '#e8f2fd'
-                                        },
-                                        alignItems : 'center',
-                                    }}
-                                >
-                                    {permission.profileImageKey === null ?
-                                    (<Avatar alt="기본프로필사진" sx={{ width: 32, height: 32}} />)
-                                    : (<Avatar src={`${S3_BASE_URL}/${permission.profileImageKey}`} alt="프로필사진" sx={{ width: 32, height: 32}} />)
-                                    }
-                                    <Box sx={{ display : 'flex', flexDirection : "column", ml : 2 }}>
-                                        <Typography variant="body2" sx={{ fontWeight : 500, flex : 1}}>
-                                            {permission.nickname}
-                                            {currentUser?.username === permission.username && (
-                                                <Typography component="span" variant="body2" sx={{ color : 'primary.main', ml : 0.5}}>(나)</Typography>
-                                            )}
-                                        </Typography>
-                                        <Typography variant="body2" sx={{ color : 'gray', flex : 1}}>{permission.username}</Typography>
-                                    </Box>
-                                    {(permission.type === "OWNER" || permission.username === currentUser?.username) ? (
-                                        <Typography variant="body2" sx={{ color : 'gray', m : 2, ml: 'auto'}}>
-                                            {permission.type === "OWNER" && ("소유자")}
-                                            {permission.type === "MANAGER" && ("관리자")}
-                                            {permission.type === "EDITOR" && ("편집자")}
-                                            {permission.type === "COMMENTOR" && ("댓글 작성자")}
-                                            {permission.type === "VIEWER" && ("뷰어")}
-                                        </Typography>
-                                    ) : (
-                                        <Box sx={{ml: 'auto'}}>
-                                        <Select
-                                            value={permission.type}
-                                            size="small"
-                                            onChange={(e: SelectChangeEvent) => {
-                                                setEditedPermissions(prev =>
-                                                    prev.map(u => u.userId === permission.userId ? { ...u, type: e.target.value } : u)
-                                                );}
-                                            }
-                                            sx={{
-                                                fontSize: '13px', // text-sm
-                                                bgcolor: 'white',
-                                                borderRadius: 2, // rounded-lg
-                                                '& .MuiOutlinedInput-notchedOutline': {
-                                                    borderColor: 'grey.300',
-                                                },
-                                                '&:hover .MuiOutlinedInput-notchedOutline': {
-                                                    borderColor: 'primary.light', // hover:border-blue-400
-                                                },
-                                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                                    borderColor: 'primary.main', // focus:border-blue-500
-                                                    borderWidth: 2,
-                                                },
-                                            }}
-                                        >
-                                            <MenuItem value="VIEWER">뷰어</MenuItem>
-                                            <MenuItem value="COMMENTOR">댓글 작성자</MenuItem>
-                                            <MenuItem value="EDITOR">편집자</MenuItem>
-                                            <MenuItem value="MANAGER">관리자</MenuItem>
-                                        </Select>
-                                        <IconButton
-                                            size="small"
-                                            onClick={() => {
-                                                handlePermanentDelete(permission.userId,permission.driveItemId);
-                                            }}
-                                        >
-                                            <CloseIcon color="error" fontSize="small"/>
-                                        </IconButton>
-                                        </Box>
-                                    )}
+            {/* 메뉴명 */}
+            <DialogTitle sx={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap : 1 }}>
+                <PermissionIcon /> 권한 관리
+            </DialogTitle>
+            
+            {/* 현재 공유된 사용자 목록 */}
+            <DialogContent>
+                <Typography variant="body1" sx={{mt : 1, fontWeight: 500}}>현재 공유된 사용자</Typography>
+                {sortedPermissions.length > 0 && (
+                    <Box sx={{width: '100%', maxHeight : 'min(300px, 35vh)', overflowY: 'auto', mt : 1 }}>
+                        {sortedPermissions.map((permission : permission) => (
+                            <Box
+                                key={permission.userId}
+                                sx={{
+                                    display : 'flex',
+                                    height : 'min(60px, 7vh)',
+                                    '&:hover': {
+                                        bgcolor: '#e8f2fd'
+                                    },
+                                    alignItems : 'center',
+                                }}
+                            >
+                                {permission.profileImageKey === null ?
+                                (<Avatar alt="기본프로필사진" sx={{ width: 32, height: 32}} />)
+                                : (<Avatar src={`${S3_BASE_URL}/${permission.profileImageKey}`} alt="프로필사진" sx={{ width: 32, height: 32}} />)
+                                }
+                                <Box sx={{ display : 'flex', flexDirection : "column", ml : 2 }}>
+                                    <Typography variant="body2" sx={{ fontWeight : 500, flex : 1}}>
+                                        {permission.nickname}
+                                        {currentUser?.username === permission.username && (
+                                            <Typography component="span" variant="body2" sx={{ color : 'primary.main', ml : 0.5}}>(나)</Typography>
+                                        )}
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color : 'gray', flex : 1}}>{permission.username}</Typography>
                                 </Box>
-                            ))}
-                        </Box>
-                    )}
-                </Box>
+                                {(permission.type === "OWNER" || permission.username === currentUser?.username) ? (
+                                    <Typography variant="body2" sx={{ color : 'gray', m : 2, ml: 'auto'}}>
+                                        {permission.type === "OWNER" && ("소유자")}
+                                        {permission.type === "MANAGER" && ("관리자")}
+                                        {permission.type === "EDITOR" && ("편집자")}
+                                        {permission.type === "COMMENTOR" && ("댓글 작성자")}
+                                        {permission.type === "VIEWER" && ("뷰어")}
+                                    </Typography>
+                                ) : (
+                                    <Box sx={{ml: 'auto'}}>
+                                    <Select
+                                        value={permission.type}
+                                        size="small"
+                                        onChange={(e: SelectChangeEvent) => {
+                                            setEditedPermissions(prev =>
+                                                prev.map(u => u.userId === permission.userId ? { ...u, type: e.target.value } : u)
+                                            );}
+                                        }
+                                        sx={{
+                                            fontSize: '13px', // text-sm
+                                            bgcolor: 'white',
+                                            borderRadius: 2, // rounded-lg
+                                            '& .MuiOutlinedInput-notchedOutline': {
+                                                borderColor: 'grey.300',
+                                            },
+                                            '&:hover .MuiOutlinedInput-notchedOutline': {
+                                                borderColor: 'primary.light', // hover:border-blue-400
+                                            },
+                                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                                borderColor: 'primary.main', // focus:border-blue-500
+                                                borderWidth: 2,
+                                            },
+                                        }}
+                                    >
+                                        <MenuItem value="VIEWER">뷰어</MenuItem>
+                                        <MenuItem value="COMMENTOR">댓글 작성자</MenuItem>
+                                        <MenuItem value="EDITOR">편집자</MenuItem>
+                                        <MenuItem value="MANAGER">관리자</MenuItem>
+                                    </Select>
+                                    <IconButton
+                                        size="small"
+                                        onClick={() => {
+                                            setDeleteTarget({ userId: permission.userId, driveItemId: permission.driveItemId });
+                                        }}
+                                    >
+                                        <CloseIcon color="error" fontSize="small"/>
+                                    </IconButton>
+                                    </Box>
+                                )}
+                            </Box>
+                        ))}
+                    </Box>
+                )}
+                </DialogContent>
 
                 {/* 버튼 */}
-                <Box sx={{ mt : 4, display : 'flex', gap : 1.5, justifyContent : "flex-end"}}>
+                <DialogActions>
                     <Button
                         disableElevation
                         type="button"
@@ -371,9 +339,22 @@ function  PermissionModal ({
                     >
                         완료
                     </Button>
-                </Box>
-            </Box>
-        </Box>
+                </DialogActions>
+        </Dialog>
+
+        {/* 삭제 팝업 */}
+        <DeletePopup
+            open={deleteTarget !== null}
+            title="권한 삭제"
+            message="해당 권한을 삭제하시겠습니까?"
+            onConfirm={() => {
+                if (deleteTarget) {
+                    doDelete(deleteTarget.userId, deleteTarget.driveItemId);
+                }
+            }}
+            onClose={() => setDeleteTarget(null)}
+        />
+        </>
     )
 }
 

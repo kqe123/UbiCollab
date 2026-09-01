@@ -18,6 +18,7 @@ import ShareIcon from '@mui/icons-material/Share';
 import PermissionIcon from '@mui/icons-material/CoPresent';
 import DeleteIcon from '@mui/icons-material/Delete';
 
+
 function DriveItemMenu({
     open, x, y, driveItem, onClose
 } : {
@@ -228,7 +229,7 @@ function DriveItemMenu({
                         disabled={!(driveItem.permissionType === "OWNER" || driveItem.permissionType === "MANAGER")}
                     >
                         <ListItemIcon> <DeleteIcon fontSize="small" /> </ListItemIcon>
-                        <Typography variant="body2" sx={{fontWeight: 500}}>
+                        <Typography variant="body2" sx={{fontWeight: 600}}>
                             휴지통으로 이동
                         </Typography>
                     </MenuItem>

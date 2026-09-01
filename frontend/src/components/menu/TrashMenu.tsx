@@ -1,6 +1,7 @@
 import type {DriveItem} from "../../types/driveitem";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
@@ -10,6 +11,7 @@ import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
 import RestoreIcon from '@mui/icons-material/RestoreFromTrash';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import DeletePopup from "../popup/DeletePopup";
 function TrashMenu({
     open, x, y, driveItem, onClose
 } : {
@@ -22,6 +24,7 @@ function TrashMenu({
 
     const queryClient = useQueryClient(); // QueryClient 가져옴
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
+    const [deleteConfirm, setDeleteConfirm] = useState(false); // delete 팝업창 열림/닫힘
 
     // "복원" 함수
     const restoreTrash = async () => {
@@ -59,7 +62,7 @@ function TrashMenu({
     // "영구 삭제" 함수
     const deleteTrash = async () => {
         try {
-            // 문서 변경 Backend API 호출
+            // 영구 삭제 Backend API 호출
             await axios.delete(`http://localhost:8080/api/driveitem/delete/${driveItem.publicId}`,
             {
                 headers: {
@@ -88,19 +91,14 @@ function TrashMenu({
         } 
     }
 
-    const handlePermanentDelete = async () => {
-        const confirmed = window.confirm(
-            "이 항목을 영구 삭제하시겠습니까?\n삭제한 항목은 복구할 수 없습니다."
-        );
-
-        if (!confirmed) 
-            return;
-        
+    const doDelete = async () => {
         await deleteTrash();
+        setDeleteConfirm(false);
         onClose();
     };
 
     return (
+        <>
         <Menu                 
             open={open}
             onClose={onClose}
@@ -127,7 +125,7 @@ function TrashMenu({
                 <Divider sx={{my : 0.5}}/>
                 
                 <MenuItem
-                    onClick={handlePermanentDelete}
+                    onClick={() => setDeleteConfirm(true)}
                     sx={{
                         width : '100%',
                         justifyContent: 'flex-start',
@@ -143,6 +141,16 @@ function TrashMenu({
                 </MenuItem>
             </MenuList>
         </Menu>
+        
+        {/* 삭제 팝업 */}
+        <DeletePopup
+            open={deleteConfirm}
+            title="영구 삭제"
+            message="이 항목을 영구 삭제하시겠습니까?"
+            onConfirm={doDelete}
+            onClose={() => setDeleteConfirm(false)}
+        />
+    </>
     );
 }
 
