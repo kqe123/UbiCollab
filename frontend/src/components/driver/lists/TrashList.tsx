@@ -4,7 +4,7 @@ import folderIcon from "../../../assets/folder.png";
 import noTrashImg from "../../../assets/empty-trash.png";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useOutletContext } from "react-router-dom";
-import TrashMenuModal from "../../modal/TrashMenuModal"
+import TrashMenu from "../../menu/TrashMenu"
 import type { DirectoryOutletContext} from "../Directory";
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -150,7 +150,8 @@ function TrashList() {
         </Box>
         
         {driveItemMenu.isOpen && selectedDriveItem && (
-            <TrashMenuModal
+            <TrashMenu
+            open={driveItemMenu.isOpen}
             x={driveItemMenu.x}
             y={driveItemMenu.y}
             driveItem={selectedDriveItem}

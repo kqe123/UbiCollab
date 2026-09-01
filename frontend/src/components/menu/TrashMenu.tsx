@@ -1,17 +1,21 @@
 import type {DriveItem} from "../../types/driveitem";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import Box from '@mui/material/Box';
-import Paper from '@mui/material/Paper';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import MenuList from '@mui/material/MenuList';
+import ListItemIcon from '@mui/material/ListItemIcon';
 import Divider from '@mui/material/Divider';
-import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import RestoreIcon from '@mui/icons-material/RestoreFromTrash';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import DeletePopup from "../popup/DeletePopup";
 function TrashMenu({
-    x, y, driveItem, onClose
+    open, x, y, driveItem, onClose
 } : {
+    open: boolean;
     x : number;
     y : number;
     driveItem : DriveItem;
@@ -20,7 +24,7 @@ function TrashMenu({
 
     const queryClient = useQueryClient(); // QueryClient 가져옴
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
-
+    const [deleteConfirm, setDeleteConfirm] = useState(false); // delete 팝업창 열림/닫힘
 
     // "복원" 함수
     const restoreTrash = async () => {
@@ -34,7 +38,6 @@ function TrashMenu({
                 }
             }
             );
-        
             console.log("알림 : " + response.data);
             await queryClient.invalidateQueries({
                 queryKey: ["driveItems"]
@@ -43,16 +46,10 @@ function TrashMenu({
             onClose();
         } catch (error: unknown) {
             console.error("복원 실패... : ", error);
-
             // axios에서 발생한 오류인 경우
             if (axios.isAxiosError(error)) {
                 console.error("백엔드 응답:", error.response?.data);
                 toast.error(error.response?.data?.message ?? "폴더/파일을 복원하는데 실패했습니다.");
-            } 
-            // 일반 오류인 경우
-            else if (error instanceof Error) {
-                console.error("일반 오류:", error.message);
-                toast.error(error.message);
             } 
             // 그 외의 오류인 경우
             else {
@@ -65,7 +62,7 @@ function TrashMenu({
     // "영구 삭제" 함수
     const deleteTrash = async () => {
         try {
-            // 문서 변경 Backend API 호출
+            // 영구 삭제 Backend API 호출
             await axios.delete(`http://localhost:8080/api/driveitem/delete/${driveItem.publicId}`,
             {
                 headers: {
@@ -81,16 +78,10 @@ function TrashMenu({
             toast.success("영구 삭제가 완료되었습니다.");
         } catch (error: unknown) {
             console.error("영구 삭제 실패... : ", error);
-
             // axios에서 발생한 오류인 경우
             if (axios.isAxiosError(error)) {
                 console.error("백엔드 응답:", error.response?.data);
                 toast.error(error.response?.data?.message ?? "폴더/파일을 영구 삭제 하는데 실패했습니다.");
-            } 
-            // 일반 오류인 경우
-            else if (error instanceof Error) {
-                console.error("일반 오류:", error.message);
-                toast.error(error.message);
             } 
             // 그 외의 오류인 경우
             else {
@@ -100,64 +91,66 @@ function TrashMenu({
         } 
     }
 
-    const handlePermanentDelete = async () => {
-        const confirmed = window.confirm(
-            "이 항목을 영구 삭제하시겠습니까?\n삭제한 항목은 복구할 수 없습니다."
-        );
-
-        if (!confirmed) 
-            return;
-        
-
+    const doDelete = async () => {
         await deleteTrash();
+        setDeleteConfirm(false);
         onClose();
     };
 
     return (
         <>
-        <Box sx={{ position: 'fixed', inset: 0,  zIndex: 40}} onClick={onClose}>
-            <Paper
-                elevation={2}
-                onClick={(e) => e.stopPropagation()}
-                sx={{
-                    position: 'fixed',
-                    zIndex: 50,
-                    width: 176, // w-44 (44 * 4px)
-                    borderRadius: 2, // rounded-lg
-                    bgcolor: 'background.paper',
-                    py: 0.5, // py-2
-                    left: `${x}px`,
-                    top: `${y}px`,
-                }}
-            >
-                <Button 
-                    type="button"
+        <Menu                 
+            open={open}
+            onClose={onClose}
+            anchorReference="anchorPosition"
+            anchorPosition={{ top: y, left: x }}
+            slotProps={{
+                paper: {
+                    sx: { width: 176, borderRadius: 2 } // 기존 Paper의 width/borderRadius만 유지
+                },
+                list: {
+                    sx: { py: 0.5 } // 기존 Paper의 py도 여기로
+                }
+            }} 
+        >
+            <MenuList>
+                <MenuItem
                     onClick={restoreTrash}
                     sx={{width : '100%', justifyContent: 'flex-start', px : 2, color: 'black'}}
-                    startIcon={<RestoreIcon sx={{ mb : '3px'}}/>}
                 >
+                    <ListItemIcon> <RestoreIcon fontSize="small" /></ListItemIcon>
                     <Typography variant="body2" sx={{color: 'black' }}>복원</Typography>
-                </Button>
+                </MenuItem>
+
                 <Divider sx={{my : 0.5}}/>
-                <Button 
-                    type="button"
-                    onClick={handlePermanentDelete}
+                
+                <MenuItem
+                    onClick={() => setDeleteConfirm(true)}
                     sx={{
-                            width : '100%',
-                            justifyContent: 'flex-start',
-                            px : 2,
-                            color: 'red',
-                            '&:hover': {
-                                bgcolor: '#fdc2c2'
-                            },
+                        width : '100%',
+                        justifyContent: 'flex-start',
+                        px : 2,
+                        color: 'red',
+                        '&:hover': {
+                            bgcolor: '#fdc2c2'
+                        },
                     }}
-                    startIcon={<DeleteForeverIcon sx={{ mb : '3px'}} />}
                 >
-                    <Typography variant="body2" sx={{color: 'red', fontWeight: 600 }}>영구 삭제</Typography>
-                </Button>
-            </Paper>
-        </Box>
-        </>
+                    <ListItemIcon> <DeleteForeverIcon fontSize="small" /></ListItemIcon>
+                    <Typography variant="body2" sx={{fontWeight: 600 }}>영구 삭제</Typography>
+                </MenuItem>
+            </MenuList>
+        </Menu>
+        
+        {/* 삭제 팝업 */}
+        <DeletePopup
+            open={deleteConfirm}
+            title="영구 삭제"
+            message="이 항목을 영구 삭제하시겠습니까?"
+            onConfirm={doDelete}
+            onClose={() => setDeleteConfirm(false)}
+        />
+    </>
     );
 }
 

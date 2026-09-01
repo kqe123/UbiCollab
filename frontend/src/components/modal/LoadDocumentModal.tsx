@@ -4,8 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import fileIcon from "@/assets/file.png";
 import Box from '@mui/material/Box';
-import CloseIcon from '@mui/icons-material/Close';
-import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -13,6 +11,9 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
+import Dialog from '@mui/material/Dialog';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
 
 function LoadDocumentModal({onClose} : {onClose : () => void}) {
     const [selectedFileId, setSelectedFileId] = useState<string|null>(null); // 현재 선택된 문서 ID
@@ -79,45 +80,26 @@ function LoadDocumentModal({onClose} : {onClose : () => void}) {
     }
 
     return (
-        // 오버레이 (배경)
-        <Box 
-            sx={{
-                position: 'fixed', // fixed
-                inset: 0, // inset-0
-                zIndex: 50, // z-50
-                display: 'flex',
-                bgcolor: 'rgba(0, 0, 0, 0.4)', // bg-black/40
-                alignItems: 'center',
-                justifyContent: 'center',
-            }}
-            onClick={onClose}
+        <Dialog
+            open={true}
+            onClose={onClose}
+            fullWidth
+            maxWidth="sm"
         >
-            {/* 모달창 */}
-            <Box 
-                sx={{
-                    width : '50%',
-                    height : '50%',
-                    bgcolor: 'white',
-                    p : 3,
-                    borderRadius: '8px',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                }}
-                onClick={(e) => e.stopPropagation()}
-            >
-                <Box sx={{display : 'flex' }}>
-                    <Typography variant="h5" sx={{ fontWeight: 500, mt: 1, flex : 1}}>문서 불러오기</Typography>
-                    <Button type="button" onClick={onClose}><CloseIcon /></Button>
-                </Box>
+            {/* 메뉴명 */}
+            <DialogTitle sx={{ fontWeight: 500, alignItems: 'center' }}>
+                문서 불러오기
+            </DialogTitle>
 
+            <DialogContent>
                 {/* 문서가 0건일 때 */}
                 {!isLoading && !isError && files.length === 0 && (
-                    <Typography variant="h5" sx={{ mt: 5}}>불러올 문서가 없습니다..</Typography>
+                    <Typography variant="h5" sx={{ mt: 2}}>불러올 문서가 없습니다..</Typography>
                 )}
 
                 {/* 문서 테이블 */}
                 <TableContainer>
-                <Table sx={{ mt: 5, width: '100%', tableLayout: 'fixed', textAlign: 'left' }}>
+                <Table sx={{ mt: 2, width: '100%', tableLayout: 'fixed', textAlign: 'left' }}>
                     <TableHead>
                         <TableRow sx={{ borderBottom: '1px solid #DBDBDB'}}>
                             <TableCell sx={{ width : '50%', py: 1}}>이름</TableCell>
@@ -161,8 +143,8 @@ function LoadDocumentModal({onClose} : {onClose : () => void}) {
                     </TableBody>
                 </Table>
                 </TableContainer>
-            </Box>
-        </Box>
+            </DialogContent>
+        </Dialog>
     );
 }
 

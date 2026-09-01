@@ -3,11 +3,13 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import type {DriveItem} from "../../types/driveitem";
 import { useQueryClient } from "@tanstack/react-query";
-import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
-import Typography from '@mui/material/Typography';
 import EditIcon from '@mui/icons-material/Edit';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
 
 
 function ChangeNameModal ({
@@ -71,75 +73,61 @@ function ChangeNameModal ({
     };
 
     return ( 
-        <Box 
-            sx={{
-                position: 'fixed', // fixed
-                inset: 0, // inset-0
-                zIndex: 50, // z-50
-                display: 'flex',
-                bgcolor: 'rgba(0, 0, 0, 0.4)', // bg-black/40
-                alignItems: 'center',
-                justifyContent: 'center',
-            }}
-            onClick={onClose}
+        <Dialog
+            open={true}
+            onClose={onClose}
+            fullWidth
+            maxWidth="xs"
         >
-            {/* 모달창 */}
-            <Box 
-                sx={{
-                    width : '30%',
-                    height : '30%',
-                    bgcolor: 'white',
-                    p : 3,
-                    borderRadius: '8px',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                }}
-                onClick={(e) => e.stopPropagation()}
-            >
-                <Typography variant="h5" sx={{ fontWeight: 500 }} ><EditIcon /> 이름 변경</Typography>
-                {/* 입력창 */}
+            {/* 메뉴명 */}
+            <DialogTitle sx={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap : 1 }}>
+                <EditIcon /> 이름 변경
+            </DialogTitle>
+
+            {/* 입력창 */}
+            <DialogContent>
                 <TextField
                     type="text"
                     value={driveItemName}
                     onChange={(e) => setDriveItemName(e.target.value)}
                     onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                            changeName();
+                    if (e.key === "Enter") {
+                        changeName();
                         }
                     }}
-                    sx={{ mt : 4, width : '100%'}}
+                    sx={{ mt : 2, width : '100%'}}
                 />
+            </DialogContent>
+            <DialogActions>
                 {/* 버튼 */}
-                <Box sx={{ mt : 4, display : 'flex', justifyContent: 'flex-end', gap : 1.5 }}>
-                    <Button
-                        type="button"
-                        onClick={onClose}
-                        size="large"
-                        sx={{ borderRadius: '8px',
-                            fontWeight: 500, 
-                            color: 'grey.700', 
-                            '&:hover': {
-                                 bgcolor: 'grey.100',
-                            },
-                        }}
-                    >
-                        취소
-                     </Button>
+                <Button
+                    type="button"
+                    onClick={onClose}
+                    size="large"
+                    sx={{ borderRadius: '8px',
+                        fontWeight: 500, 
+                        color: 'grey.700', 
+                        '&:hover': {
+                            bgcolor: 'grey.100',
+                        },
+                    }}
+                >
+                    취소
+                </Button>
 
-                    <Button
-                        disableElevation
-                        type="button"
-                        size="large"
-                        variant="contained"
-                        onClick={changeName}
-                        color='primary'
-                        sx={{ borderRadius: '8px', fontWeight: 500,}}
-                    >
-                        확인
-                    </Button>
-                </Box>
-            </Box>
-        </Box>
+                <Button
+                    disableElevation
+                    type="button"
+                    size="large"
+                    variant="contained"
+                    onClick={changeName}
+                    color='primary'
+                    sx={{ borderRadius: '8px', fontWeight: 500,}}
+                >
+                    확인
+                </Button>
+            </DialogActions>
+        </Dialog>
     )
 }
 

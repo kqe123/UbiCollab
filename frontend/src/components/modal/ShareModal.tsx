@@ -14,7 +14,11 @@ import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
 import IconButton from  '@mui/material/IconButton';
-
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+import ClickAwayListener from '@mui/material/ClickAwayListener';
 function  ShareModal ({
     driveItem,
     onClose
@@ -115,43 +119,25 @@ function  ShareModal ({
 
     return ( 
     <>  
-        <Box 
-            sx={{
-                position: 'fixed', // fixed
-                inset: 0, // inset-0
-                zIndex: 50, // z-50
-                display: 'flex',
-                bgcolor: 'rgba(0, 0, 0, 0.4)', // bg-black/40
-                alignItems: 'center',
-                justifyContent: 'center',
+        <Dialog
+            open={true}
+            onClose={onClose}
+            fullWidth
+            maxWidth="xs"
+            slotProps={{
+                paper: {
+                    sx: { minHeight: '60%', maxHeight: '80%' } // 원하는 높이로 조절
+                }
             }}
-            onClick={onClose}
         >
-            {/* 모달창 */}
-            <Box 
-                sx={{
-                    width : '40%',
-                    height : '60%',
-                    bgcolor: 'white',
-                    p : 3,
-                    borderRadius: '8px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    overflow: 'hidden',
-                }}
-                onClick={(e) => {
-                    e.stopPropagation();
-                    setIsUserListOpen(false);
-                }}
-            >   
-                {/* 메뉴명 */}
-                <Box sx={{display : 'flex' }}>
-                    <Typography variant="h6" sx={{ fontWeight: 500, mt: 1, flex : 1}}>
-                        <ShareIcon sx={{mb : '3px'}}/> "{driveItem.itemName}" 공유 추가</Typography>
-                    <Button type="button" onClick={onClose}><CloseIcon sx={{color: 'black'}}/></Button>
-                </Box>
+            {/* 메뉴명 */}
+            <DialogTitle sx={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap : 1 }}>
+                <ShareIcon /> "{driveItem.itemName}" 공유 추가
+            </DialogTitle>
 
-                <Box sx={{ position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+            <DialogContent>
+                <ClickAwayListener onClickAway={() => setIsUserListOpen(false)}>
+                <Box sx={{ position: 'relative', mt : 2 }}>
                     {/* 입력창 */}
                     <TextField 
                         type="text" 
@@ -162,10 +148,7 @@ function  ShareModal ({
                             setIsUserListOpen(true);}}
                         onFocus={() => {
                             setIsUserListOpen(true);}}
-                        sx={{
-                            width : '100%',
-                            mt: 3,
-                        }}
+                        sx={{ width : '100%'}}
                     />
                     {/* 자동완성 사용자 목록 */}
                     {isUserListOpen && text !== "" &&  users.length > 0 && (
@@ -236,6 +219,7 @@ function  ShareModal ({
                         </Box>
                     )}
                 </Box>
+                </ClickAwayListener>
                 
                 {/* 추가된 공유 사용자들 목록 */}
                 <Box sx={{mt : 2, flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column'}}>
@@ -313,9 +297,10 @@ function  ShareModal ({
                         </Box>
                     )}
                 </Box>
+                </DialogContent>
 
                 {/* 버튼 */}
-                <Box sx={{ mt : 4, display : 'flex', gap : 1.5, justifyContent : "flex-end"}}>
+                <DialogActions>
                     <Button
                         disableElevation
                         type="button"
@@ -327,9 +312,8 @@ function  ShareModal ({
                     >
                         완료
                     </Button>
-                </Box>
-            </Box>
-        </Box>
+                </DialogActions>
+        </Dialog>
     </>
     )
 }

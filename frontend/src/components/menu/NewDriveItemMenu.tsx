@@ -3,13 +3,15 @@ import toast from "react-hot-toast";
 import fileIcon from "../../assets/file.png";
 import folderIcon from "../../assets/folder.png";
 import { useQueryClient } from "@tanstack/react-query";
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import MenuList from '@mui/material/MenuList';
 import Box from '@mui/material/Box';
-import Paper from '@mui/material/Paper';
-import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
-function NewDriveItemModal({
-    x, y, onClose, currentFolderId, disabled = false
+function NewDriveItemMenu({
+    open, x, y, onClose, currentFolderId, disabled = false
 } : {
+    open : boolean;
     x : number;
     y : number;
     onClose : () => void;
@@ -59,11 +61,6 @@ function NewDriveItemModal({
                 console.error("백엔드 응답:", error.response?.data);
                 toast.error(error.response?.data?.message ?? "파일 생성에 실패했습니다.");
             } 
-            // 일반 오류인 경우
-            else if (error instanceof Error) {
-                console.error("일반 오류:", error.message);
-                toast.error(error.message);
-            } 
             // 그 외의 오류인 경우
             else {
                 console.error("알 수 없는 오류:", error);
@@ -110,11 +107,6 @@ function NewDriveItemModal({
                 console.error("백엔드 응답:", error.response?.data);
                 toast.error(error.response?.data?.message ?? "폴더 생성에 실패했습니다.");
             } 
-            // 일반 오류인 경우
-            else if (error instanceof Error) {
-                console.error("일반 오류:", error.message);
-                toast.error(error.message);
-            } 
             // 그 외의 오류인 경우
             else {
                 console.error("알 수 없는 오류:", error);
@@ -124,52 +116,48 @@ function NewDriveItemModal({
     }
 
     return (
-        <>
-            <Box sx={{ position: 'fixed', inset: 0,  zIndex: 40}} onClick={onClose}>
-                <Paper
-                    elevation={2}
-                    onClick={(e) => e.stopPropagation()}
-                    sx={{
-                        position: 'fixed',
-                        zIndex: 50,
-                        width: 176, // w-44 (44 * 4px)
-                        borderRadius: 2, // rounded-lg
-                        bgcolor: 'background.paper',
-                        py: 0.5, // py-2
-                        left: `${x}px`,
-                        top: `${y}px`,
-                    }}
-                >   
-                    <Button
-                        type="button"
-                        onClick={() => {createFolder()}}
-                        disabled={disabled}
-                        sx={{width : '100%', justifyContent: 'flex-start', px : 2}}
-                    >
-                        <Box
-                            component="img"
-                            src={folderIcon}
-                            sx={{ width: '15px', height: '15px', mr : '5px', mb : '3px'}}
-                        />
-                        <Typography variant="body2" sx={{color: disabled ? 'text.disabled' : 'black' }}>새 폴더 만들기</Typography>
-                    </Button>
-                    <Button
-                        type="button"
-                        onClick={() => {createFile()}}
-                        disabled={disabled}
-                        sx={{width : '100%', justifyContent: 'flex-start', px : 2}}
-                    >
-                        <Box
-                            component="img"
-                            src={fileIcon}
-                            sx={{ width: '15px', height: '18px', mr : '5px', mb : '3px'}}
-                        />
-                        <Typography variant="body2" sx={{color: disabled ? 'text.disabled' : 'black' }}>새 파일 만들기</Typography>
-                    </Button>
-                </Paper>
-            </Box>
-        </>
+        <Menu 
+            open={open}
+            onClose={onClose}
+            anchorReference="anchorPosition"
+            anchorPosition={{ top: y, left: x }}
+            slotProps={{
+                paper: {
+                    sx: { width: 176, borderRadius: 2 } // 기존 Paper의 width/borderRadius만 유지
+                },
+                list: {
+                    sx: { py: 0.5 } // 기존 Paper의 py도 여기로
+                }
+            }}    
+        >
+            <MenuList>
+                <MenuItem
+                    onClick={() => {createFolder()}}
+                    disabled={disabled}
+                    sx={{width : '100%', justifyContent: 'flex-start', px : 2}}
+                >
+                    <Box
+                        component="img"
+                        src={folderIcon}
+                        sx={{ width: '15px', height: '15px', mr : '5px', mb : '3px'}}
+                    />
+                    <Typography variant="body2" sx={{color: disabled ? 'text.disabled' : 'black' }}>새 폴더 만들기</Typography>
+                </MenuItem>
+                <MenuItem
+                    onClick={() => {createFile()}}
+                    disabled={disabled}
+                    sx={{width : '100%', justifyContent: 'flex-start', px : 2}}
+                >
+                    <Box
+                        component="img"
+                        src={fileIcon}
+                        sx={{ width: '15px', height: '18px', mr : '5px', mb : '3px'}}
+                    />
+                    <Typography variant="body2" sx={{color: disabled ? 'text.disabled' : 'black' }}>새 파일 만들기</Typography>
+                </MenuItem>
+            </MenuList>
+        </Menu>
     );
 }
 
-export default NewDriveItemModal;
+export default NewDriveItemMenu;
