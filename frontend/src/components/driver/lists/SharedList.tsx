@@ -7,8 +7,8 @@ import noAuthorizedIcon from "../../../assets/noAuthorized.png";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useNavigate, useParams, useOutletContext, NavLink } from "react-router-dom";
-import DriveItemMenuModal from "../../modal/DriveItemMenuModal"
-import NewDriveItemModal from "../../modal/NewDriveItemModal"
+import DriveItemMenu from "../../menu/DriveItemMenu"
+import NewDriveItemMenu from "../../menu/NewDriveItemMenu"
 import type {DriveItem} from "../../../types/driveitem";
 import type { DirectoryOutletContext, MenuType} from "../Directory";
 import Box from '@mui/material/Box';
@@ -342,7 +342,8 @@ function SharedList() {
         </Box>
         
         {driveItemMenu.isOpen && selectedDriveItem && (
-            <DriveItemMenuModal
+            <DriveItemMenu
+            open={driveItemMenu.isOpen}
             x={driveItemMenu.x}
             y={driveItemMenu.y}
             driveItem={selectedDriveItem}
@@ -350,8 +351,9 @@ function SharedList() {
             />
         )}
 
-        {tableMenu.isOpen && currentFolderId && (
-            <NewDriveItemModal
+        {currentFolderId && (
+            <NewDriveItemMenu
+            open={tableMenu.isOpen}
             x={tableMenu.x}
             y={tableMenu.y}
             onClose={closeTableMenu}

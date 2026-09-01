@@ -1,7 +1,7 @@
 import axios from "axios";
 import fileIcon from "../../../assets/file.png";
 import noFilesImg from "../../../assets/empty-files.png";
-import DocumentMenuModal from "../../modal/DriveItemMenuModal"
+import DriveItemMenu from "../../menu/DriveItemMenu"
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import type { DirectoryOutletContext } from "../Directory";
@@ -134,7 +134,8 @@ function RecentList() {
         </TableContainer>
     )}
         {driveItemMenu.isOpen && selectedDriveItem && (
-            <DocumentMenuModal
+            <DriveItemMenu
+            open={driveItemMenu.isOpen}
             x={driveItemMenu.x}
             y={driveItemMenu.y}
             driveItem={selectedDriveItem}

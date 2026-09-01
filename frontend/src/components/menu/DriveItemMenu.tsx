@@ -3,13 +3,14 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import ChangeNameModal from "./ChangeNameModal"
-import ShareModal from "./ShareModal"
-import PermissionModal from "./PermissionModal"
-import Box from '@mui/material/Box';
-import Paper from '@mui/material/Paper';
+import ChangeNameModal from "../modal/ChangeNameModal"
+import ShareModal from "../modal/ShareModal"
+import PermissionModal from "../modal/PermissionModal"
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import MenuList from '@mui/material/MenuList';
+import ListItemIcon from '@mui/material/ListItemIcon';
 import Divider from '@mui/material/Divider';
-import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import EditIcon from '@mui/icons-material/Edit';
 import StarIcon from '@mui/icons-material/StarBorder';
@@ -17,9 +18,10 @@ import ShareIcon from '@mui/icons-material/Share';
 import PermissionIcon from '@mui/icons-material/CoPresent';
 import DeleteIcon from '@mui/icons-material/Delete';
 
-function DriveItemMenuModal({
-    x, y, driveItem, onClose
+function DriveItemMenu({
+    open, x, y, driveItem, onClose
 } : {
+    open: boolean;
     x : number;
     y : number;
     driveItem : DriveItem;
@@ -58,16 +60,10 @@ function DriveItemMenuModal({
             onClose();
         } catch (error: unknown) {
             console.error("즐겨찾기 추가 실패.. : ", error);
-
             // axios에서 발생한 오류인 경우
             if (axios.isAxiosError(error)) {
                 console.error("백엔드 응답:", error.response?.data);
                 toast.error(error.response?.data?.message ?? "폴더/파일을 즐겨찾기에 등록하는데 실패했습니다.");
-            } 
-            // 일반 오류인 경우
-            else if (error instanceof Error) {
-                console.error("일반 오류:", error.message);
-                toast.error(error.message);
             } 
             // 그 외의 오류인 경우
             else {
@@ -97,16 +93,10 @@ function DriveItemMenuModal({
             onClose();
         } catch (error: unknown) {
             console.error("즐겨찾기 해제 실패.. : ", error);
-
             // axios에서 발생한 오류인 경우
             if (axios.isAxiosError(error)) {
                 console.error("백엔드 응답:", error.response?.data);
                 toast.error(error.response?.data?.message ?? "폴더/파일을 즐겨찾기를 해제하는데 실패했습니다.");
-            } 
-            // 일반 오류인 경우
-            else if (error instanceof Error) {
-                console.error("일반 오류:", error.message);
-                toast.error(error.message);
             } 
             // 그 외의 오류인 경우
             else {
@@ -143,11 +133,6 @@ function DriveItemMenuModal({
                 console.error("백엔드 응답:", error.response?.data);
                 toast.error(error.response?.data?.message ?? "파일/폴더를 휴지통으로 보내기에 실패했습니다.");
             } 
-            // 일반 오류인 경우
-            else if (error instanceof Error) {
-                console.error("일반 오류:", error.message);
-                toast.error(error.message);
-            } 
             // 그 외의 오류인 경우
             else {
                 console.error("알 수 없는 오류:", error);
@@ -160,123 +145,95 @@ function DriveItemMenuModal({
         <>
         {/* menuMode = CONTEXT일때 */}
         {menuMode === "CONTEXT" && (
-            <Box sx={{ position: 'fixed', inset: 0,  zIndex: 40}} onClick={onClose}>
-                <Paper
-                    elevation={2}
-                    onClick={(e) => e.stopPropagation()}
-                    sx={{
-                        position: 'fixed',
-                        zIndex: 50,
-                        width: 176, // w-44 (44 * 4px)
-                        borderRadius: 2, // rounded-lg
-                        bgcolor: 'background.paper',
-                        py: 0.5, // py-2
-                        left: `${x}px`,
-                        top: `${y}px`,
-                    }}
-                >
-                    <Button 
-                        type="button"
+            <Menu 
+                open={open}
+                onClose={onClose}
+                anchorReference="anchorPosition"
+                anchorPosition={{ top: y, left: x }}
+                slotProps={{
+                    paper: {
+                        sx: { width: 176, borderRadius: 2 } // 기존 Paper의 width/borderRadius만 유지
+                    },
+                    list: {
+                        sx: { py: 0.5 } // 기존 Paper의 py도 여기로
+                    }
+                }}    
+            >
+                <MenuList>
+                    <MenuItem
                         onClick={() => {setMenuMode("RENAME")}}
-                        sx={{ width : '100%', justifyContent: 'flex-start', px : 2, color : 'black'}}
-                        startIcon={<EditIcon sx={{ mb : '3px'}} />}
                         disabled={!(driveItem.permissionType === "OWNER" || driveItem.permissionType === "MANAGER" ||
                                     driveItem.permissionType === "EDITOR")}
-                    >
-                        <Typography 
-                            variant="body2"
-                            sx={{color: !(driveItem.permissionType === "OWNER" || driveItem.permissionType === "MANAGER"
-                                    || driveItem.permissionType === "EDITOR") ? 'text.disabled' : 'black' }}>
-                            이름 변경
-                        </Typography>
-                    </Button>
+                        >
+                            <ListItemIcon>
+                                <EditIcon fontSize="small" />
+                            </ListItemIcon>
+                            <Typography variant="body2">
+                                이름 변경
+                            </Typography>
+                    </MenuItem>
+
                     {driveItem.isFavorite === true ? (
-                        <Button 
-                            type="button"
+                        <MenuItem
                             onClick={deleteFavorite}
-                            sx={{width : '100%', justifyContent: 'flex-start', px : 2, color : 'black'}}
-                            startIcon={<StarIcon sx={{ mb : '3px'}}/>}
                             disabled={driveItem.permissionType === null}
                         >
-                            <Typography 
-                                variant="body2" 
-                                sx={{color: (driveItem.permissionType === null) ? 'text.disabled' : 'black' }}
-                            >
+                            <ListItemIcon> <StarIcon fontSize="small" /> </ListItemIcon>
+                            <Typography variant="body2">
                                 즐겨찾기 해제
                             </Typography>
-                        </Button>
+                        </MenuItem>
                     ) : 
-                        <Button 
-                            type="button" 
+                        <MenuItem
                             onClick={addFavorite}
-                            sx={{width : '100%', justifyContent: 'flex-start', px : 2, color : 'black'}}
-                            startIcon={<StarIcon sx={{ mb : '3px'}}/>}
                             disabled={driveItem.permissionType === null}
-                        >
-                            <Typography 
-                                variant="body2"
-                                sx={{color: (driveItem.permissionType === null) ? 'text.disabled' : 'black' }}
-                            >
+                        >   
+                            <ListItemIcon> <StarIcon fontSize="small" /> </ListItemIcon>
+                            <Typography variant="body2">
                                 즐겨찾기 추가
                             </Typography>
-                        </Button>
+                        </MenuItem>
                     }
-                    <Button 
-                        type="button" 
+
+                    <MenuItem
                         onClick={() => {setMenuMode("SHARE")}}
-                        sx={{width : '100%', justifyContent: 'flex-start', px : 2, color : 'black'}}
-                        startIcon={<ShareIcon sx={{ mb : '3px'}}/>}
                         disabled={!(driveItem.permissionType === "OWNER" || driveItem.permissionType === "MANAGER")}
                     >
-                        <Typography 
-                            variant="body2"
-                            sx={{color: !(driveItem.permissionType === "OWNER" ||
-                                driveItem.permissionType === "MANAGER") ? 'text.disabled' : 'black' }}
-                        >
+                        <ListItemIcon> <ShareIcon fontSize="small" /> </ListItemIcon>
+                        <Typography variant="body2">
                             공유 추가
                         </Typography>
-                    </Button>
-                    <Button 
-                        type="button" 
+                    </MenuItem>
+
+                    <MenuItem
                         onClick={() => {setMenuMode("PERMISSION")}}
-                        sx={{width : '100%', justifyContent: 'flex-start', px : 2, color : 'black'}}
-                        startIcon={<PermissionIcon sx={{ mb : '3px'}}/>}
                         disabled={!(driveItem.permissionType === "OWNER" || driveItem.permissionType === "MANAGER")}
                     >
-                        <Typography 
-                            variant="body2"
-                            sx={{color: !(driveItem.permissionType === "OWNER" ||
-                                driveItem.permissionType === "MANAGER") ? 'text.disabled' : 'black' }}
-                        >
+                        <ListItemIcon> <PermissionIcon fontSize="small" /> </ListItemIcon>
+                        <Typography variant="body2">
                             권한 관리
                         </Typography>
-                    </Button>
+                    </MenuItem>
+
                     <Divider sx={{my : 0.5}}/>
-                    <Button 
-                        type="button" 
+
+                    <MenuItem
                         onClick={throwTrash}
                         sx={{
-                            width : '100%',
-                            justifyContent: 'flex-start',
-                            px : 2,
                             color : 'red',
                             '&:hover': {
                                 bgcolor: '#fdc2c2'
                             },
                         }}
-                        startIcon={<DeleteIcon sx={{ mb : '3px'}}/>}
                         disabled={!(driveItem.permissionType === "OWNER" || driveItem.permissionType === "MANAGER")}
                     >
-                        <Typography 
-                            variant="body2"
-                            sx={{color: !(driveItem.permissionType === "OWNER" ||
-                                 driveItem.permissionType === "MANAGER") ? 'text.disabled' : 'red' }}
-                        >
+                        <ListItemIcon> <DeleteIcon fontSize="small" /> </ListItemIcon>
+                        <Typography variant="body2" sx={{fontWeight: 500}}>
                             휴지통으로 이동
                         </Typography>
-                    </Button>
-                </Paper>
-            </Box>
+                    </MenuItem>
+                </MenuList>
+            </Menu>
         )}
         {/* menuMode = RENAME일때 */}
         {menuMode === "RENAME" && (
@@ -306,4 +263,4 @@ function DriveItemMenuModal({
 
 }
 
-export default DriveItemMenuModal;
+export default DriveItemMenu;

@@ -5,7 +5,7 @@ import folderIcon from "../../../assets/folder.png";
 import noFavoriteImg from "../../../assets/empty-favorite.png";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams, useOutletContext, NavLink } from "react-router-dom";
-import DriveItemMenuModal from "../../modal/DriveItemMenuModal"
+import DriveItemMenu from "../../menu/DriveItemMenu"
 import type {DriveItem} from "../../../types/driveitem";
 import type { DirectoryOutletContext} from "../Directory";
 import Box from '@mui/material/Box';
@@ -298,7 +298,8 @@ function FavoriteList() {
         </Box>
         
         {driveItemMenu.isOpen && selectedDriveItem && (
-            <DriveItemMenuModal
+            <DriveItemMenu
+            open={driveItemMenu.isOpen}
             x={driveItemMenu.x}
             y={driveItemMenu.y}
             driveItem={selectedDriveItem}
