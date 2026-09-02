@@ -4,7 +4,17 @@ import { createRoot } from 'react-dom/client'
 import App from "./App.tsx";
 import { BrowserRouter} from 'react-router-dom';
 import { QueryClient, QueryClientProvider} from '@tanstack/react-query'
+import "pretendard/dist/web/variable/pretendardvariable.css";
 import "./index.css";
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+
+// MUI 전역
+const theme = createTheme({
+    typography: {
+        fontFamily: '"Pretendard Variable", "Pretendard", sans-serif',
+    },
+});
+
 
 // queryClient : 서버 데이터 관리자
 const queryClient = new QueryClient({
@@ -24,10 +34,12 @@ const queryClient = new QueryClient({
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    </QueryClientProvider>
+    <ThemeProvider theme={theme}>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </QueryClientProvider>
+    </ThemeProvider>
   </StrictMode>,
 )

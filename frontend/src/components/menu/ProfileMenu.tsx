@@ -2,6 +2,8 @@ import type {DriveItem} from "../../types/driveitem";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
+import Box from '@mui/material/Box';
+import Avatar from '@mui/material/Avatar';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import MenuList from '@mui/material/MenuList';
@@ -19,7 +21,7 @@ function ProfileMenu({
     currentUser : User | undefined
     anchor : HTMLButtonElement | null
 }) {
-
+    const S3_BASE_URL = "https://ubicollab-bucket.s3.ap-northeast-2.amazonaws.com"
     const queryClient = useQueryClient(); // QueryClient 가져옴
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
     const navigate = useNavigate();
@@ -36,13 +38,30 @@ function ProfileMenu({
             anchorEl={anchor}
             slotProps={{
                 paper: {
-                    sx: { width: 150, borderRadius: 2 } // 기존 Paper의 width/borderRadius만 유지
+                    sx: { width: 300, borderRadius: 2 } // 기존 Paper의 width/borderRadius만 유지
                 },
                 list: {
                     sx: { py: 0.5 } // 기존 Paper의 py도 여기로
                 }
             }} 
-        >
+        >   
+            <Box sx={{p : 1, display : 'flex'}}>
+                {currentUser?.profileImageKey ? (
+                        <Avatar 
+                            src={`${S3_BASE_URL}/${currentUser.profileImageKey}`}
+                            alt="프로필사진" sx={{ width: 50, height: 50}}
+                        />
+                    ) : (
+                        <Avatar alt="프로필사진" sx={{ width: 50, height: 50}} />
+                )}
+                <Box sx={{display : 'flex', flexDirection : "column", ml : 2 }}>
+                    <Typography variant="body2" sx={{ fontWeight : 500, flex : 1}}>{currentUser?.nickname}</Typography>
+                    <Typography variant="body2" sx={{ color : 'gray', flex : 1}}>{currentUser?.username}</Typography>
+                </Box>
+            </Box>
+
+            <Divider sx={{my : 0.5}}/>
+
             <MenuList>
                 <MenuItem
                     sx={{width : '100%', justifyContent: 'flex-start', px : 2, color: 'black'}}
