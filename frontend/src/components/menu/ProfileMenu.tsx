@@ -22,7 +22,6 @@ function ProfileMenu({
     anchor : HTMLButtonElement | null
 }) {
     const S3_BASE_URL = "https://ubicollab-bucket.s3.ap-northeast-2.amazonaws.com"
-    const queryClient = useQueryClient(); // QueryClient 가져옴
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
     const navigate = useNavigate();
 
@@ -65,6 +64,7 @@ function ProfileMenu({
             <MenuList>
                 <MenuItem
                     sx={{width : '100%', justifyContent: 'flex-start', px : 2, color: 'black'}}
+                    onClick={() => navigate('/profile')}
                 >
                     <ListItemIcon> <SettingsIcon fontSize="small" /></ListItemIcon>
                     <Typography variant="body2" sx={{color: 'black' }}>개인 설정</Typography>

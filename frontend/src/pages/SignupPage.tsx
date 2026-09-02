@@ -23,7 +23,7 @@ function SignupPage () {
 
     const [avatarSrc, setAvatarSrc] = useState<string | null>(null); // 이미지 -> BASE64 문자열
     const [avatarFile, setAvatarFile] = useState<File | null>(null); // 실제 업로드용 이미지(File 객체)
-
+    
     // 입력된 이미지 파일을 미리보기(Base64 문자열)와 실제 업로드용 File 객체로 저장함.
     const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -101,31 +101,39 @@ function SignupPage () {
     }
 
     // S3 presigned URI를 발급받는 함수
-    const getAvatarUploadUrl = async (file: File, userId : string | null): Promise<{ uploadUrl: string; key: string }> => {
+    /* const getAvatarUploadUrl = async (file: File, userId : string | null): Promise<{ uploadUrl: string; key: string }> => {
+        const formData = new FormData();
+        formData.append("file", avatarFile); 
         const response = await axios.post("http://localhost:8080/api/user/s3-profile", {
             fileName: file.name,
             contentType: file.type,
             userId : userId
         });
         return response.data;
-    };
+    }; */
 
     // S3 presigned URI에 프로필 사진을 올리는 함수
-    const uploadToS3 = async (uploadUrl: string, file: File) => {
-        await axios.put(uploadUrl, file, {
-            headers: { "Content-Type": file.type },
-        });
+    const uploadToS3 = async (file: File, userId : string) => {
+        const formData = new FormData();
+        formData.append("file", file); 
+        formData.append("userId", userId);  
+        await axios.post("http://localhost:8080/api/user/profile-image",
+            formData,
+            {
+                headers: { "Content-Type": "multipart/form-data" }
+            }
+        );
     };
 
     // S3의 키(경로)를 백엔드 해당 User에게 부여하는 함수
-    const updateProfileImageKey = async (key: string, userId : string | null) => {
+    /* const updateProfileImageKey = async (key: string, userId : string | null) => {
         const response = await axios.patch(`http://localhost:8080/api/user/profileImageKey/${userId}`, 
             {
                 profileImageKey : key
             }
         );
         return response.data;
-    };
+    }; */
 
 
     // 회원가입 함수 
@@ -169,9 +177,9 @@ function SignupPage () {
             //    해당 URI에 이미지 파일을 업로드해서 S3 버킷에 추가함.
             if (avatarFile) {
                 try {
-                    const { uploadUrl, key } = await getAvatarUploadUrl(avatarFile, userId ?? null);
-                    await uploadToS3(uploadUrl, avatarFile);
-                    await updateProfileImageKey(key, userId);
+                    //const { uploadUrl, key } = await getAvatarUploadUrl(avatarFile, userId ?? null);
+                    await uploadToS3(avatarFile, userId);
+                    //await updateProfileImageKey(key, userId);
                     toast.success("프로필 사진 업데이트에 성공하였습니다!" )
                 } catch (uploadError) {
                     // 계정은 이미 생성됐으니 회원가입은 성공으로 처리하고

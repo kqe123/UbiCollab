@@ -50,6 +50,7 @@ public class DriveItem {
 	// 만든 사람 (외래키)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
 	
     // 내용 (파일이면 O, 폴더면 X)

@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -88,6 +89,13 @@ public class UserController {
 			return ResponseEntity.status(HttpStatus.OK)
 					.body(userService.getCurrentUser(username));
 	}
-
+	
+	// [프로필 화면] 회원 탈퇴  API (DELETE '/api/user/{id}')
+	@DeleteMapping("/delete/{id}")
+	public ResponseEntity<String> deleteUser(@PathVariable("id") UUID publicId,
+			Authentication authentication) {
+		String username = authentication.getName(); // 현재 로그인중인 유저
+		return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+	}
 	
 }
