@@ -1,4 +1,4 @@
-import Header from "../components/driver/DriverHeader.tsx";
+import DriverHeader from "../components/driver/DriverHeader.tsx";
 import DriverSideBar from "../components/driver/DriverSideBar.tsx";
 import Directory from "../components/driver/Directory.tsx";
 import Box from '@mui/material/Box';
@@ -13,7 +13,7 @@ function DriverPage() {
 
 	return (
 		<Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-			<Header />
+			<DriverHeader />
 			<Box sx={{ display: 'flex', flex: 1, bgcolor: '#F9F9FA' }}>
 				<DriverSideBar />
 				<Directory />
