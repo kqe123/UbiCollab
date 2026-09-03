@@ -1,5 +1,7 @@
 package com.ubicollab.user;
 
+
+import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -9,9 +11,11 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.ubicollab.common.exception.PermissionDeniedException;
 import com.ubicollab.common.exception.ResourceNotFoundException;
+import com.ubicollab.common.exception.S3UploadDeniedException;
 import com.ubicollab.driveitem.DriveItem;
 import com.ubicollab.driveitem.DriveItemRepository;
 import com.ubicollab.permission.PermissionService;
@@ -19,9 +23,17 @@ import com.ubicollab.user.dto.PresignedUrlRequest;
 import com.ubicollab.user.dto.PresignedUrlResponse;
 import com.ubicollab.user.dto.UserResponse;
 
+import software.amazon.awssdk.core.SdkBytes;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.rekognition.RekognitionClient;
+import software.amazon.awssdk.services.rekognition.model.DetectModerationLabelsRequest;
+import software.amazon.awssdk.services.rekognition.model.DetectModerationLabelsResponse;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
+import software.amazon.awssdk.services.rekognition.model.Image;
 
 
 @Service
@@ -30,20 +42,23 @@ public class UserService {
 	private final DriveItemRepository driveRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final PermissionService permissionService;
-	private final S3Presigner presigner;
+	private final S3Client s3Client;
     private final String bucket;
-
+    private final RekognitionClient rekognitionClient;
+    
 	public UserService (UserRepository userRepository,
 			DriveItemRepository driveRepository,
 			PasswordEncoder passwordEncoder,
 			PermissionService permissionService,
-			S3Presigner presigner,
+			S3Client s3Client,
+			RekognitionClient rekognitionClient,
 			@Value("${AWS_S3_BUCKET}") String bucket) {
 		this.userRepository = userRepository;
 		this.driveRepository = driveRepository;
 		this.passwordEncoder = passwordEncoder;
 		this.permissionService = permissionService;
-		this.presigner = presigner;
+		this.s3Client = s3Client;
+		this.rekognitionClient = rekognitionClient;
         this.bucket = bucket;
 	}
 	
@@ -76,41 +91,82 @@ public class UserService {
 		return newUser.getPublicId();
 	}
 	
-	// 프로필 사진을 올릴 presigned URI를 반환하는 메서드
-	public PresignedUrlResponse createAvatarUploadUrl(PresignedUrlRequest request) {
-        // 경로 :  profiles/(User의 UUID)/profile.png
-		int dotIndex = request.fileName().lastIndexOf('.');
-		String extension = (dotIndex == -1) ? "" : request.fileName().substring(dotIndex);
-        String key = "profiles/" + request.userId() + "/" + "profile" + extension;
-        
-        // "S3의 어느 버킷, 어느 경로(key)에, 어떤 타입(image/png 등)으로 파일을 넣을 것인가"를 정의하는 요청 객체
-        // 아직 실제로 업로드하는 게 아니라 "이런 업로드가 있을 예정"이라는 명세만 만드는 단계이다.
-        PutObjectRequest objectRequest = PutObjectRequest.builder()
-                .bucket(bucket)
-                .key(key)
-                .contentType(request.contentType())
-                .build();
-        
-        // 위에서 만든 업로드 명세(objectRequest)를 감싸서, 
-        // "이 업로드 요청에 서명(presign)해줘, 유효시간은 5분으로"라는 요청을 만듭니다.
-        PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
-                .signatureDuration(Duration.ofMinutes(5))
-                .putObjectRequest(objectRequest)
-                .build();
+	// 프로필사진을 s3 버킷에 업로드하는  메서드
+	public void uploadProfileImage(MultipartFile file, UUID userId) {
+		
+		// 1. 기본 유효성 검사 — 비어있는지, 크기, Content-Type 화이트리스트
+	    if (file.isEmpty()) {
+	        throw new IllegalArgumentException("파일이 비어있습니다.");
+	    }
+	    
+	    String contentType = file.getContentType();
+	    if (contentType == null || !List.of("image/png", "image/jpeg", "image/webp").contains(contentType)) {
+	        throw new IllegalArgumentException("허용되지 않는 파일 형식입니다.");
+	    }
 
-        String url = presigner.presignPutObject(presignRequest).url().toString();
-        return new PresignedUrlResponse(url, key);
-    }
-	
-	// 방금 회원가입한 User에 프로필사진 경로를 업데이트하는 메서드
-	public void updateProfileImageKey(String profileImageKey, UUID userId) {
-		// 방금 회원가입한 유저가 존재하는지 확인
-		User user = getUserByPublicIdOrThrow(userId);
+	    // 2. 바이트로 읽기 (Rekognition, S3 업로드 둘 다 이 바이트를 씀)
+	    byte[] bytes;
+	    try {
+	        bytes = file.getBytes();
+	    } catch (IOException e) {
+	        throw new RuntimeException("파일을 읽는 중 오류가 발생했습니다.", e);
+	    }
+	    
+	    // 3. AWS Rekognition로 유해 콘텐츠 검사 — 여기서 걸리면 아래로 못 내려감 (S3 저장 자체가 안 됨)
+	    // Rekognition이 "이 라벨이 맞다"고 판단하는 신뢰도(confidence score)가 70% 이상인 것만 결과에 포함시킴.
+	    DetectModerationLabelsRequest moderationRequest = DetectModerationLabelsRequest.builder()
+	            .image(Image.builder().bytes(SdkBytes.fromByteArray(bytes)).build())
+	            .minConfidence(70F)
+	            .build();
+	    
+	    // Rekognition의 사전 학습된 모델이 이미지를 분석해서, 
+	    // 폭력성/노출/약물/무기/충격적 콘텐츠 등 미리 정의된 카테고리(모더레이션 라벨) 중 해당하는 게 있는지 찾아냅니다.
+	    DetectModerationLabelsResponse moderationResponse =
+	            rekognitionClient.detectModerationLabels(moderationRequest);
+	    
+		// 디버그용: 감지된 라벨별 신뢰도 로그
+		moderationResponse.moderationLabels().forEach(label ->
+		System.out.printf("[Rekognition] %s (%s) - %.2f%%%n",
+				label.name(),
+		        label.parentName().isEmpty() ? "최상위" : label.parentName(),
+		        label.confidence())
+		   );
+	    
+	    // 신뢰도 80% 이상인 모더레이션 라벨이 하나라도 감지되면 (리스트가 비어있지 않으면) 예외를 던져서 업로드 로직을 중단시킵니다.
+	    if (!moderationResponse.moderationLabels().isEmpty()) {
+	        throw new S3UploadDeniedException("부적절한 이미지는 업로드할 수 없습니다.");
+	    }
+	    
+	    // 4. User 존재 확인
+	    User user = getUserByPublicIdOrThrow(userId);
 
-		// 입력받은  profileImageKey 그대로 해당 유저에게 부여 + 저장
-		user.setProfileImageKey(profileImageKey);
-		userRepository.save(user);
+	    // 5. S3 key(경로) 생성 : 'profiles/(User의 UUID)/profile....'
+	    int dotIndex = file.getOriginalFilename().lastIndexOf('.');
+		String extension = (dotIndex == -1) ? "" : file.getOriginalFilename().substring(dotIndex);
+        String key = "profiles/" + userId + "/" + "profile" + extension;
+
+	    // 6. S3에 실제 업로드 — presigned URL 없이 백엔드에서 자기 자격증명으로 직접 PUT
+        // "S3의 어느 버킷, 어느 경로(key)에, 어떤 타입(image/png 등)으로 파일을 넣을 것인가"를 정의하는 명세만 만드는 단계이다.
+	    PutObjectRequest objectRequest = PutObjectRequest.builder()
+	            .bucket(bucket)
+	            .key(key)
+	            .contentType(contentType)
+	            .build();
+	    
+	    // S3Client가 명세를 기반으로 해당 bytes 배열(이미지)를 S3 버킷에 PUT시킴 (Image Upload)
+	    s3Client.putObject(objectRequest, RequestBody.fromBytes(bytes));
+
+	    // 7. DB에 key 반영 + 만약 중간에 예외 발생 시 롤백
+	    try {
+	        user.setProfileImageKey(key);
+	        userRepository.save(user);
+	    } catch (Exception e) {
+	        // DB 저장 실패 시 방금 올린 S3 객체를 다시 지워서 고아 파일 방지
+	        s3Client.deleteObject(DeleteObjectRequest.builder().bucket(bucket).key(key).build());
+	        throw e;
+	    }
 	}
+
 
 	// 중복 username 검사 메서드
 	public Boolean checkSameUsername(String username) {

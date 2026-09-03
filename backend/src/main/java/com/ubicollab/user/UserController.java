@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.ubicollab.user.dto.PresignedUrlRequest;
 import com.ubicollab.user.dto.PresignedUrlResponse;
@@ -45,21 +46,14 @@ public class UserController {
 	            .body(userId);
 	}
 	
-	// [회원가입] 프로필사진을 업로드하는 Presigned Url를 반환하는 API (POST 'api/user/s3-profile')
-	@PostMapping("/s3-profile")
-    public ResponseEntity<PresignedUrlResponse> getAvatarUploadUrl(
-            @Valid @RequestBody PresignedUrlRequest request) {
-        return ResponseEntity.ok(userService.createAvatarUploadUrl(request));
-    }
-	
-	// [회원가입] 프로필 키를  해당 User에 업데이트하는 API (PATCH '/api/user/profileImageKey/{key}')
-	@PatchMapping("/profileImageKey/{userId}")
-	public ResponseEntity<String> updateProfileImageKey(@PathVariable("userId") UUID userId,
-		@Valid @RequestBody Map<String, String> body) {
-		
-		String profileImageKey = body.get("profileImageKey");
-		userService.updateProfileImageKey(profileImageKey, userId);
-		return ResponseEntity.status(HttpStatus.OK).body("해당 User에 프로필 사진 URI 업데이트 완료");
+	// [회원가입] 프로필사진을 s3 버킷에 업로드하는  API (POST 'api/user/profile-image')
+	@PostMapping("/profile-image")
+	public ResponseEntity<?> uploadProfileImage(
+			@RequestParam("file") MultipartFile file,
+	        @RequestParam("userId") UUID userId
+	        ) {
+		userService.uploadProfileImage(file, userId);
+		return ResponseEntity.ok().build();
 	}
 	
 	// [회원가입] 중복 username 체크 API (GET 'api/user/check-username')
