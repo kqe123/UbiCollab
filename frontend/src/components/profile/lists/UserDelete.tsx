@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useQuery } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from '@mui/material/Button';
@@ -8,18 +8,60 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import DeletePopup from '../../popup/DeletePopup';
 
 function UserDelete() {
 
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
     const navigate = useNavigate();
-    const [isChecked, setIsChecked] = useState<boolean>(false);
+    const [isChecked, setIsChecked] = useState<boolean>(false); // 체크박스 체크/비체크
+    const [deleteConfirm, setDeleteConfirm] = useState(false); // delete 팝업창 열림/닫힘
 
     // 체크박스 상태 변화 메서드
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setIsChecked(event.target.checked);
     };
 
+    // 회원탈퇴 팝업창을 여는 메서드
+    const confirmChange = async () => {
+        if (!isChecked) {
+            toast.error("회원탈퇴 안내사항 확인 후 체크박스를 선택해주세요.")
+            return;
+        }
+
+        setDeleteConfirm(true);
+    };
+
+    // "회원 탈퇴" 함수
+    const deleteUser = async () => {
+        try {
+            // 영구 삭제 Backend API 호출
+            await axios.delete("http://localhost:8080/api/user/delete",
+            {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`
+                }
+            }
+        );
+
+            console.log("알림 : 회원 탈퇴 완료");
+            toast.success("회원 탈퇴가 완료되었습니다.");
+            localStorage.removeItem("accessToken");
+            navigate('/login');
+        } catch (error: unknown) {
+            console.error("회원 탈퇴 실패... : ", error);
+            // axios에서 발생한 오류인 경우
+            if (axios.isAxiosError(error)) {
+                console.error("백엔드 응답:", error.response?.data);
+                toast.error(error.response?.data?.message ?? "회원 탈퇴 하는데 실패했습니다.");
+            } 
+            // 그 외의 오류인 경우
+            else {
+                console.error("알 수 없는 오류:", error);
+                toast.error("알 수 없는 오류가 발생했습니다.");
+            }
+        } 
+    }
 
     return (
         <>
@@ -72,22 +114,31 @@ function UserDelete() {
             </Box>
         </Box>
         
+        {/* 약관 확인 체크박스 */}
         <FormControlLabel 
             control={<Checkbox checked={isChecked} onChange={handleChange} />}
             sx={{my : 4}}
             label="위의 회원탈퇴 시 주의사항을 모두 확인했습니다."
         />
         
-        
-        {/* Submit Button */}
+        {/* 탈퇴 버튼 */}
         <Button 
             disableElevation
             variant="contained"
             size="large"
-            color="error">
+            color="error"
+            onClick={confirmChange}>
             회원탈퇴
         </Button>
 
+        {/* 삭제 팝업 */}
+        <DeletePopup
+            open={deleteConfirm}
+            title="회원 탈퇴"
+            message="정말 회원 탈퇴를 진행하시겠습니까? 탈퇴 시 모든 정보가 삭제되며 복구할 수 없습니다."
+            onConfirm={deleteUser}
+            onClose={() => setDeleteConfirm(false)}
+        />
         </>
     );
 }

@@ -23,7 +23,8 @@ function SignupPage () {
 
     const [avatarSrc, setAvatarSrc] = useState<string | null>(null); // 이미지 -> BASE64 문자열
     const [avatarFile, setAvatarFile] = useState<File | null>(null); // 실제 업로드용 이미지(File 객체)
-    
+    document.title = "회원가입 - Ubicollab";
+
     // 입력된 이미지 파일을 미리보기(Base64 문자열)와 실제 업로드용 File 객체로 저장함.
     const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -227,8 +228,8 @@ function SignupPage () {
                                 />
                             </IconButton>
                             }
-                        >
-                            <Avatar alt="Upload new avatar" src={avatarSrc} sx={{ width: 100, height: 100 }} />
+                        >   
+                            <Avatar alt="Upload new avatar" src={avatarSrc ?? undefined} sx={{ width: 100, height: 100 }} />
                         </Badge>
                     </Box>
                     

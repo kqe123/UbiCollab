@@ -29,7 +29,12 @@ import software.amazon.awssdk.services.rekognition.RekognitionClient;
 import software.amazon.awssdk.services.rekognition.model.DetectModerationLabelsRequest;
 import software.amazon.awssdk.services.rekognition.model.DetectModerationLabelsResponse;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.Delete;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
+import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
@@ -62,7 +67,7 @@ public class UserService {
         this.bucket = bucket;
 	}
 	
-	// User를 생성하는 메서드
+	// [회원가입] User를 생성하는 메서드
 	public UUID createUser(User user) {
 		String username = user.getUsername();
 		String password = user.getPassword();
@@ -91,7 +96,7 @@ public class UserService {
 		return newUser.getPublicId();
 	}
 	
-	// 프로필사진을 s3 버킷에 업로드하는  메서드
+	// [회원가입] 프로필사진을 s3 버킷에 업로드하는  메서드
 	public void uploadProfileImage(MultipartFile file, UUID userId) {
 		
 		// 1. 기본 유효성 검사 — 비어있는지, 크기, Content-Type 화이트리스트
@@ -168,12 +173,12 @@ public class UserService {
 	}
 
 
-	// 중복 username 검사 메서드
+	// [회원가입] 중복 username 검사 메서드
 	public Boolean checkSameUsername(String username) {
 	    return userRepository.findByUsername(username).isPresent();
 	}
 
-	// username 검색 엔진 메서드
+	// [공유 추가] username 검색 엔진 메서드
 	public List<UserResponse> searchUsers(String username, String keyword, UUID publicId) {
 		List<UserResponse> result = new ArrayList<>();
 
@@ -203,6 +208,55 @@ public class UserService {
 	// 현재 로그인중인 유저 반환 메서드
 	public UserResponse getCurrentUser(String username) {
 		return new UserResponse(getUserOrThrow(username));
+	}
+	
+	// [프로필] 회원 탈퇴 메서드
+	public void deleteUser(String username) {
+		// 현재 로그인된 유저
+		User user = getUserOrThrow(username);
+		
+		// 1. DB 해당  User 삭제
+		userRepository.delete(user);
+		
+		// profileImageKey가 존재할 때만(프로필 사진이 존재할 때만) 로직 수행
+		if (user.getProfileImageKey() != null) {
+			// 2. S3에서 이 유저의 "profiles/{publicId}/" prefix에 해당하는 객체를 전부 찾아서 삭제
+		    String prefix = "profiles/" + user.getPublicId() + "/"; // 삭제할 대상의 경로(prefix)
+		    
+		    // 3. "S3의 어느 버킷, 어느 prefix의 파일을 조회할지"를 정의하는 요청(명세)을 생성
+		    ListObjectsV2Request listRequest = ListObjectsV2Request.builder()
+		            .bucket(bucket)
+		            .prefix(prefix)
+		            .build();
+		    
+		    // 4. 위에서 만든 요청을 실제로 S3에 전송하고, 그 응답(조회 결과)을 받음
+		    // listResponse : 해당 prefix로 시작하는 객체들의 메타데이터(key, size 등)
+		    ListObjectsV2Response listResponse = s3Client.listObjectsV2(listRequest);
+		    
+		    // 5. 조회된 객체가 하나 이상 있다면 삭제 로직 진행
+		    if (!listResponse.contents().isEmpty()) {
+		    	// 5-1. 조회된 S3Object 리스트에서 key(파일 경로)만 추출해
+		        // DeleteObjects 요청이 요구하는 ObjectIdentifier 형태로 변환
+		        List<ObjectIdentifier> objectsToDelete = listResponse.contents().stream()
+		                .map(s3Object -> ObjectIdentifier.builder().key(s3Object.key()).build())
+		                .toList();
+		        
+		        // 5-2. 삭제할 객체 목록(objectsToDelete)을 담아, "이 버킷의 이 객체들을 지워줘"라는 삭제 요청(명세)을 생성 (실제 삭제 X)
+		        DeleteObjectsRequest deleteRequest = DeleteObjectsRequest.builder()
+		                .bucket(bucket)
+		                .delete(Delete.builder().objects(objectsToDelete).build())
+		                .build();
+		        
+		        // 5-3. 삭제 요청을 실제로 S3에 전송 (실제 삭제 O)
+		        try {
+		            s3Client.deleteObjects(deleteRequest);
+		        } catch (Exception e) {
+		            // 로그만 남기고 넘어가서,S3에 고아 파일만 남는 정도로 처리
+		            System.err.println("탈퇴 후 S3 정리 실패 (유저: " + user.getPublicId() + "): " + e.getMessage());
+		        }
+		    }
+		}
+		
 	}
 
 	// username으로 User를 조회하는 공통 헬퍼

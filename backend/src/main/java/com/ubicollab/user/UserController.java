@@ -64,7 +64,7 @@ public class UserController {
 	    return ResponseEntity.status(HttpStatus.OK).body(exists);
 	}
 	
-	// [회원가입] 실시간 username 검색 결과 API (GET 'api/user/search')
+	// [공유 추가] 실시간 username 검색 결과 API (GET 'api/user/search')
 	@GetMapping("/search")
 	public ResponseEntity<List<UserResponse>> searchUsers(
 			@RequestParam("keyword") String keyword,
@@ -84,11 +84,11 @@ public class UserController {
 					.body(userService.getCurrentUser(username));
 	}
 	
-	// [프로필 화면] 회원 탈퇴  API (DELETE '/api/user/{id}')
-	@DeleteMapping("/delete/{id}")
-	public ResponseEntity<String> deleteUser(@PathVariable("id") UUID publicId,
-			Authentication authentication) {
+	// [프로필 화면] 회원 탈퇴  API (DELETE '/api/user/delete')
+	@DeleteMapping("/delete")
+	public ResponseEntity<String> deleteUser(Authentication authentication) {
 		String username = authentication.getName(); // 현재 로그인중인 유저
+		userService.deleteUser(username);
 		return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
 	}
 	
