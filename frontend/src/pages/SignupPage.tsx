@@ -203,7 +203,7 @@ function SignupPage () {
                     component="form"
                     onSubmit={signup}
                     sx={{ width : '60%', mx: 'auto', display: 'flex', flexDirection: 'column',
-                        gap: 1.5, mt : 3}}
+                        gap: 1.5, mt : 1}}
                 >
                     <Typography 
                         variant="body1"
@@ -231,7 +231,11 @@ function SignupPage () {
                             <Avatar alt="Upload new avatar" src={avatarSrc} sx={{ width: 100, height: 100 }} />
                         </Badge>
                     </Box>
-
+                    
+                    <Typography variant="body2" color="error" >
+                        ⚠️ 부적절한 콘텐츠(노출, 폭력, 약물·흡연 등)가 포함된 사진은 업로드가 차단될 수 있습니다.
+                    </Typography>
+                    
                     {/* ID */}
                     <TextField
                         required
@@ -285,13 +289,16 @@ function SignupPage () {
                         placeholder="2자 이상 입력"
                         sx={{'& .MuiInputBase-input': { fontSize: '15px'} }}
                     />
+
                     {/* Submit Button */}
                     <Button 
                         disableElevation
                         type="submit"
                         variant="contained"
                         size="medium"
-                        color="primary">
+                        color="primary"
+                        sx={{mt : 1}}
+                    >
                         회원가입
                     </Button>
                 </Box>

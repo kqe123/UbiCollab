@@ -2,6 +2,7 @@ package com.ubicollab;
 
 import java.util.Arrays;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -34,9 +35,10 @@ public class SecurityConfig {
 	}
 	
 	// 비밀번호를 암호화(Encoding) 하고, 로그인할 때 비교(Matching) 하는 객체
+	// Salt + pepper를 적용시켜 보안을 강화함.
 	@Bean
-	public PasswordEncoder passwordEncoder() {
-		return new BCryptPasswordEncoder();
+	public PasswordEncoder passwordEncoder(@Value("${PASSWORD_PEPPER}") String pepper) {
+	    return new PepperedPasswordEncoder(new BCryptPasswordEncoder(), pepper);
 	}
 	
 	// 로그인을 실제로 수행하는 객체

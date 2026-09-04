@@ -132,7 +132,7 @@ public class UserService {
 		        label.confidence())
 		   );
 	    
-	    // 신뢰도 80% 이상인 모더레이션 라벨이 하나라도 감지되면 (리스트가 비어있지 않으면) 예외를 던져서 업로드 로직을 중단시킵니다.
+	    // 신뢰도 70% 이상인 모더레이션 라벨이 하나라도 감지되면 (리스트가 비어있지 않으면) 예외를 던져서 업로드 로직을 중단시킵니다.
 	    if (!moderationResponse.moderationLabels().isEmpty()) {
 	        throw new S3UploadDeniedException("부적절한 이미지는 업로드할 수 없습니다.");
 	    }

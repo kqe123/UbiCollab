@@ -28,6 +28,7 @@ function ProfileMenu({
     const logout = () => {
         localStorage.removeItem("accessToken");
         navigate('/login');
+        console.log("로그아웃 완료");
     }
     return (
         <>
