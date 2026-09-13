@@ -19,8 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.ubicollab.user.dto.PresignedUrlRequest;
-import com.ubicollab.user.dto.PresignedUrlResponse;
+import com.ubicollab.user.dto.PasswordChangeDto;
 import com.ubicollab.user.dto.UserResponse;
 
 import jakarta.validation.Valid;
@@ -82,6 +81,15 @@ public class UserController {
 			String username = authentication.getName(); // 현재 로그인 username
 			return ResponseEntity.status(HttpStatus.OK)
 					.body(userService.getCurrentUser(username));
+	}
+	
+	// [프로필 화면] 비밀번호 변경  API (PATCH '/api/user/change-password')
+	@PatchMapping("change-password")
+	public ResponseEntity<?> changePassword(Authentication authentication,
+			@Valid @RequestBody PasswordChangeDto request) {
+		String username = authentication.getName(); // 현재 로그인중인 유저
+		userService.changePassword(username, request); // 비밀번호 변경
+		return ResponseEntity.status(HttpStatus.OK).body("비밀번호 변경 성공");
 	}
 	
 	// [프로필 화면] 회원 탈퇴  API (DELETE '/api/user/delete')

@@ -2,7 +2,6 @@ package com.ubicollab.user;
 
 
 import java.io.IOException;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,14 +12,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.ubicollab.common.exception.InvalidPasswordException;
 import com.ubicollab.common.exception.PermissionDeniedException;
 import com.ubicollab.common.exception.ResourceNotFoundException;
 import com.ubicollab.common.exception.S3UploadDeniedException;
 import com.ubicollab.driveitem.DriveItem;
 import com.ubicollab.driveitem.DriveItemRepository;
 import com.ubicollab.permission.PermissionService;
-import com.ubicollab.user.dto.PresignedUrlRequest;
-import com.ubicollab.user.dto.PresignedUrlResponse;
+import com.ubicollab.user.dto.PasswordChangeDto;
 import com.ubicollab.user.dto.UserResponse;
 
 import software.amazon.awssdk.core.SdkBytes;
@@ -36,10 +35,7 @@ import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.presigner.S3Presigner;
-import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 import software.amazon.awssdk.services.rekognition.model.Image;
-
 
 @Service
 public class UserService {
@@ -66,6 +62,7 @@ public class UserService {
 		this.rekognitionClient = rekognitionClient;
         this.bucket = bucket;
 	}
+	
 	
 	// [회원가입] User를 생성하는 메서드
 	public UUID createUser(User user) {
@@ -208,6 +205,20 @@ public class UserService {
 	// 현재 로그인중인 유저 반환 메서드
 	public UserResponse getCurrentUser(String username) {
 		return new UserResponse(getUserOrThrow(username));
+	}
+	
+	// [프로필] 비밀번호 변경 메서드
+	public void changePassword(String username, PasswordChangeDto request) {
+		// 1. 현재 사용자가 맞는지 검증
+		// 현재 User 정보를 가져온뒤, 입력값(Rawpassword)과 해시된 비밀번호를 비교함
+		User user = getUserOrThrow(username);
+		if (!passwordEncoder.matches(request.currentPassword(), user.getPassword())) {
+	        throw new InvalidPasswordException("현재 비밀번호가 일치하지 않습니다.");
+	    }
+		
+		// 2. 새 비밀번호로 변경 (유효성 검증은 Dto에서 이미 수행함)
+		user.setPassword(passwordEncoder.encode(request.newPassword()));
+		userRepository.save(user);
 	}
 	
 	// [프로필] 회원 탈퇴 메서드
