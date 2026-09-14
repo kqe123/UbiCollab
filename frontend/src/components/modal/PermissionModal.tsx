@@ -26,7 +26,6 @@ function  PermissionModal ({
     driveItem : DriveItem,
     onClose : () => void;
 }) {
-    const S3_BASE_URL = "https://ubicollab-bucket.s3.ap-northeast-2.amazonaws.com"
     const queryClient = useQueryClient(); // QueryClient 가져옴
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
     const { data: currentUser } = useCurrentUser(); // 현재 로그인 유저 정보 (DriverHeader와 캐시 공유됨)
@@ -85,6 +84,7 @@ function  PermissionModal ({
     } = useQuery({
         queryKey : ["permissions", driveItem.publicId],
         queryFn : getPermissions,
+        refetchInterval: 5 * 60 * 1000, // 5분마다 백그라운드에서 자동 재요청 
     })
 
     // 권한이 업데이트된 사용자들을 뽑아내는 함수
@@ -258,9 +258,9 @@ function  PermissionModal ({
                                     alignItems : 'center',
                                 }}
                             >
-                                {permission.profileImageKey === null ?
+                                {permission.profileUri === null ?
                                 (<Avatar alt="기본프로필사진" sx={{ width: 32, height: 32}} />)
-                                : (<Avatar src={`${S3_BASE_URL}/${permission.profileImageKey}`} alt="프로필사진" sx={{ width: 32, height: 32}} />)
+                                : (<Avatar src={permission.profileUri} alt="프로필사진" sx={{ width: 32, height: 32}} />)
                                 }
                                 <Box sx={{ display : 'flex', flexDirection : "column", ml : 2 }}>
                                     <Typography variant="body2" sx={{ fontWeight : 500, flex : 1}}>

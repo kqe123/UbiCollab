@@ -2,6 +2,7 @@ package com.ubicollab.user;
 
 
 import java.io.IOException;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,10 +33,14 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.Delete;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 import software.amazon.awssdk.services.rekognition.model.Image;
 
 @Service
@@ -45,6 +50,7 @@ public class UserService {
 	private final PasswordEncoder passwordEncoder;
 	private final PermissionService permissionService;
 	private final S3Client s3Client;
+	private final S3Presigner s3Presigner;
     private final String bucket;
     private final RekognitionClient rekognitionClient;
     
@@ -53,6 +59,7 @@ public class UserService {
 			PasswordEncoder passwordEncoder,
 			PermissionService permissionService,
 			S3Client s3Client,
+			S3Presigner s3Presigner,
 			RekognitionClient rekognitionClient,
 			@Value("${AWS_S3_BUCKET}") String bucket) {
 		this.userRepository = userRepository;
@@ -60,6 +67,7 @@ public class UserService {
 		this.passwordEncoder = passwordEncoder;
 		this.permissionService = permissionService;
 		this.s3Client = s3Client;
+		this.s3Presigner = s3Presigner;
 		this.rekognitionClient = rekognitionClient;
         this.bucket = bucket;
 	}
@@ -182,17 +190,27 @@ public class UserService {
 		// 해당 키워드를 기반으로 검색 결과 반환 (소유자(Owner),자기 자신 ,이미 공유중인 사용자들 제외)
 		List<User> users = userRepository.searchByUsername(keyword, driveItem.getUser().getUsername(), publicId);
 		for (User user : users) {
+			// 본인 제외
 			if (username.equals(user.getUsername())) {
 				continue;
 			}
-			result.add(new UserResponse(user));
+			
+			String presignedUri = getProfileUri(user.getProfileImageKey());
+			result.add(new UserResponse(user,presignedUri));
 		}
 		return result;
 	}
 
 	// 현재 로그인중인 유저 반환 메서드
 	public UserResponse getCurrentUser(String username) {
-		return new UserResponse(getUserOrThrow(username));
+		// 1. User 정보 가져옴
+		User user = getUserOrThrow(username); 
+		String key = user.getProfileImageKey();
+		
+		// 2. 프로필 사진을 로드할 Presigned URI를 반환받는다 (key가 null이면  null 반환)
+		String presignedUri = getProfileUri(key);
+		
+		return new UserResponse(user, presignedUri);
 	}
 	
 	// [프로필] 비밀번호 변경 메서드
@@ -255,16 +273,38 @@ public class UserService {
 		        }
 		    }
 		}
-		
 	}
-
-	// username으로 User를 조회하는 공통 헬퍼
+	
+	// 프로필 사진을 로드할 Presigned URI를 반환하는 헬퍼 메서드
+	private String getProfileUri(String key) {
+		String profileUri = null;
+		// 프로필 키가 존재할 경우에만 수행
+		if (key != null) {
+			// 1. "S3의 어느 버킷, 어느 key를 GET할 것인가"를 정의하는 요청 명세 (아직 서명 X)
+			GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+					.bucket(bucket)
+					.key(key)
+					.build();
+			
+			// 2. 위 요청에 "10분간만 유효한 GET"이라는 서명 조건을 씌운 presign 요청 생성
+	        GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+	                .signatureDuration(Duration.ofMinutes(10)) // URL 유효기간 10분
+	                .getObjectRequest(getObjectRequest)
+	                .build();
+			
+	        // 3. 실제 서명 수행 — AWS 자격증명으로 로컬에서 HMAC 서명 계산 (네트워크 호출 없음, 빠름)
+	        profileUri = s3Presigner.presignGetObject(presignRequest).url().toString();
+		}
+		return profileUri;
+	}
+	
+	// username으로 User를 조회하는 공통 헬퍼 메서드
 	private User getUserOrThrow(String username) {
 		return userRepository.findByUsername(username).orElseThrow(
 				() -> new ResourceNotFoundException("User를 찾을 수 없습니다. : " + username));
 	}
 
-	// publicId로 User를 조회하는 공통 헬퍼
+	// publicId로 User를 조회하는 공통 헬퍼 메서드 
 	private User getUserByPublicIdOrThrow(UUID userId) {
 		return userRepository.findByPublicId(userId).orElseThrow(
 				() -> new ResourceNotFoundException("존재하지 않는 사용자입니다."));

@@ -26,7 +26,6 @@ function  ShareModal ({
     driveItem : DriveItem,
     onClose : () => void;
 }) { 
-    const S3_BASE_URL = "https://ubicollab-bucket.s3.ap-northeast-2.amazonaws.com"
     const [text, setText] = useState<string>(""); // 입력값
     const [users, setUsers] = useState<User[]>([]); // 검색 결과 유저들
     const [sharedUsers, setSharedUsers] = useState<permission[]>([]); // 공유 대상에 추가한 유저들
@@ -196,7 +195,7 @@ function  ShareModal ({
                                                 userId : user.publicId,
                                                 username: user.username,
                                                 nickname: user.nickname,
-                                                profileImageKey: user.profileImageKey,
+                                                profileUri: user.profileUri,
                                                 driveItemId : driveItem.publicId,
                                                 type: "VIEWER",
                                             }
@@ -205,9 +204,9 @@ function  ShareModal ({
                                         }
                                     }
                                 >
-                                    {user.profileImageKey === null ? 
+                                    {user.profileUri === null ? 
                                     (<Avatar alt="기본프로필사진" sx={{ width: 32, height: 32}} />)
-                                    : (<Avatar src={`${S3_BASE_URL}/${user.profileImageKey}`} alt="프로필사진" sx={{ width: 32, height: 32}} />)
+                                    : (<Avatar src={user.profileUri} alt="프로필사진" sx={{ width: 32, height: 32}} />)
                                     }
                                     
                                     <Box sx={{display : 'flex', flexDirection : "column", ml : 2 }}>
@@ -240,9 +239,9 @@ function  ShareModal ({
                                         my : 1
                                     }}
                                 >
-                                    {sharedUser.profileImageKey === null ? 
+                                    {sharedUser.profileUri === null ? 
                                     (<Avatar alt="기본프로필사진" sx={{ width: 32, height: 32}} />)
-                                    : (<Avatar src={`${S3_BASE_URL}/${sharedUser.profileImageKey}`} alt="프로필사진" sx={{ width: 32, height: 32}} />)
+                                    : (<Avatar src={sharedUser.profileUri} alt="프로필사진" sx={{ width: 32, height: 32}} />)
                                     }
                                     <Box sx={{ display : 'flex', flexDirection : "column", ml : 2 }}>
                                         <Typography variant="body2" sx={{ fontWeight : 500, flex : 1}}>{sharedUser.nickname}</Typography>

@@ -32,5 +32,6 @@ export function useCurrentUser() {
     return useQuery<User>({
         queryKey: ["currentUser"],
         queryFn: getCurrentUser,
+        refetchInterval: 5 * 60 * 1000, // 5분마다 백그라운드에서 자동 재요청 
     });
 }

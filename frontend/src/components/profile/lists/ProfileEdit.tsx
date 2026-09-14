@@ -18,6 +18,8 @@ import { useCurrentUser } from "../../../hooks/use-current-user";
 
 function ProfileEdit() {
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
+    
+    // 현재 로그인중인 유저 정보 
     const {
         data: currentUser, // 백엔드에서 받아온 데이터
         isLoading : isUserLoading,    // 현재 요청 중인지 여부
@@ -28,7 +30,6 @@ function ProfileEdit() {
     const [nickname, setNickname] = useState<string>("");
     const navigate = useNavigate();
 
-    // 문서 리스트를 정상적으로 받아왔을 때
     return (
         <>
         <Typography variant="h5" sx={{ fontWeight: 800, mt: 1}}>프로필 수정</Typography>

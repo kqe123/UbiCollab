@@ -13,7 +13,7 @@ function EditorHeader({
     permission : "VIEWER" | "COMMENTOR" | "EDITOR" |"MANAGER" | "OWNER" | null;
 }) {
 
-    const S3_BASE_URL = "https://ubicollab-bucket.s3.ap-northeast-2.amazonaws.com"
+    // 현재 로그인된 User 정보 
     const {
         data: currentUser, // 백엔드에서 받아온 데이터
         isLoading,    // 현재 요청 중인지 여부
@@ -50,8 +50,8 @@ return (
         
         {/* Buttons */}
         <Box sx={{ width : '20%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap : 2}}>
-            {currentUser?.profileImageKey ? (
-                <Avatar src={`${S3_BASE_URL}/${currentUser.profileImageKey}`} alt="프로필사진" sx={{ width: 50, height: 50, cursor : 'pointer'}} />
+            {currentUser?.profileUri ? (
+                <Avatar src={currentUser.profileUri} alt="프로필사진" sx={{ width: 50, height: 50, cursor : 'pointer'}} />
             ) : (
                 <Avatar alt="프로필사진" sx={{ width: 50, height: 50, cursor : 'pointer'}} />
             )}

@@ -7,7 +7,6 @@ import { useState, useRef } from "react";
 import ProfileMenu from '../menu/ProfileMenu';
 
 function ProfileHeader() {
-    const S3_BASE_URL = "https://ubicollab-bucket.s3.ap-northeast-2.amazonaws.com"
     // 현재 로그인 유저 정보 (같은 queryKey["currentUser"]를 쓰는 다른 컴포넌트와 캐시 공유됨)
     const {
         data: currentUser, // 백엔드에서 받아온 데이터
@@ -44,9 +43,9 @@ function ProfileHeader() {
                         <Typography variant="body2" sx={{ color: 'error.main' ,textAlign: 'center'}}>{error.message}</Typography>
                     </Box>
                 )}
-                {currentUser?.profileImageKey ? (
+                {currentUser?.profileUri ? (
                     <Avatar 
-                        src={`${S3_BASE_URL}/${currentUser.profileImageKey}`}
+                        src={currentUser.profileUri}
                         alt="프로필사진" sx={{ width: 50, height: 50, cursor : 'pointer'}}
                         ref={anchorRef}
                         onClick={() => setIsProfileMenuOpen(true)}

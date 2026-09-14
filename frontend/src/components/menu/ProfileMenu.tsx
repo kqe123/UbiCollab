@@ -18,7 +18,6 @@ function ProfileMenu({
     currentUser : User | undefined
     anchor : HTMLButtonElement | null
 }) {
-    const S3_BASE_URL = "https://ubicollab-bucket.s3.ap-northeast-2.amazonaws.com"
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
     const navigate = useNavigate();
 
@@ -43,9 +42,9 @@ function ProfileMenu({
             }} 
         >   
             <Box sx={{p : 1, display : 'flex'}}>
-                {currentUser?.profileImageKey ? (
+                {currentUser?.profileUri ? (
                         <Avatar 
-                            src={`${S3_BASE_URL}/${currentUser.profileImageKey}`}
+                            src={currentUser.profileUri}
                             alt="프로필사진" sx={{ width: 50, height: 50}}
                         />
                     ) : (
