@@ -19,7 +19,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.ubicollab.driveitem.dto.DriveItemCreateDto;
 import com.ubicollab.user.dto.PasswordChangeDto;
+import com.ubicollab.user.dto.SignupDto;
 import com.ubicollab.user.dto.UserResponse;
 
 import jakarta.validation.Valid;
@@ -38,8 +40,9 @@ public class UserController {
 	
 	// [회원가입] 회원가입 API (POST 'api/user')
 	@PostMapping
-	public ResponseEntity<UUID> createUser(@RequestBody User user) {
-	    UUID userId = userService.createUser(user);
+	public ResponseEntity<UUID> createUser(
+			@Valid @RequestBody SignupDto request) {
+	    UUID userId = userService.createUser(request);
 		return ResponseEntity
 	            .status(HttpStatus.CREATED)
 	            .body(userId);

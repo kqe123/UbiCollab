@@ -20,6 +20,7 @@ import com.ubicollab.driveitem.DriveItem;
 import com.ubicollab.driveitem.DriveItemRepository;
 import com.ubicollab.permission.PermissionService;
 import com.ubicollab.user.dto.PasswordChangeDto;
+import com.ubicollab.user.dto.SignupDto;
 import com.ubicollab.user.dto.UserResponse;
 
 import software.amazon.awssdk.core.SdkBytes;
@@ -65,23 +66,10 @@ public class UserService {
 	
 	
 	// [회원가입] User를 생성하는 메서드
-	public UUID createUser(User user) {
-		String username = user.getUsername();
-		String password = user.getPassword();
-		String nickname = user.getNickname();
-		
-		// 유효성 검사
-		if (username == null || username.isBlank()) {
-	        throw new IllegalArgumentException("username은 필수입니다.");
-	    }
-		
-		if (password == null || password.isBlank()) {
-	        throw new IllegalArgumentException("password은 필수입니다.");
-	    }
-		
-		if (nickname == null || nickname.isBlank()) {
-	        throw new IllegalArgumentException("nickname은 필수입니다.");
-	    }
+	public UUID createUser(SignupDto request) {
+		String username = request.username();
+		String password = request.password();
+		String nickname = request.nickname();
 		
 		// User 객체 생성 (username, password, nickname, createdDate, role, profileImageKey)
 		// password는 Bean으로 등록된 passwordEncoder를 사용해 암호화한다.
