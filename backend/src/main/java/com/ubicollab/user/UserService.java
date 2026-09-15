@@ -20,6 +20,7 @@ import com.ubicollab.common.exception.S3UploadDeniedException;
 import com.ubicollab.driveitem.DriveItem;
 import com.ubicollab.driveitem.DriveItemRepository;
 import com.ubicollab.permission.PermissionService;
+import com.ubicollab.user.dto.NicknameChangeDto;
 import com.ubicollab.user.dto.PasswordChangeDto;
 import com.ubicollab.user.dto.SignupDto;
 import com.ubicollab.user.dto.UserResponse;
@@ -89,8 +90,9 @@ public class UserService {
 		return newUser.getPublicId();
 	}
 	
-	// [회원가입] 프로필사진을 s3 버킷에 업로드하는  메서드
-	public void uploadProfileImage(MultipartFile file, UUID userId) {
+	// [회원가입, 프로필] 프로필사진을 s3 버킷에 업로드하는  메서드
+	// 대상 유저는 인증된 username으로 조회 — 요청 파라미터로 임의의 userId를 신뢰하지 않는다.
+	public void uploadProfileImage(MultipartFile file, String username) {
 		
 		// 1. 기본 유효성 검사 — 비어있는지, 크기, Content-Type 화이트리스트
 	    if (file.isEmpty()) {
@@ -135,13 +137,14 @@ public class UserService {
 	        throw new S3UploadDeniedException("부적절한 이미지는 업로드할 수 없습니다.");
 	    }
 	    
-	    // 4. User 존재 확인
-	    User user = getUserByPublicIdOrThrow(userId);
+	    // 4. User 존재 확인 (인증된 본인 계정)
+	    User user = getUserOrThrow(username);
+	    UUID userId = user.getPublicId();
 
-	    // 5. S3 key(경로) 생성 : 'profiles/(User의 UUID)/profile....'
-	    int dotIndex = file.getOriginalFilename().lastIndexOf('.');
-		String extension = (dotIndex == -1) ? "" : file.getOriginalFilename().substring(dotIndex);
-        String key = "profiles/" + userId + "/" + "profile" + extension;
+	    // 5. S3 key(경로) 생성 : 'profiles/(User의 UUID)/profile'
+	    // 확장자를 key에 넣지 않음 — 렌더링은 아래 contentType 헤더가 담당하므로,
+	    // 나중에 다른 형식(png -> jpg 등)으로 사진을 바꿔도 항상 같은 key라 S3가 자동으로 덮어쓰고, 고아 파일이 안 생김.
+        String key = "profiles/" + userId + "/profile";
 
 	    // 6. S3에 실제 업로드 — presigned URL 없이 백엔드에서 자기 자격증명으로 직접 PUT
         // "S3의 어느 버킷, 어느 경로(key)에, 어떤 타입(image/png 등)으로 파일을 넣을 것인가"를 정의하는 명세만 만드는 단계이다.
@@ -227,6 +230,16 @@ public class UserService {
 		userRepository.save(user);
 	}
 	
+	// [프로필] 닉네임 변경 메서드
+	public void changeNickname(String username, NicknameChangeDto request) {
+		// 1. 현재 사용자가 맞는지 검증
+		User user = getUserOrThrow(username);
+			
+		// 2. 새 닉네임으로 변경
+		user.setNickname(request.nickname());
+		userRepository.save(user);
+	}
+	
 	// [프로필] 회원 탈퇴 메서드
 	public void deleteUser(String username) {
 		// 현재 로그인된 유저
@@ -302,12 +315,6 @@ public class UserService {
 	private User getUserOrThrow(String username) {
 		return userRepository.findByUsername(username).orElseThrow(
 				() -> new ResourceNotFoundException("User를 찾을 수 없습니다. : " + username));
-	}
-
-	// publicId로 User를 조회하는 공통 헬퍼 메서드 
-	private User getUserByPublicIdOrThrow(UUID userId) {
-		return userRepository.findByPublicId(userId).orElseThrow(
-				() -> new ResourceNotFoundException("존재하지 않는 사용자입니다."));
 	}
 
 }

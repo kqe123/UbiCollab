@@ -103,14 +103,17 @@ function SignupPage () {
 
     // 백엔드에 File 객체를 Multipart로 보내어,
     // S3 버킷에 업로드를 수행하는 함수
-    const uploadToS3 = async (file: File, userId : string) => {
+    // 인증 필요 — 대상 유저는 accessToken(JWT)에서 백엔드가 직접 알아내므로 userId를 따로 안 보낸다.
+    const uploadToS3 = async (file: File, accessToken : string) => {
         const formData = new FormData();
-        formData.append("file", file); 
-        formData.append("userId", userId);  
-        const response = await axios.post("http://localhost:8080/api/user/profile-image",
+        formData.append("file", file);
+        const response = await axios.post("http://localhost:8080/api/user/profile-upload",
             formData,
             {
-                headers: { "Content-Type": "multipart/form-data" }
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                    Authorization: `Bearer ${accessToken}`
+                }
             }
         );
         return response.data;
@@ -150,15 +153,18 @@ function SignupPage () {
             );
             
             console.log("회원가입 성공");
-            const userId = response.data;  // User의 publicId를 임시 저장
-            console.log(userId);
             toast.success("회원가입에 성공하였습니다!")
-            
-            // 4. (선택사항) 프로필 사진이 있다면, 백엔드에게 해당 프로필 사진을
+
+            // 4. 가입 직후 JWT를 발급 (프로필 사진 업로드에 필요)
+            // 이 JWT는 프로필 사진 업로드에 임시로 쓰이는 토큰으로, LocalStorage에 저장이 되지 않는다!
+            const authorization = response.headers.authorization;
+            const accessToken = authorization ? authorization.replace("Bearer ", "") : null;
+
+            // 5. (선택사항) 프로필 사진이 있다면, 백엔드에게 해당 프로필 사진을
             //    보내고, S3 버킷에 업로드한 뒤, 해당 유저의 ProfileImageKey를 수정한다.
-            if (avatarFile) {
+            if (avatarFile && accessToken) {
                 try {
-                    await uploadToS3(avatarFile, userId);
+                    await uploadToS3(avatarFile, accessToken);
                     toast.success("프로필 사진 업데이트에 성공하였습니다!" )
                 } catch (error: unknown) {
                     console.error("아바타 업로드 실패:", error);

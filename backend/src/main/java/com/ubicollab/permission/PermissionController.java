@@ -90,7 +90,7 @@ public class PermissionController {
 				.body(permissionService.getDrivePath(foldId, username));
 	}
 	
-	// [권한 관리 메뉴] 권한 삭제  API (DELETE '/api/driveitem/{}')
+	// [권한 관리 메뉴] 권한 삭제  API (DELETE '/api/permission/delete/{userId}/{driveItemId}')
 		@DeleteMapping("/delete/{userId}/{driveItemId}")
 		public ResponseEntity<String> deletePermission(@PathVariable("userId") UUID userId,
 				@PathVariable("driveItemId") UUID driveItemId,
