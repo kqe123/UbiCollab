@@ -23,6 +23,7 @@ function SignupPage () {
 
     const [avatarSrc, setAvatarSrc] = useState<string | null>(null); // 이미지 -> BASE64 문자열
     const [avatarFile, setAvatarFile] = useState<File | null>(null); // 실제 업로드용 이미지(File 객체)
+    document.title = "회원가입 - Ubicollab";
 
     // 입력된 이미지 파일을 미리보기(Base64 문자열)와 실제 업로드용 File 객체로 저장함.
     const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -100,28 +101,19 @@ function SignupPage () {
             }
     }
 
-    // S3 presigned URI를 발급받는 함수
-    const getAvatarUploadUrl = async (file: File, userId : string | null): Promise<{ uploadUrl: string; key: string }> => {
-        const response = await axios.post("http://localhost:8080/api/user/s3-profile", {
-            fileName: file.name,
-            contentType: file.type,
-            userId : userId
-        });
-        return response.data;
-    };
-
-    // S3 presigned URI에 프로필 사진을 올리는 함수
-    const uploadToS3 = async (uploadUrl: string, file: File) => {
-        await axios.put(uploadUrl, file, {
-            headers: { "Content-Type": file.type },
-        });
-    };
-
-    // S3의 키(경로)를 백엔드 해당 User에게 부여하는 함수
-    const updateProfileImageKey = async (key: string, userId : string | null) => {
-        const response = await axios.patch(`http://localhost:8080/api/user/profileImageKey/${userId}`, 
+    // 백엔드에 File 객체를 Multipart로 보내어,
+    // S3 버킷에 업로드를 수행하는 함수
+    // 인증 필요 — 대상 유저는 accessToken(JWT)에서 백엔드가 직접 알아내므로 userId를 따로 안 보낸다.
+    const uploadToS3 = async (file: File, accessToken : string) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        const response = await axios.post("http://localhost:8080/api/user/profile-upload",
+            formData,
             {
-                profileImageKey : key
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                    Authorization: `Bearer ${accessToken}`
+                }
             }
         );
         return response.data;
@@ -161,23 +153,26 @@ function SignupPage () {
             );
             
             console.log("회원가입 성공");
-            const userId = response.data;  // User의 publicId를 임시 저장
-            console.log(userId);
             toast.success("회원가입에 성공하였습니다!")
-            
-            // 4. (선택사항) 프로필 사진이 있다면, S3 Presigned URI를 받아온 뒤,
-            //    해당 URI에 이미지 파일을 업로드해서 S3 버킷에 추가함.
-            if (avatarFile) {
+
+            // 4. 가입 직후 JWT를 발급 (프로필 사진 업로드에 필요)
+            // 이 JWT는 프로필 사진 업로드에 임시로 쓰이는 토큰으로, LocalStorage에 저장이 되지 않는다!
+            const authorization = response.headers.authorization;
+            const accessToken = authorization ? authorization.replace("Bearer ", "") : null;
+
+            // 5. (선택사항) 프로필 사진이 있다면, 백엔드에게 해당 프로필 사진을
+            //    보내고, S3 버킷에 업로드한 뒤, 해당 유저의 ProfileImageKey를 수정한다.
+            if (avatarFile && accessToken) {
                 try {
-                    const { uploadUrl, key } = await getAvatarUploadUrl(avatarFile, userId ?? null);
-                    await uploadToS3(uploadUrl, avatarFile);
-                    await updateProfileImageKey(key, userId);
+                    await uploadToS3(avatarFile, accessToken);
                     toast.success("프로필 사진 업데이트에 성공하였습니다!" )
-                } catch (uploadError) {
-                    // 계정은 이미 생성됐으니 회원가입은 성공으로 처리하고
-                    // "프로필 사진 업로드는 실패했습니다" 정도로 별도 안내
-                    console.error("아바타 업로드 실패:", uploadError);
-                    toast.error("프로필 사진 업로드에 실패했습니다. 설정에서 추후에 변경가능합니다.");
+                } catch (error: unknown) {
+                    console.error("아바타 업로드 실패:", error);
+                    if (axios.isAxiosError(error)) {
+                        toast.error(error.response?.data?.message ?? "프로필 사진 업로드에 실패했습니다.");
+                    } else {
+                        toast.error("프로필 사진 업로드에 실패했습니다.");
+                    }
                 }
             }
             navigate('/login');
@@ -215,7 +210,7 @@ function SignupPage () {
                     component="form"
                     onSubmit={signup}
                     sx={{ width : '60%', mx: 'auto', display: 'flex', flexDirection: 'column',
-                        gap: 1.5, mt : 3}}
+                        gap: 1.5, mt : 1}}
                 >
                     <Typography 
                         variant="body1"
@@ -239,11 +234,15 @@ function SignupPage () {
                                 />
                             </IconButton>
                             }
-                        >
-                            <Avatar alt="Upload new avatar" src={avatarSrc} sx={{ width: 100, height: 100 }} />
+                        >   
+                            <Avatar alt="Upload new avatar" src={avatarSrc ?? undefined} sx={{ width: 100, height: 100 }} />
                         </Badge>
                     </Box>
-
+                    
+                    <Typography variant="body2" color="error" >
+                        ⚠️ 부적절한 콘텐츠(노출, 폭력, 약물·흡연 등)가 포함된 사진은 업로드가 차단될 수 있습니다.
+                    </Typography>
+                    
                     {/* ID */}
                     <TextField
                         required
@@ -297,13 +296,16 @@ function SignupPage () {
                         placeholder="2자 이상 입력"
                         sx={{'& .MuiInputBase-input': { fontSize: '15px'} }}
                     />
+
                     {/* Submit Button */}
                     <Button 
                         disableElevation
                         type="submit"
                         variant="contained"
                         size="medium"
-                        color="primary">
+                        color="primary"
+                        sx={{mt : 1}}
+                    >
                         회원가입
                     </Button>
                 </Box>

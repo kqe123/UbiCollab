@@ -2,6 +2,7 @@ package com.ubicollab;
 
 import java.util.Arrays;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -34,9 +35,10 @@ public class SecurityConfig {
 	}
 	
 	// 비밀번호를 암호화(Encoding) 하고, 로그인할 때 비교(Matching) 하는 객체
+	// Salt + pepper를 적용시켜 보안을 강화함.
 	@Bean
-	public PasswordEncoder passwordEncoder() {
-		return new BCryptPasswordEncoder();
+	public PasswordEncoder passwordEncoder(@Value("${PASSWORD_PEPPER}") String pepper) {
+	    return new PepperedPasswordEncoder(new BCryptPasswordEncoder(), pepper);
 	}
 	
 	// 로그인을 실제로 수행하는 객체
@@ -73,8 +75,7 @@ public class SecurityConfig {
 					.requestMatchers(HttpMethod.POST,"/api/login").permitAll() // 로그인 요청 API
 					.requestMatchers(HttpMethod.POST,"/api/user").permitAll() // 회원가입 API
 					.requestMatchers(HttpMethod.GET, "/api/user/check-username").permitAll() // 아이디 중복 검사 API
-					.requestMatchers(HttpMethod.POST, "/api/user/s3-profile").permitAll() // S3 Presigned URI 반환 API
-					.requestMatchers(HttpMethod.PATCH, "/api/user/profileImageKey/{userId}").permitAll() // 회원가입된 User에 프사 경로 업데이트 API
+					// 프로필 사진 업로드 API — 회원가입 직후에도 즉시 발급된 JWT로 인증하므로 항상 인증 필요
 					.anyRequest().authenticated())
 			.addFilterBefore(authenticationFilter,
 					UsernamePasswordAuthenticationFilter.class)

@@ -14,7 +14,7 @@ function LoginPage () {
     const [username, setUsername] = useState<string>("");
     const [password, setPassword] = useState<string>("");
     const navigate = useNavigate();
-    
+    document.title = "로그인 - Ubicollab";
 
     const changeUsername = (event : React.ChangeEvent<HTMLInputElement>) => {
         setUsername(event.target.value)

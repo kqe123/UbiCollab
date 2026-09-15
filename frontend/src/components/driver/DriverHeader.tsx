@@ -4,9 +4,10 @@ import Box from '@mui/material/Box';
 import Avatar from '@mui/material/Avatar';
 import TextField from '@mui/material/TextField';
 import { useCurrentUser } from "../../hooks/use-current-user";
+import { useState, useRef } from "react";
+import ProfileMenu from '../menu/ProfileMenu';
 
-function Header() {
-    const S3_BASE_URL = "https://ubicollab-bucket.s3.ap-northeast-2.amazonaws.com"
+function DriverHeader() {
     // 현재 로그인 유저 정보 (같은 queryKey["currentUser"]를 쓰는 다른 컴포넌트와 캐시 공유됨)
     const {
         data: currentUser, // 백엔드에서 받아온 데이터
@@ -15,7 +16,10 @@ function Header() {
         error,            // 실패했을 때 오류 정보
     } = useCurrentUser();
 
+    const [isProfileMenuOpen, setIsProfileMenuOpen] = useState<boolean>(false); // 프로필 메뉴 열림/닫힘
+    const anchorRef = useRef(null); // 프로필 버튼 참조
     return (
+        <>
         <Box 
             component="header" 
             sx={{ width: '100%', height: '70px', bgcolor: '#104FCD', display: 'flex',
@@ -55,14 +59,32 @@ function Header() {
                         <Typography variant="body2" sx={{ color: 'error.main' ,textAlign: 'center',}}>{error.message}</Typography>
                     </Box>
                 )}
-                {currentUser?.profileImageKey ? (
-                    <Avatar src={`${S3_BASE_URL}/${currentUser.profileImageKey}`} alt="프로필사진" sx={{ width: 50, height: 50, cursor : 'pointer'}} />
+                {currentUser?.profileUri ? (
+                    <Avatar 
+                        src={currentUser.profileUri}
+                        alt="프로필사진" sx={{ width: 50, height: 50, cursor : 'pointer'}}
+                        ref={anchorRef}
+                        onClick={() => setIsProfileMenuOpen(true)}
+                     />
                 ) : (
-                    <Avatar alt="프로필사진" sx={{ width: 50, height: 50, cursor : 'pointer'}} />
+                    <Avatar 
+                        alt="프로필사진" sx={{ width: 50, height: 50, cursor : 'pointer'}}
+                        ref={anchorRef}
+                        onClick={() => setIsProfileMenuOpen(true)}
+                    />
                 )}
             </Box>
         </Box>
+
+        {/* 프로필 메뉴 */}
+        <ProfileMenu 
+            open={isProfileMenuOpen}
+            onClose={() => setIsProfileMenuOpen(false)}
+            currentUser={currentUser}
+            anchor={anchorRef.current}
+        />
+        </>
     );
 }
 
-export default Header;
+export default DriverHeader;

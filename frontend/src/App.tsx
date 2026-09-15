@@ -3,6 +3,7 @@ import DriverPage from "./pages/DriverPage.tsx";
 import EditorPage from "./pages/EditorPage.tsx";
 import LoginPage from "./pages/LoginPage.tsx";
 import SignupPage from "./pages/SignupPage.tsx";
+import ProfilePage from "./pages/ProfilePage.tsx";
 import { Toaster } from "react-hot-toast";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import RecentList from "./components/driver/lists/RecentList";
@@ -10,7 +11,9 @@ import MyDriveList from "./components/driver/lists/MyDriveList";
 import FavoriteList from "./components/driver/lists/FavoriteList";
 import SharedList from "./components/driver/lists/SharedList";
 import TrashList from "./components/driver/lists/TrashList";
-
+import ProfileEdit from "./components/profile/lists/ProfileEdit";
+import PasswordEdit from "./components/profile/lists/PasswordEdit";
+import UserDelete from "./components/profile/lists/UserDelete";
 function App() {
   return (
     <>
@@ -40,6 +43,14 @@ function App() {
           <Route path="shared" element={<SharedList />} />            {/* folderId : null */}
           <Route path="shared/:folderId" element={<SharedList />} />  {/* folderId : string */}
           <Route path="trash" element={<TrashList />} /> 
+        </Route>
+        {/* 공통 Profile 화면 */}
+        <Route path="/profile" element={<ProfilePage />} >
+           {/* /profile 접속 시 /profile/profile-edit로 이동 */}
+          <Route index element={<Navigate to="profile-edit" replace />}/>
+          <Route path="profile-edit" element={<ProfileEdit />} />  
+          <Route path="password-edit" element={<PasswordEdit />} />
+          <Route path="user-delete" element={<UserDelete />} /> 
         </Route>
         <Route path="/editor/:fileId" element={<EditorPage />} />
       </Route>

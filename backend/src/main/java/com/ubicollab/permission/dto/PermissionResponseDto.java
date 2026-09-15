@@ -10,18 +10,18 @@ public record PermissionResponseDto (
 	UUID userId,
 	String username,
 	String nickname,
-	String profileImageKey,
+	String profileUri,
 	UUID driveItemId,
 	PermissionType type
 ) {
 	
 	
-	public PermissionResponseDto(User user, DriveItem driveItem, PermissionType type) {
+	public PermissionResponseDto(User user,String profileUri, DriveItem driveItem, PermissionType type) {
 		this(
 			user.getPublicId(),
 			user.getUsername(),
 			user.getNickname(),
-			user.getProfileImageKey(),
+			profileUri,
 			driveItem.getPublicId(),
 			type);
 	}

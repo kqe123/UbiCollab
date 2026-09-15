@@ -16,7 +16,7 @@ function EditorPage() {
     // fileName은 EditorHeader에서 관리해야되므로 여기서 State 초기화
     const [fileName, setFileName] = useState<string>("");
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
-
+    document.title = `${fileName} - Ubicollab`;
 
     // 백엔드 api(파일 하나 가져오기)를 호출하는 비동기 함수
     const getFile = async () => {

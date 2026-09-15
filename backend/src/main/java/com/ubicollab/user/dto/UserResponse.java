@@ -8,14 +8,14 @@ public record UserResponse (
 	UUID publicId,
 	String username,
 	String nickname,
-	String profileImageKey 
+	String profileUri
 ) {
-	public UserResponse(User user) {
+	public UserResponse(User user, String profileUri) {
 		this(
 			user.getPublicId(),
 			user.getUsername(),
 			user.getNickname(),
-			user.getProfileImageKey()
+			profileUri
 		);
 	}
 }

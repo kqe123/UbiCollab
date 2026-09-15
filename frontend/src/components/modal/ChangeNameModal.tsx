@@ -59,11 +59,6 @@ function ChangeNameModal ({
                 console.error("백엔드 응답:", error.response?.data);
                 toast.error(error.response?.data?.message ?? "문서 저장에 실패했습니다.");
             } 
-            // 일반 오류인 경우
-            else if (error instanceof Error) {
-                console.error("일반 오류:", error.message);
-                toast.error(error.message);
-            } 
             // 그 외의 오류인 경우
             else {
                 console.error("알 수 없는 오류:", error);

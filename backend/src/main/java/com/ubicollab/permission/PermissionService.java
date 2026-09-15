@@ -1,5 +1,6 @@
 package com.ubicollab.permission;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -9,6 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,22 +30,31 @@ import com.ubicollab.permission.enums.PermissionType;
 import com.ubicollab.user.User;
 import com.ubicollab.user.UserRepository;
 
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
+
 @Service
 public class PermissionService {
 	private final DriveItemRepository driveRepository;
 	private final PermissionRepository permissionRepository;
 	private final UserRepository userRepository;
 	private final FavoriteRepository favoriteRepository;
-
+	private final S3Presigner s3Presigner;
+	private final String bucket;
 
 	public PermissionService (DriveItemRepository driveRepository,
 			PermissionRepository permissionRepository,
 			UserRepository userRepository,
-			FavoriteRepository favoriteRepository) {
+			FavoriteRepository favoriteRepository,
+			S3Presigner s3Presigner,
+			@Value("${AWS_S3_BUCKET}") String bucket) {
 		this.driveRepository = driveRepository;
 		this.permissionRepository = permissionRepository;
 		this.userRepository = userRepository;
 		this.favoriteRepository = favoriteRepository;
+		this.s3Presigner = s3Presigner;
+		this.bucket = bucket;
 	}
 
 	// [공유 추가 메뉴] 권한 생성 메서드 (OWNER | MANAGER 권한 필요)
@@ -127,7 +138,8 @@ public class PermissionService {
 
 		// result에 소유자 추가
 		User owner = driveItem.getUser(); // 파일/폴더 소유자
-		result.add(new PermissionResponseDto(owner,driveItem,PermissionType.OWNER));
+		result.add(new PermissionResponseDto(owner,getProfileUri(owner.getProfileImageKey())
+				,driveItem,PermissionType.OWNER));
 		userIds.add(owner.getId());
 
 		// result에 권한 소유자 추가 (부모로 거슬러 올라가면서 가장 가까운 권한 리스트 반환)
@@ -142,7 +154,9 @@ public class PermissionService {
 				if (userIds.contains(userId))
 					continue;
 
-				result.add(new PermissionResponseDto(permission.getUser(),permission.getItem(),permission.getType()));
+				result.add(new PermissionResponseDto(permission.getUser(),
+						getProfileUri(permission.getUser().getProfileImageKey()),
+						permission.getItem(),permission.getType()));
 				userIds.add(userId);
 			}
 
@@ -222,35 +236,6 @@ public class PermissionService {
 		return null;
 	}
 
-	// [권한 판별] 어떤 권한이든(VIEWER 이상) 접근 가능한지
-	public boolean hasAccess(DriveItem driveItem, User user) {
-		return getPermission(driveItem, user) != null;
-	}
-
-	// [권한 판별] OWNER | MANAGER 권한인지 (생성/이동/공유/권한 변경 등에 필요)
-	public boolean isOwnerOrManager(DriveItem driveItem, User user) {
-		return isOwnerOrManager(getPermission(driveItem, user));
-	}
-
-	// [권한 판별] OWNER 권한인지 (완전한 소유권이 필요한 동작에 사용)
-	public boolean isOwner(DriveItem driveItem, User user) {
-		return getPermission(driveItem, user) == PermissionType.OWNER;
-	}
-
-	// [권한 판별] 내용을 수정할 수 있는 권한인지 (OWNER | MANAGER | EDITOR)
-	public boolean canEdit(DriveItem driveItem, User user) {
-		return canEdit(getPermission(driveItem, user));
-	}
-
-	// 이미 계산된 PermissionType을 대상으로 판별할 때 쓰는 버전 (getPermission을 중복 호출하지 않도록)
-	public boolean isOwnerOrManager(PermissionType type) {
-		return type == PermissionType.OWNER || type == PermissionType.MANAGER;
-	}
-
-	public boolean canEdit(PermissionType type) {
-		return isOwnerOrManager(type) || type == PermissionType.EDITOR;
-	}
-
 	// [공유 문서] 현재 공유 문서의 경로(path)를 반환하는 메서드 (접근 권한 필요)
 	public List<DriveItemResponseDto> getDrivePath(UUID foldId, String username) {
 		List<DriveItemResponseDto> path = new ArrayList<>();
@@ -322,19 +307,71 @@ public class PermissionService {
 	    permissionRepository.delete(permission);
 	}
 
-	// 현재 로그인 사용자(username)를 조회하는 공통 헬퍼
+	// [권한 판별] 어떤 권한이든(VIEWER 이상) 접근 가능한지
+	public boolean hasAccess(DriveItem driveItem, User user) {
+		return getPermission(driveItem, user) != null;
+	}
+
+	// [권한 판별] OWNER | MANAGER 권한인지 (생성/이동/공유/권한 변경 등에 필요)
+	public boolean isOwnerOrManager(DriveItem driveItem, User user) {
+		return isOwnerOrManager(getPermission(driveItem, user));
+	}
+
+	// [권한 판별] OWNER 권한인지 (완전한 소유권이 필요한 동작에 사용)
+	public boolean isOwner(DriveItem driveItem, User user) {
+		return getPermission(driveItem, user) == PermissionType.OWNER;
+	}
+
+	// [권한 판별] 내용을 수정할 수 있는 권한인지 (OWNER | MANAGER | EDITOR)
+	public boolean canEdit(DriveItem driveItem, User user) {
+		return canEdit(getPermission(driveItem, user));
+	}
+
+	// 이미 계산된 PermissionType을 대상으로 판별할 때 쓰는 버전 (getPermission을 중복 호출하지 않도록)
+	public boolean isOwnerOrManager(PermissionType type) {
+		return type == PermissionType.OWNER || type == PermissionType.MANAGER;
+	}
+
+	public boolean canEdit(PermissionType type) {
+		return isOwnerOrManager(type) || type == PermissionType.EDITOR;
+	}
+	
+	// 프로필 사진을 로드할 Presigned URI를 반환하는 헬퍼 메서드
+	private String getProfileUri(String key) {
+		String profileUri = null;
+		// 프로필 키가 존재할 경우에만 수행
+		if (key != null) {
+			// 1. "S3의 어느 버킷, 어느 key를 GET할 것인가"를 정의하는 요청 명세 (아직 서명 X)
+			GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+					.bucket(bucket)
+					.key(key)
+					.build();
+				
+			// 2. 위 요청에 "10분간만 유효한 GET"이라는 서명 조건을 씌운 presign 요청 생성
+		    GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+		            .signatureDuration(Duration.ofMinutes(10)) // URL 유효기간 10분
+		            .getObjectRequest(getObjectRequest)
+		            .build();
+				
+		    // 3. 실제 서명 수행 — AWS 자격증명으로 로컬에서 HMAC 서명 계산 (네트워크 호출 없음, 빠름)
+		    profileUri = s3Presigner.presignGetObject(presignRequest).url().toString();
+		}
+		return profileUri;
+	}
+	
+	// 현재 로그인 사용자(username)를 조회하는 공통 헬퍼 메서드
 	private User getUserOrThrow(String username) {
 		return userRepository.findByUsername(username).orElseThrow(
 				() -> new ResourceNotFoundException("User를 찾을 수 없습니다. : " + username));
 	}
 
-	// publicId로 User를 조회하는 공통 헬퍼 (공유 대상 User 등)
+	// publicId로 User를 조회하는 공통 헬퍼 메서드 (공유 대상 User 등)
 	private User getUserByPublicIdOrThrow(UUID userId) {
 		return userRepository.findByPublicId(userId).orElseThrow(
 				() -> new ResourceNotFoundException("User를 찾을 수 없습니다. : " + userId));
 	}
 
-	// publicId로 DriveItem을 조회하는 공통 헬퍼
+	// publicId로 DriveItem을 조회하는 공통 헬퍼 메서드
 	private DriveItem getDriveItemOrThrow(UUID publicId) {
 		return driveRepository.findByPublicId(publicId).orElseThrow(
 				() -> new ResourceNotFoundException("DriveItem을 찾을 수 없습니다. publicId=" + publicId));

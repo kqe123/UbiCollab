@@ -1,17 +1,19 @@
 import { NavLink } from "react-router-dom";
 import Box from '@mui/material/Box';
+import ListItemButton from '@mui/material/ListItemButton';
+
+// 사이드바 메뉴 목록
+const navItems = [
+    { to: "/drive/my-drive", label: "내 드라이브" },
+    { to: "/drive/recent", label: "내 문서" },
+    { to: "/drive/favorite", label: "즐겨찾기" },
+    { to: "/drive/shared", label: "공유 문서" },
+    { to: "/drive/trash", label: "휴지통" },
+];
+
 function DriverSideBar() {
 
-    const getButtonStyle = ({ isActive }: { isActive: boolean }) => {
-        return `w-full cursor-pointer rounded-[10px] border-none px-3 py-3 
-                text-left font-semibold hover:bg-[#dfe8f5]
-                ${isActive
-                ? "bg-[#C2E7FF] text-[#104FCD]"
-                : "bg-transparent hover:bg-[#E6EFF5]"
-                }`;
-    };
-    
-    return ( 
+    return (
         <Box
             component="aside"
             sx={{
@@ -31,11 +33,34 @@ function DriverSideBar() {
                     gap: 1, // gap-2 = 8px = MUI spacing 1
                 }}
             >
-                <NavLink to="/drive/my-drive" className={getButtonStyle}>내 드라이브</NavLink>
-                <NavLink to="/drive/recent" className={getButtonStyle}>내 문서</NavLink>
-                <NavLink to="/drive/favorite" className={getButtonStyle}>즐겨찾기</NavLink>
-                <NavLink to="/drive/shared" className={getButtonStyle}>공유 문서</NavLink>
-                <NavLink to="/drive/trash" className={getButtonStyle}>휴지통</NavLink>
+                {navItems.map((item) => (
+                    <ListItemButton
+                        key={item.to}
+                        component={NavLink}
+                        to={item.to}
+                        disableGutters
+                        sx={{
+                            width: '100%', // w-full
+                            borderRadius: '10px', // rounded-[10px]
+                            px: 1.5, // px-3 = 12px = MUI spacing 1.5
+                            py: 1.5, // py-3 = 12px = MUI spacing 1.5
+                            fontWeight: 600, // font-semibold
+                            bgcolor: 'transparent',
+                            '&:hover': {
+                                bgcolor: '#E6EFF5',
+                            },
+                            '&.active': {
+                                bgcolor: '#C2E7FF',
+                                color: '#104FCD',
+                                '&:hover': {
+                                    bgcolor: '#dfe8f5',
+                                },
+                            },
+                        }}
+                    >
+                        {item.label}
+                    </ListItemButton>
+                ))}
             </Box>
         </Box>
     );
