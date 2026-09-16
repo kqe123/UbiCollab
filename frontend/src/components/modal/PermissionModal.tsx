@@ -37,8 +37,8 @@ function  PermissionModal ({
     // 화면 표시용 정렬: 소유자(OWNER)를 맨 위로, 나머지는 닉네임 가나다/ABC 순 (editedPermissions 원본 순서/상태는 그대로 둠)
     const sortedPermissions = useMemo(
         () => [...editedPermissions].sort((a, b) => {
-            if (a.type === "OWNER" && b.type !== "OWNER") return -1;
-            if (a.type !== "OWNER" && b.type === "OWNER") return 1;
+            if (a.isOwner && !b.isOwner) return -1;
+            if (!a.isOwner && b.isOwner) return 1;
             return a.nickname.localeCompare(b.nickname, "ko");
         }),
         [editedPermissions]
@@ -271,15 +271,15 @@ function  PermissionModal ({
                                     </Typography>
                                     <Typography variant="body2" sx={{ color : 'gray', flex : 1}}>{permission.username}</Typography>
                                 </Box>
-                                {(permission.type === "OWNER" || permission.username === currentUser?.username) ? (
-                                    <Typography variant="body2" sx={{ color : 'gray', m : 2, ml: 'auto'}}>
-                                        {permission.type === "OWNER" && ("소유자")}
-                                        {permission.type === "MANAGER" && ("관리자")}
-                                        {permission.type === "EDITOR" && ("편집자")}
-                                        {permission.type === "COMMENTOR" && ("댓글 작성자")}
-                                        {permission.type === "VIEWER" && ("뷰어")}
-                                    </Typography>
-                                ) : (
+                                {(permission.isOwner || permission.username === currentUser?.username) ? (
+                                        <Typography variant="body2" sx={{ color : 'gray', m : 2, ml: 'auto'}}>
+                                            {permission.isOwner ? "소유자" :
+                                            permission.type === "MANAGER" ? "관리자" :
+                                            permission.type === "EDITOR" ? "편집자" :
+                                            permission.type === "COMMENTOR" ? "댓글 작성자" :
+                                            "뷰어"}
+                                        </Typography>
+                                    ) : (
                                     <Box sx={{ml: 'auto'}}>
                                     <Select
                                         value={permission.type}

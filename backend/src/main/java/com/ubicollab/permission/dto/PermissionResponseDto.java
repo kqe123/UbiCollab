@@ -12,17 +12,20 @@ public record PermissionResponseDto (
 	String nickname,
 	String profileUri,
 	UUID driveItemId,
-	PermissionType type
+	PermissionType type,
+	Boolean isOwner   // 추가
 ) {
 	
 	
 	public PermissionResponseDto(User user,String profileUri, DriveItem driveItem, PermissionType type) {
 		this(
-			user.getPublicId(),
-			user.getUsername(),
-			user.getNickname(),
+            user.getPublicId(), 
+			user.getUsername(), 
+			user.getNickname(), 
 			profileUri,
-			driveItem.getPublicId(),
-			type);
+            driveItem.getPublicId(), 
+			type,
+            driveItem.getUser().getPublicId().equals(user.getPublicId())   // 추가
+        );
 	}
 }

@@ -57,7 +57,7 @@ public class PermissionService {
 		this.bucket = bucket;
 	}
 
-	// [공유 추가 메뉴] 권한 생성 메서드 (OWNER | MANAGER 권한 필요)
+	// [공유 추가 메뉴] 권한 생성 메서드 (MANAGER 권한 필요)
 	@Transactional
 	public int createPermission(String username, PermissionCreateDto request) {
 		// 현재 로그인 사용자
@@ -69,8 +69,8 @@ public class PermissionService {
 		// 공유할 사용자(userid, permissionType)
 		List<UserDto> userList = request.userList();
 
-		// [권한 제어] OWNER | MANAGER 필요
-		if (!isOwnerOrManager(driveItem, currentUser)) {
+		// [접근 제어] MANAGER 필요
+		if (!isManager(driveItem, currentUser)) {
 			throw new PermissionDeniedException("공유할 권한이 없습니다.");
 		}
 
@@ -83,7 +83,7 @@ public class PermissionService {
 		return userList.size();
 	}
 
-	// [권한 관리 메뉴] 권한 변경 메서드 (OWNER | MANAGER 권한 필요)
+	// [권한 관리 메뉴] 권한 변경 메서드 (MANAGER 권한 필요)
 	@Transactional
 	public int updatePermission(String username, PermissionUpdateDto request) {
 		// 현재 로그인 사용자
@@ -95,8 +95,8 @@ public class PermissionService {
 		// 공유할 사용자(userid, permissionType)
 		List<PermissionDto> permissionList = request.permissionList();
 
-		// [권한 제어] OWNER | MANAGER 필요
-		if (!isOwnerOrManager(current, currentUser)) {
+		// [접근 제어] MANAGER 필요
+		if (!isManager(current, currentUser)) {
 			throw new PermissionDeniedException("권한을 변경할 권한이 없습니다.");
 		}
 
@@ -106,8 +106,8 @@ public class PermissionService {
 			DriveItem driveItem = getDriveItemOrThrow(permissionInfo.driveItemId());
 
 			// [권한 제어] driveItemId는 클라이언트가 보내는 값이라, currentItemId와 다를 수 있음(상위 폴더에서 상속된 권한 수정 등).
-			// 그래서 항목마다 실제로 이 driveItem에 대한 OWNER | MANAGER 권한이 있는지 반드시 재검증해야 함.
-			if (!isOwnerOrManager(driveItem, currentUser)) {
+			// 그래서 항목마다 실제로 이 driveItem에 대한 MANAGER 권한이 있는지 반드시 재검증해야 함.
+			if (!isManager(driveItem, currentUser)) {
 				throw new PermissionDeniedException("해당 항목의 권한을 변경할 권한이 없습니다. driveItemId=" + driveItem.getPublicId());
 			}
 
@@ -131,16 +131,10 @@ public class PermissionService {
 		// 공유할 대상(DriveItem)
 		DriveItem driveItem = getDriveItemOrThrow(publicId);
 
-		// [권한 제어] 모든 권한 중 하나 필요
+		// [접근 제어] Viewer이상의  권한 하나 필요
 		if (!hasAccess(driveItem, currentUser)) {
 			throw new PermissionDeniedException("해당 사용자는 접근할 권한이 없습니다.");
 		}
-
-		// result에 소유자 추가
-		User owner = driveItem.getUser(); // 파일/폴더 소유자
-		result.add(new PermissionResponseDto(owner,getProfileUri(owner.getProfileImageKey())
-				,driveItem,PermissionType.OWNER));
-		userIds.add(owner.getId());
 
 		// result에 권한 소유자 추가 (부모로 거슬러 올라가면서 가장 가까운 권한 리스트 반환)
 		while (driveItem != null) {
@@ -169,50 +163,39 @@ public class PermissionService {
 	// [공유 문서] 공유 문서 디렉토리를 조회하는 메서드 (특정 상황에서 접근 권한 필요)
 	public List<SharedItemResponseDto> getSharedDriveItems(String username, UUID parentId) {
 		List<SharedItemResponseDto> result = new ArrayList<>();
-
-
-		// 현재 로그인된 유저
 		User user = getUserOrThrow(username);
-
-		// Parent X -> 현재 로그인 유저가 가진 Permission의 DriveItem들을 result에 추가
+		
 		if (parentId == null) {
-
-			// 현재 유저가 가진 모든 Permission을 순회하며, DriveItem들을 가져옴
-			// DriveItem 정보 + isFavorite + Permission의 타입(VIEWER, EDITOR 등) 정보를 담아서 result에 추가
-			for (Permission permission : permissionRepository.findByUser(user) ) {
-				boolean isFavorite = favoriteRepository.existsByUserUsernameAndItem(username,  permission.getItem());
-				result.add(new SharedItemResponseDto(permission.getItem(), isFavorite, permission.getType()));
+			// 1) 내가 공유받은 것들 — 단, 2단계 때문에 내가 만든 최상위 아이템도 이 Permission 목록에
+			//    같이 잡히므로, 내 소유 아이템은 여기서 제외하고 아래(2번)에서 별도로 처리한다.
+			for (Permission permission : permissionRepository.findByUser(user)) {
+				if (isOwner(permission.getItem(), user)) {
+					continue;
+				}
+				boolean isFavorite = favoriteRepository.existsByUserUsernameAndItem(username, permission.getItem());
+				result.add(new SharedItemResponseDto(permission.getItem(), isFavorite, permission.getType(), false));
 			}
 
-			// 소유자가 자신인데,1명이상 공유한적이 있는 경우도 result에 추가
-			for(DriveItem driveItem : driveRepository.findByUserUsername(username)) {
-				if (permissionRepository.existsByItem(driveItem)) {
+			// 2) 내가 소유자이면서, 1명 이상 공유한 적 있는 경우
+			for (DriveItem driveItem : driveRepository.findByUserUsername(username)) {
+				if (permissionRepository.existsByItemAndUserNot(driveItem, user)) {
 					boolean isFavorite = favoriteRepository.existsByUserUsernameAndItem(username, driveItem);
-					result.add(new SharedItemResponseDto(driveItem, isFavorite, PermissionType.OWNER));
+					result.add(new SharedItemResponseDto(driveItem, isFavorite, PermissionType.MANAGER, true));
 				}
 			}
 		}
-
-		// Parent O -> 권한 체크 후 결정
 		else {
-			// 현재 부모 DriveItem(폴더)
 			DriveItem parent = getDriveItemOrThrow(parentId);
-
-			// 현재 사용자가 권한이 있는 사용자인지 Permission 체크를 함.
-			PermissionType permissionType = getPermission(parent,user);
-
-			// 권한  X -> [권한 제어] OWNER | MANAGER 필요
+			PermissionType permissionType = getPermission(parent, user);
 			if (permissionType == null) {
 				throw new PermissionDeniedException("해당 사용자는 접근할 권한이 없습니다.");
 			}
-
-			// 권한 O -> 해당 부모 아래에 있는 DriveItem 리스트를 result에 추가
 			for (DriveItem driveItem : driveRepository.findByParent(parent)) {
 				boolean isFavorite = favoriteRepository.existsByUserUsernameAndItem(username, driveItem);
-				result.add(new SharedItemResponseDto(driveItem, isFavorite, permissionType));
+				boolean isOwner = isOwner(driveItem, user);   // 아이템마다 실제 소유자 비교
+				result.add(new SharedItemResponseDto(driveItem, isFavorite, permissionType, isOwner));
 			}
 		}
-
 		return result;
 	}
 
@@ -223,11 +206,6 @@ public class PermissionService {
 			Optional<Permission> permission = permissionRepository.findByItemAndUser(driveItem, user);
 			if (permission.isPresent()) {
 				return permission.get().getType();
-			}
-
-			// 현재 사용자가 해당 아이템의 소유자라면 "OWNER" 반환
-			if (driveItem.getUser().getPublicId().equals(user.getPublicId())) {
-				return PermissionType.OWNER;
 			}
 
 			// 부모로 이동
@@ -251,7 +229,7 @@ public class PermissionService {
 		// 현재 유저
 		User user = getUserOrThrow(username);
 
-		// 접근 권한이 없을 시 예외 처리
+		// (접근 제어) Viewer이상의  권한 하나 필요
 		if (!hasAccess(parent, user)) {
     		throw new PermissionDeniedException("해당 사용자는 접근할 권한이 없습니다.");
 		}
@@ -262,14 +240,15 @@ public class PermissionService {
 			// 프론트에서 "현재 폴더에 새 폴더/파일을 만들 권한이 있는지" 등을 판단할 수 있도록
 			// 각 경로 노드마다 실제 권한 타입을 계산해서 내려준다. (기존에는 null 고정)
 			PermissionType nodePermissionType = getPermission(parent, user);
-			path.add(new DriveItemResponseDto(parent, isFavorite, nodePermissionType));
+			boolean isOwner = isOwner(parent, user);
+			path.add(new DriveItemResponseDto(parent, isFavorite, nodePermissionType, isOwner));
 
 			// 공유 경계 판단
 			// 1) 나에게 직접 Permission이 부여된 지점이거나,
 			boolean isSharedToMe = permissionRepository.existsByItemAndUser(parent, user);
 			// 2) 내가 소유자이면서, 해당 아이템을 누군가에게 공유한 적 있는 지점이면 추적 중지
 			boolean isSharedByMe = parent.getUser().getPublicId().equals(user.getPublicId())
-					&& permissionRepository.existsByItem(parent);
+					&& permissionRepository.existsByItemAndUserNot(parent, user);
 
 			if (isSharedToMe || isSharedByMe) {
 				break;
@@ -283,7 +262,7 @@ public class PermissionService {
 		return path;
 	}
 
-	// 해당 Permission를 제거하는 메서드 (OWNER | MANAGER 권한 필요)
+	// 해당 Permission를 제거하는 메서드 (MANAGER 권한 필요)
 	@Transactional
 	public void deletePermission(UUID userId, UUID driveItemId, String username) {
 	    // 현재 로그인 사용자
@@ -292,8 +271,8 @@ public class PermissionService {
 	    // 권한 대상 driveItem
 	    DriveItem driveItem = getDriveItemOrThrow(driveItemId);
 
-	    // [권한 제어] OWNER | MANAGER 필요
-	    if (!isOwnerOrManager(driveItem, currentUser)) {
+	    // [권한 제어] MANAGER 필요
+	    if (!isManager(driveItem, currentUser)) {
 	        throw new PermissionDeniedException("권한을 삭제할 권한이 없습니다.");
 	    }
 
@@ -312,28 +291,28 @@ public class PermissionService {
 		return getPermission(driveItem, user) != null;
 	}
 
-	// [권한 판별] OWNER | MANAGER 권한인지 (생성/이동/공유/권한 변경 등에 필요)
-	public boolean isOwnerOrManager(DriveItem driveItem, User user) {
-		return isOwnerOrManager(getPermission(driveItem, user));
+	// [권한 판별] MANAGER 권한인지 (생성/이동/공유/권한 변경 등에 필요)
+	public boolean isManager(DriveItem driveItem, User user) {
+		return isManager(getPermission(driveItem, user));
 	}
 
-	// [권한 판별] OWNER 권한인지 (완전한 소유권이 필요한 동작에 사용)
+	// [소유자 판별] 진짜 생성자(소유자)인지 - Permission 여부와 무관하게 DriveItem.user로 직접 판별
 	public boolean isOwner(DriveItem driveItem, User user) {
-		return getPermission(driveItem, user) == PermissionType.OWNER;
+		return driveItem.getUser().getPublicId().equals(user.getPublicId());
 	}
 
-	// [권한 판별] 내용을 수정할 수 있는 권한인지 (OWNER | MANAGER | EDITOR)
+	// [권한 판별] 내용을 수정할 수 있는 권한인지 (MANAGER | EDITOR)
 	public boolean canEdit(DriveItem driveItem, User user) {
 		return canEdit(getPermission(driveItem, user));
 	}
 
 	// 이미 계산된 PermissionType을 대상으로 판별할 때 쓰는 버전 (getPermission을 중복 호출하지 않도록)
-	public boolean isOwnerOrManager(PermissionType type) {
-		return type == PermissionType.OWNER || type == PermissionType.MANAGER;
+	public boolean isManager(PermissionType type) {
+		return type == PermissionType.MANAGER;
 	}
 
 	public boolean canEdit(PermissionType type) {
-		return isOwnerOrManager(type) || type == PermissionType.EDITOR;
+		return isManager(type) || type == PermissionType.EDITOR;
 	}
 	
 	// 프로필 사진을 로드할 Presigned URI를 반환하는 헬퍼 메서드

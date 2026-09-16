@@ -16,7 +16,11 @@ import com.ubicollab.driveitem.dto.DriveItemUpdateDto;
 import com.ubicollab.driveitem.enums.DriveItemExtension;
 import com.ubicollab.driveitem.enums.DriveItemType;
 import com.ubicollab.favorite.FavoriteRepository;
+import com.ubicollab.permission.Permission;
+import com.ubicollab.permission.PermissionRepository;
 import com.ubicollab.permission.PermissionService;
+import com.ubicollab.permission.dto.PermissionCreateDto;
+import com.ubicollab.permission.dto.PermissionCreateDto.UserDto;
 import com.ubicollab.permission.enums.PermissionType;
 import com.ubicollab.user.User;
 import com.ubicollab.user.UserRepository;
@@ -29,21 +33,24 @@ public class DriveItemService {
 	private final UserRepository userRepository;
 	private final FavoriteRepository favoriteRepository;
 	private final PermissionService permissionService;
+	private final PermissionRepository permissionRepository;
 
 	public DriveItemService(DriveItemRepository driveRepository,
 							UserRepository userRepository,
 							FavoriteRepository favoriteRepository,
-							PermissionService permissionService) {
+							PermissionService permissionService,
+							PermissionRepository permissionRepository) {
 		this.driveRepository = driveRepository;
 		this.userRepository = userRepository;
 		this.favoriteRepository = favoriteRepository;
 		this.permissionService = permissionService;
+		this.permissionRepository = permissionRepository;
 	}
 
-	// DriveItem(folder/file) 생성 메서드 (MANAGER | OWNER 권한 필요)
+	// DriveItem(folder/file) 생성 메서드 (MANAGER 권한 필요)
 	public UUID createDriveItem(DriveItemCreateDto request, String username) {
 		// 기본적인 유효성 검사 (itemName, type)
-		String itemName = requireValidItemName(request.itemName());
+		String itemName = validateItemName(request.itemName());
 		DriveItemType type = request.type(); // 무조건 필수
 		if (type == null) {
 			throw new IllegalArgumentException("오류 : type은 필수입니다.");
@@ -52,13 +59,13 @@ public class DriveItemService {
 		// 현재 유저(필수)
 		User user = getUserOrThrow(username);
 
-		// parent O -> 현재 유저의 권한을 따져서 예외처리
-		DriveItem parent = resolveParentForCreate(request.parentPublicId(), user);
+		// 기본적인 유효성 검사 (parent)
+		DriveItem parent = validateParent(request.parentPublicId(), user);
 
-		// type에 따른 유효성 검사 + 파일 크기 계산
+		// type에 따른 기본적인 유효성 검사 (content, extension) + 파일 크기 계산 (Folder라면 null)
 		String content = request.content(); // 파일은 O, 폴더는 null
 		DriveItemExtension extension = request.extension(); // 파일은 O, 폴더는 null
-		Long size = computeSizeAndValidateTypeFields(type, content, extension);
+		Long size = computeSizeAndValidateTypeFields(type,content,extension);
 
 	    // 새로운 DriveItem 객체 생성 (publicId는 @UuidGenerator가 저장 시 자동 생성)
 	    DriveItem newDriveItem = new DriveItem(
@@ -74,16 +81,26 @@ public class DriveItemService {
 	        false
 	    );
 
-	    // 저장 + 자동 생성된 publicId 반환
+	    // DriveItem 저장
 	    driveRepository.save(newDriveItem);
+	    
+	    // 루트 DriveItem(parent X)이라면  MANAGER 권한 생성
+	    if (parent == null) {
+	    	Permission permission = new Permission (user, newDriveItem, PermissionType.MANAGER, LocalDateTime.now());
+	    	permissionRepository.save(permission);
+	    }
+	    
 		return newDriveItem.getPublicId();
 	}
+	
 
-	// itemName 필수/길이 검사 후 앞뒤 공백을 제거해 반환
-	private String requireValidItemName(String itemName) {
+	// itemName의 입력값을 검증하는 헬퍼 메서드
+	private String validateItemName(String itemName) {
+		// (예외처리) 비었거나 null일때
 		if (itemName == null || itemName.isBlank())
 			throw new IllegalArgumentException("오류 : itemName은 필수입니다.");
-
+		
+		// (예외처리) 100자를 초과했을때
 		if (itemName.length() > MAX_ITEM_NAME_LENGTH) {
 			throw new IllegalArgumentException("오류 : itemName은 " + MAX_ITEM_NAME_LENGTH + "자 이하여야 합니다.");
 		}
@@ -91,29 +108,33 @@ public class DriveItemService {
 		return itemName.trim();
 	}
 
-	// 생성 시 부모 폴더를 검증하는 헬퍼 (parentPublicId가 없으면 최상위 생성이므로 null 반환)
-	private DriveItem resolveParentForCreate(UUID parentPublicId, User user) {
+	// parent의 입력값을 검증한 뒤 parent 객체를 반환하는 헬퍼 메서드 
+	private DriveItem validateParent(UUID parentPublicId, User user) {
+		// parent가 없으면 그대로 null 반환하고 종료
 		if (parentPublicId == null) {
 			return null;
 		}
-
+		
+		// (예외처리) 부모가 DB에 존재하지 않을때
 		DriveItem parent = driveRepository.findByPublicId(parentPublicId)
 				.orElseThrow(() -> new IllegalArgumentException("부모 폴더가 존재하지 않습니다."));
-
+		
+		// (예외처리) 부모가 폴더 Type이 아닐때
 		if (parent.getType() != DriveItemType.FOLDER) {
 			throw new IllegalArgumentException("부모는 폴더여야 합니다.");
 		}
 
-		// [권한 제어] OWNER | MANAGER만
-		if (!permissionService.isOwnerOrManager(parent, user)) {
+		// (접근 제어) MANAGER만 접근 가능
+		if (!permissionService.isManager(parent, user)) {
 			throw new PermissionDeniedException("해당 위치에 DriveItem를 생성할 권한이 없습니다.");
 		}
 
 		return parent;
 	}
 
-	// FOLDER/FILE 타입별 필드 유효성 검사 + FILE의 byte 크기 계산 (FOLDER는 null 반환)
+	// FOLDER/FILE 타입별 필드 유효성 검사 + FILE의 byte 크기 계산 (FOLDER는 null 반환) 헬퍼 메서드 
 	private Long computeSizeAndValidateTypeFields(DriveItemType type, String content, DriveItemExtension extension) {
+		// Folder라면 content, extension X
 		if (type == DriveItemType.FOLDER) {
 			if (content != null)
 				throw new IllegalArgumentException("오류 : 폴더는 content를 가질수 없습니다.");
@@ -123,7 +144,8 @@ public class DriveItemService {
 
 			return null;
 		}
-
+		
+		// File이라면 content, extension 필수 + size 계산해서 반환
 		if (type == DriveItemType.FILE) {
 			if (content == null)
 				throw new IllegalArgumentException("오류 : 파일의 content는 필수입니다.");
@@ -145,7 +167,7 @@ public class DriveItemService {
 		for (DriveItem driveItem : driveRepository.findByTypeAndUserUsername(DriveItemType.FILE, username)) {
 			// 해당 DriveItem이 즐겨찾기에 등록되어 있는지 확인
 			boolean isFavorite = favoriteRepository.existsByUserUsernameAndItem(username, driveItem);
-		    result.add(new DriveItemResponseDto(driveItem, isFavorite, PermissionType.OWNER));
+		    result.add(new DriveItemResponseDto(driveItem, isFavorite, PermissionType.MANAGER, true));
 		}
 
 		return result;
@@ -157,7 +179,7 @@ public class DriveItemService {
 		DriveItem file = driveRepository.findByPublicId(publicId).orElseThrow(
 				() -> new ResourceNotFoundException("파일를 찾을 수 없습니다. publicId=" + publicId));
 
-		// 1-1.DriveItem이 FOLDER라면 예외처리
+		// 1-1.(예외처리) DriveItem이 FOLDER일때
 		if (file.getType() != DriveItemType.FILE) {
 			throw new IllegalArgumentException("오류 : 해당 아이템은 파일이 아닙니다!");
 		}
@@ -166,18 +188,19 @@ public class DriveItemService {
 		User user = getUserOrThrow(username);
 		PermissionType permissionType = permissionService.getPermission(file,user);
 
-		// 2-1. [권한 제어] 모든 권한 중 하나 필요
+		// 2-1. (권한 제어) Viewer이상의 권한 하나 필요
 		if (permissionType == null) {
 			throw new PermissionDeniedException("해당 사용자는 접근할 권한이 없습니다.");
 		}
 
-		// 3. DriveItem 정보 + isFavorite + 해당 DriveItem에 대한 권한 정보를 반환
+		// 3. DriveItem 정보 + isFavorite + 해당 DriveItem에 대한 권한 정보를 반환 + Owner인지 boolean값
 		boolean isFavorite = favoriteRepository.existsByUserUsernameAndItem(username, file);
-		return new DriveItemResponseDto(file, isFavorite, permissionType);
+		boolean isOwner = permissionService.isOwner(file, user);
+		return new DriveItemResponseDto(file, isFavorite, permissionType, isOwner);
 	}
 
 
-	// [내 드라이브] 현재 디렉토리의 DriveItem(folder/file)들을 반환하는 메서드 (OWNER 권한 필요)
+	// [내 드라이브] 현재 디렉토리의 DriveItem(folder/file)들을 반환하는 메서드 (MANAGER 이상 접근 가능)
 	public List<DriveItemResponseDto> getDriveItems(UUID parentPublicId, String username) {
 		List<DriveItemResponseDto> result = new ArrayList<>();
 		List<DriveItem> driveItems; // 현재 디렉토리의 DriveItem List를 담을 변수
@@ -195,8 +218,8 @@ public class DriveItemService {
 			DriveItem parentItem = driveRepository.findByPublicId(parentPublicId).orElseThrow(
 					() -> new ResourceNotFoundException("파일을 찾을 수 없습니다. publicId=" + parentPublicId));
 
-			// [권한 제어] OWNER 권한 필요
-	        if (!permissionService.isOwner(parentItem, user)) {
+			// (접근 제어) MANAGER 이상 접근 가능 (다른 MANAGER가 만든 하위 아이템도 조회 가능해야 함)
+	        if (!permissionService.isManager(parentItem, user)) {
 	            throw new PermissionDeniedException("해당 사용자는 접근할 권한이 없습니다.");
 	        }
 
@@ -204,16 +227,16 @@ public class DriveItemService {
 	        driveItems = driveRepository.findByParentPublicId(parentPublicId);
 		}
 
-		for (DriveItem driveItem :driveItems) {
-			// 해당 DriveItem이 즐겨찾기에 등록되어 있는지 확인
+		for (DriveItem driveItem : driveItems) {
 			boolean isFavorite = favoriteRepository.existsByUserUsernameAndItem(username, driveItem);
-			result.add(new DriveItemResponseDto(driveItem, isFavorite, PermissionType.OWNER));
+			boolean isOwner = permissionService.isOwner(driveItem, user);
+			result.add(new DriveItemResponseDto(driveItem, isFavorite, PermissionType.MANAGER, isOwner));
 		}
 
 		return result;
 	}
 
-	// [내 드라이브] 현재 디렉토리의 경로(path)를 반환하는 메서드 (Owner 권한 필요)
+	// [내 드라이브] 현재 디렉토리의 경로(path)를 반환하는 메서드 (Owner만 가능)
 	public List<DriveItemResponseDto> getDrivePath(UUID foldId, String username) {
 		List<DriveItemResponseDto> path = new ArrayList<>();
 
@@ -228,8 +251,8 @@ public class DriveItemService {
 		// 현재 유저
 		User user = getUserOrThrow(username);
 
-		// [권한 제어] OWNER 권한 필요
-		if (!permissionService.isOwner(parent, user)) {
+		// (접근 제어) MANAGER만 접근 가능
+		if (!permissionService.isManager(parent, user)) {
 		    throw new PermissionDeniedException("해당 사용자는 접근할 권한이 없습니다.");
 		}
 
@@ -237,7 +260,8 @@ public class DriveItemService {
 		// 이렇게 되면, 가장 하위 디렉토리부터 저장이 되게 된다. [자식(0), 부모(1), 조부모(2)...]
 		while (parent != null) {
 			boolean isFavorite = favoriteRepository.existsByUserUsernameAndItem(username, parent);
-			path.add(new DriveItemResponseDto(parent, isFavorite, null));
+			boolean isOwner = permissionService.isOwner(parent, user);
+    		path.add(new DriveItemResponseDto(parent, isFavorite, null, isOwner));
 			parent = parent.getParent();
 		}
 
@@ -246,20 +270,20 @@ public class DriveItemService {
 		return path;
 	}
 
-	// 휴지통 최상위 DriveItem(folder/file)를 가져오는 메서드 (권한 불필요)
+	// 휴지통 최상위 DriveItem(folder/file)를 가져오는 메서드
 	public List<DriveItemResponseDto> getTrash(String username) {
 		List<DriveItemResponseDto> result = new ArrayList<>();
 
 		// 휴지통 최상위 요소인지는 IsTrashRoot가 true인지로 판단한다.
 		for ( DriveItem driveItem : driveRepository.findByUserUsernameAndIsTrashRoot(username, true)) {
 			boolean isFavorite = favoriteRepository.existsByUserUsernameAndItem(username, driveItem);
-			result.add(new DriveItemResponseDto(driveItem, isFavorite, PermissionType.OWNER));
+			result.add(new DriveItemResponseDto(driveItem, isFavorite, PermissionType.MANAGER, true));
 		}
 
 		return result;
 	}
 
-	// DriveItem(folder/file)를 수정하는 메서드 (파일/폴더명 변경, 파일 내용 변경, 파일/폴더 이동) (Permission Required)
+	// DriveItem(folder/file)를 수정하는 메서드 (파일/폴더명 변경, 파일 내용 변경, 파일/폴더 이동) (접근 권한 필요)
 	public void updateDriveItem(UUID publicId, DriveItemUpdateDto request, String username) {
 	    // 현재 로그인 사용자
 	    User user = getUserOrThrow(username);
@@ -267,20 +291,20 @@ public class DriveItemService {
 	    // 수정 대상 driveItem
 		DriveItem driveItem = getDriveItemOrThrow(publicId);
 
-		// 현재 갖고있는 권한(OWNER, MANAGER 등...)
+		// 현재 갖고있는 권한(MANAGER 등...)
 		PermissionType permissionType = permissionService.getPermission(driveItem, user);
-		boolean canEdit = permissionService.canEdit(permissionType);
-		boolean canMove = permissionService.isOwnerOrManager(permissionType);
+		boolean canEdit = permissionService.canEdit(permissionType); // 파일 내용 수정 : MANAGER | EDITOR
+		boolean canManage = permissionService.isManager(permissionType); // 이름 변경 / 이동 : MANAGER만
 
-		applyItemNameUpdate(driveItem, request.itemName(), canEdit);
-		applyParentUpdate(driveItem, request.parentId(), user, canMove);
-		applyContentUpdate(driveItem, request.content(), canEdit);
+		updateItemName(driveItem, request.itemName(), canManage);
+		updateParent(driveItem, request.parentId(), user, canManage);
+		updateContent(driveItem, request.content(), canEdit);
 
 		driveRepository.save(driveItem);
 	}
 
 	// itemName이 요청에 포함된 경우 유효성 검사 + 권한 검사 후 변경
-	private void applyItemNameUpdate(DriveItem driveItem, String itemName, boolean canEdit) {
+	private void updateItemName(DriveItem driveItem, String itemName, boolean canManage) {
 		if (itemName == null) {
 			return;
 		}
@@ -295,8 +319,8 @@ public class DriveItemService {
 			throw new IllegalArgumentException("fileName은 " + MAX_ITEM_NAME_LENGTH + "자 이하여야 합니다.");
 		}
 
-		// [권한 제어] OWNER | MANAGER | EDITOR 권한 필요
-		if (!canEdit) {
+		// [접근 제어] MANAGER 권한 필요 (EDITOR는 이름 변경 불가)
+		if (!canManage) {
 			throw new PermissionDeniedException("아이템명을 변경할 권한이 없습니다.");
 		}
 
@@ -304,7 +328,7 @@ public class DriveItemService {
 	}
 
 	// parentId가 요청에 포함된 경우(이동) 유효성 검사 + 권한 검사 후 변경
-	private void applyParentUpdate(DriveItem driveItem, UUID parentId, User user, boolean canMove) {
+	private void updateParent(DriveItem driveItem, UUID parentId, User user, boolean canMove) {
 		if (parentId == null) {
 			return;
 		}
@@ -316,14 +340,14 @@ public class DriveItemService {
 			throw new IllegalArgumentException("부모는 폴더여야 합니다.");
 		}
 
-		// [권한 제어] 이동 대상 아이템 자체에 대해 OWNER | MANAGER 권한 필요
+		// [접근 제어] 이동 대상 아이템 자체에 대해 MANAGER 권한 필요
 		if (!canMove) {
 			throw new PermissionDeniedException("부모를 변경할 권한이 없습니다.");
 		}
 
-		// [권한 제어] 이동할 목적지 폴더에도 OWNER | MANAGER 권한 필요 (createDriveItem과 동일한 기준)
+		// [접근 제어] 이동할 목적지 폴더에도  MANAGER 권한 필요 (createDriveItem과 동일한 기준)
 		// 이 검사가 없으면, 권한이 전혀 없는 임의의 폴더 안으로 아이템을 옮겨 넣을 수 있게 됨.
-		if (!permissionService.isOwnerOrManager(parent, user)) {
+		if (!permissionService.isManager(parent, user)) {
 			throw new PermissionDeniedException("이동할 위치에 대한 권한이 없습니다.");
 		}
 
@@ -331,7 +355,7 @@ public class DriveItemService {
 	}
 
 	// content가 요청에 포함된 경우 유효성 검사 + 권한 검사 후 변경 (파일만 가능)
-	private void applyContentUpdate(DriveItem driveItem, String content, boolean canEdit) {
+	private void updateContent(DriveItem driveItem, String content, boolean canEdit) {
 		if (content == null) {
 			return;
 		}
@@ -340,7 +364,7 @@ public class DriveItemService {
 			throw new IllegalArgumentException("폴더는 content를 수정할 수 없습니다.");
 		}
 
-		// [권한 제어] OWNER | MANAGER | EDITOR 권한 필요
+		// [접근 제어] MANAGER | EDITOR 권한 필요
 		if (!canEdit) {
 			throw new PermissionDeniedException("파일 내용을 변경할 권한이 없습니다.");
 		}
@@ -349,7 +373,7 @@ public class DriveItemService {
 		driveItem.setSize((long) content.getBytes(StandardCharsets.UTF_8).length);
 	}
 
-	// 해당 DriveItem(folder/file)과 모든 자식 요소들을 휴지통으로 보내는 메서드 (OWNER | MANAGER 권한 필요)
+	// 해당 DriveItem(folder/file)과 모든 자식 요소들을 휴지통으로 보내는 메서드 (MANAGER 권한 필요)
 	@Transactional
 	public void moveToTrash(UUID publicId, String username) {
 		// 휴지통 대상 driveItem
@@ -358,8 +382,8 @@ public class DriveItemService {
 		// 현재 유저
 		User user = getUserOrThrow(username);
 
-		// [권한 제어] OWNER | MANAGER 권한 필요
-		if (!permissionService.isOwnerOrManager(root, user)) {
+		// [접근 제어] MANAGER 권한 필요
+		if (!permissionService.isManager(root, user)) {
 			throw new PermissionDeniedException("휴지통으로 보낼 권한이 없습니다.");
 		}
 
@@ -368,7 +392,7 @@ public class DriveItemService {
 		updateIsInTrash(root, true, true);
 	}
 
-	// 해당 DriveItem(folder/file)과 모든 자식 요소들을 복원하는 메서드 (OWNER 권한 필요)
+	// 해당 DriveItem(folder/file)과 모든 자식 요소들을 복원하는 메서드 (OWNER만 가능)
 	@Transactional
 	public void restoreTrash(UUID publicId, String username) {
 		// 복원 대상 driveItem
@@ -377,7 +401,7 @@ public class DriveItemService {
 		// 현재 유저
 		User user = getUserOrThrow(username);
 
-		// [권한 제어] OWNER 권한 필요
+		// [접근 제어] OWNER만 접근 가능
 		if (!permissionService.isOwner(root, user)) {
 			throw new PermissionDeniedException("해당 아이템을 복원할 권한이 없습니다.");
 		}
@@ -410,7 +434,7 @@ public class DriveItemService {
 		}
 	}
 
-	// DriveItem를 제거하는 메서드 (OWNER 권한 필요)
+	// DriveItem를 제거하는 메서드 (OWNER만 가능)
 	@Transactional
 	public void deleteDriveItem(UUID publicId, String username) {
 		// 제거 대상 driveItem
@@ -418,7 +442,7 @@ public class DriveItemService {
 		// 현재 유저
 		User user = getUserOrThrow(username);
 
-		// [권한 제어] OWNER 권한 필요
+		// [접근 제어] OWNER만 접근 가능
 		if (!permissionService.isOwner(root, user)) {
 			throw new PermissionDeniedException("해당 아이템을 복원할 권한이 없습니다.");
 		}

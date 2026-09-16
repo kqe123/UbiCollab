@@ -20,11 +20,12 @@ public record SharedItemResponseDto(
 	    LocalDateTime createdDate,
 	    Boolean isInTrash,
 	    Boolean isFavorite,
-	    PermissionType permissionType
+	    PermissionType permissionType,
+		Boolean isOwner   // 추가
 	    // DriveItem Entity에는 없지만, Response에는 필요한 값
 	    // isTrashRoot는 API에서만 사용하므로 제외
 ) {
-	    public SharedItemResponseDto (DriveItem driveItem, Boolean isFavorite, PermissionType permissionType) {
+	    public SharedItemResponseDto (DriveItem driveItem, Boolean isFavorite, PermissionType permissionType, Boolean isOwner) {
 			this(	driveItem.getPublicId(),
 					driveItem.getItemName(),
 					driveItem.getType(),
@@ -36,7 +37,8 @@ public record SharedItemResponseDto(
 	    			driveItem.getCreatedDate(),
 	    			driveItem.getIsInTrash(),
 	    			isFavorite,
-	    			permissionType
+	    			permissionType,
+					isOwner
 			);
 		}
 }

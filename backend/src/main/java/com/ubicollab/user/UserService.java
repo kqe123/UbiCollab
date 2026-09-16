@@ -185,8 +185,8 @@ public class UserService {
 		DriveItem driveItem = driveRepository.findByPublicId(publicId).orElseThrow(
 				() -> new ResourceNotFoundException("해당 아이템을 찾을 수 없습니다. publicId="+ publicId));
 
-		// [권한 제어] 공유 대상을 검색하는 API이므로, createPermission과 동일하게 OWNER | MANAGER 권한 필요
-		if (!permissionService.isOwnerOrManager(driveItem, currentUser)) {
+		// [접근 제어] 공유 대상을 검색하는 API이므로, createPermission과 동일하게 MANAGER 권한 필요
+		if (!permissionService.isManager(driveItem, currentUser)) {
 			throw new PermissionDeniedException("사용자를 검색할 권한이 없습니다.");
 		}
 

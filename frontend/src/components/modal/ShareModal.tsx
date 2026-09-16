@@ -198,6 +198,7 @@ function  ShareModal ({
                                                 profileUri: user.profileUri,
                                                 driveItemId : driveItem.publicId,
                                                 type: "VIEWER",
+                                                isOwner: false,
                                             }
                                         ])
                                         setIsUserListOpen(false);

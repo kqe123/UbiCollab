@@ -10,7 +10,7 @@ function EditorHeader({
 } : {
     fileName : string;
     setFileName : React.Dispatch<React.SetStateAction<string>>;
-    permission : "VIEWER" | "COMMENTOR" | "EDITOR" |"MANAGER" | "OWNER" | null;
+    permission : "VIEWER" | "COMMENTOR" | "EDITOR" | "MANAGER" | null;
 }) {
 
     // 현재 로그인된 User 정보 

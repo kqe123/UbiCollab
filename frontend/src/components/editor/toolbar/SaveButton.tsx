@@ -3,11 +3,11 @@ import IconButton from  '@mui/material/IconButton';
 function SaveButton({
     onSave,
     isSaving,
-    canEdit
+    canSave
 } : {
     onSave : () => Promise<void>
     isSaving : boolean;
-    canEdit : boolean;
+    canSave : boolean;
 }) {
     return(
         <>  
@@ -15,7 +15,7 @@ function SaveButton({
             <IconButton
                 type="button"
                 onClick={onSave}
-                disabled={isSaving || !canEdit }
+                disabled={isSaving || !canSave }
                 size="large"
                 sx={{ width: 16, height: 16, display: 'flex', alignItems: 'center',
                     justifyContent: 'center', borderRadius: '10px', mx : 1,
@@ -29,7 +29,7 @@ function SaveButton({
                 }}
                 title={isSaving ? "저장 중..." : "저장"}
             >
-                <SaveIcon sx={{ color: canEdit ? '#007FFF' : 'gray.300'}}/>
+                <SaveIcon sx={{ color: canSave ? '#007FFF' : 'gray.300'}}/>
             </IconButton>
         </>
     )

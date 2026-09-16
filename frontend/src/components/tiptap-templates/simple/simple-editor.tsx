@@ -88,14 +88,14 @@ const MainToolbarContent = ({
   onSave,
   isSaving,
   isMobile,
-  canEdit
+  canSave
 }: {
   onHighlighterClick: () => void
   onLinkClick: () => void
   onSave : () => Promise<void>
   isSaving : boolean
   isMobile: boolean
-  canEdit : boolean
+  canSave : boolean
 }) => {
   const [isLoadModalOpen, setIsLoadModalOpen] = useState<boolean>(false);
 
@@ -115,7 +115,7 @@ const MainToolbarContent = ({
         <SaveButton 
           onSave={onSave}
           isSaving={isSaving}
-          canEdit={canEdit}/>
+          canSave={canSave}/>
       </ToolbarGroup>
       <ToolbarSeparator />
       <ToolbarGroup>
@@ -162,7 +162,7 @@ const MainToolbarContent = ({
       <ToolbarGroup>
         <ImageUploadButton text="Add" />
       </ToolbarGroup>
-      {!canEdit && (
+      {!canSave && (
           <Text 
             variant="body2"
             sx={{color : 'red', ml : 2, fontWeight : 500}}>※ 현재 읽기 모드입니다.</Text>
@@ -227,7 +227,7 @@ export function SimpleEditor({
   )
   const [isSaving, setIsSaving] = useState<boolean>(false); // 저장 상태를 나타내는 isSaving 추가
   const toolbarRef = useRef<HTMLDivElement>(null)
-  const canEdit = permission === "OWNER" || permission === "MANAGER" || permission === "EDITOR";
+  const canEdit = permission === "MANAGER" || permission === "EDITOR";
   const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
 
   const editor = useEditor({
@@ -364,7 +364,7 @@ export function SimpleEditor({
               onSave={handleSave}   // MainToolbarContent에 onSave 이름으로 저장 로직 전달
               isSaving={isSaving}   // MainToolbarContent에 isSaving도 전달
               isMobile={isMobile}
-              canEdit={canEdit}
+              canSave={canEdit}
             />
           ) : (
             <MobileToolbarContent

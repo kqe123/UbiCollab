@@ -13,6 +13,7 @@ export type DriveItem = {
     createdDate: string;
     isInTrash : boolean;
     isFavorite : boolean;
-    permissionType : "VIEWER" | "COMMENTOR" | "EDITOR" | "MANAGER" | "OWNER" | null;
+    permissionType : "VIEWER" | "COMMENTOR" | "EDITOR" | "MANAGER" | null;
+    isOwner: boolean;
 };
 
