@@ -1,7 +1,6 @@
 import axios from "axios";
 import toast from "react-hot-toast";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import Stack from '@mui/material/Stack';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -94,7 +93,7 @@ function ProfileEdit() {
         if (nickname !== currentUser.nickname) {
             try {
                 // Backend API 호출
-                const response = await axios.patch(
+                await axios.patch(
                     `http://localhost:8080/api/user/change-nickname`,
                     { nickname : nickname },
                     {
