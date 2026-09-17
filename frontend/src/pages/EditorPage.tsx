@@ -44,22 +44,19 @@ function EditorPage() {
 
     // useQuery 실행 (첫 렌더링 시, queryKey가 변경될 시에 실행한다.)
     const {
-        data: file, // 백엔드에서 받아온 데이터
+        data: file, // 백엔드에서 받은 데이터
         isLoading,    // 현재 요청 중인지 여부
-        isError,        // 요청이 실패했는지 여부
-        error,            // 실패했을 때 오류 정보
+        isError,      // 요청이 실패했는지 여부
+        error,        // 실패했을 때 오류 정보
     } = useQuery<DriveItem>({
         queryKey: ["driveItems", "editor" , fileId], // 서버 데이터를 해당 이름으로 관리
-        queryFn: getFile,   // getDriveItems() 실행
+        queryFn: getFile,   // getFile() 실행
     });
 
-
-    // file이 도착한 시점에 외부 데이터로 로컬 State 초기화
-    useEffect(() => {
-        if (file) {
-            setFileName(file.itemName);
-        }
-    }, [file]);
+    // useEffect가 아니라 컴포넌트 함수 몸통(return 이전)에 그냥 이렇게 씀
+    if (file && fileName === "") {
+        setFileName(file.itemName);
+    }
 
     // 문서를 받아오기 전에 편집기를 렌더링하지 않음
     if (isLoading) {

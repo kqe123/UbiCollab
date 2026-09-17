@@ -18,7 +18,6 @@ function ProfileMenu({
     currentUser : User | undefined
     anchor : HTMLButtonElement | null
 }) {
-    const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
     const navigate = useNavigate();
 
     const logout = () => {

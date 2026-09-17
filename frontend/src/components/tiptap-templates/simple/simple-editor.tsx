@@ -88,7 +88,8 @@ const MainToolbarContent = ({
   onSave,
   isSaving,
   isMobile,
-  canSave
+  canSave,
+  canEdit
 }: {
   onHighlighterClick: () => void
   onLinkClick: () => void
@@ -96,6 +97,7 @@ const MainToolbarContent = ({
   isSaving : boolean
   isMobile: boolean
   canSave : boolean
+  canEdit : boolean
 }) => {
   const [isLoadModalOpen, setIsLoadModalOpen] = useState<boolean>(false);
 
@@ -162,7 +164,7 @@ const MainToolbarContent = ({
       <ToolbarGroup>
         <ImageUploadButton text="Add" />
       </ToolbarGroup>
-      {!canSave && (
+      {!canEdit && (
           <Text 
             variant="body2"
             sx={{color : 'red', ml : 2, fontWeight : 500}}>※ 현재 읽기 모드입니다.</Text>
@@ -226,13 +228,27 @@ export function SimpleEditor({
     "main"
   )
   const [isSaving, setIsSaving] = useState<boolean>(false); // 저장 상태를 나타내는 isSaving 추가
+  const [isHaveUpdate, setIsHaveUpdate] = useState<boolean>(false); // 업데이트 유무를 나타내는 상태값
   const toolbarRef = useRef<HTMLDivElement>(null)
+
+  // 마지막 저장 상태의 스냅샷
+  // EditorPage에서 file이 isLoading일때는 SimpleEditor 자체를 렌더링 하지 않으므로
+  // fileName, initialContent가 확정된 값이다. 그래서 그냥 초기값으로 채운다.
+  const savedSnapshot = useRef<{itemName : string, content: string}>({
+    itemName: fileName,
+    content: DOMPurify.sanitize(initialContent),
+  }); 
   const canEdit = permission === "MANAGER" || permission === "EDITOR";
+  const canSave = canEdit && isHaveUpdate
   const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
 
   const editor = useEditor({
     immediatelyRender: false,
-    editable : canEdit,
+    editable : canEdit, // false이면 편집 불가
+    // 에디터 내용이 변경되면, 업데이트 유무를 체크하는 checkUpdates() 실행
+    onUpdate: ({ editor }) => {
+      checkUpdates(fileName, DOMPurify.sanitize(editor.getHTML()));
+    },
     editorProps: {
       attributes: {
         autocomplete: "off",
@@ -268,7 +284,7 @@ export function SimpleEditor({
         onError: (error) => console.error("Upload failed:", error),
       }),
     ],
-    content: DOMPurify.sanitize(initialContent), // 에디터 내용 업데이트
+    content : DOMPurify.sanitize(initialContent), // 에디터 내용 업데이트
   })
 
   // handleSave() : fileName, content, extension을 보내서 DB에 Document를 저장하도록
@@ -310,18 +326,15 @@ export function SimpleEditor({
         
       console.log("알림 : 문서 저장 성공");
       toast.success("성공적으로 저장되었습니다.");
-      } catch (error: unknown) {
+      savedSnapshot.current = { itemName: trimmedFileName, content: fileData.content };
+      setIsHaveUpdate(false);
+    } catch (error: unknown) {
       console.error("문서 저장 실패:", error);
       
       // axios에서 발생한 오류인 경우
       if (axios.isAxiosError(error)) {
         console.error("백엔드 응답:", error.response?.data);
         toast.error(error.response?.data?.message ?? "문서 저장에 실패했습니다.");
-      } 
-      // 일반 오류인 경우
-      else if (error instanceof Error) {
-        console.error("일반 오류:", error.message);
-        toast.error(error.message);
       } 
       // 그 외의 오류인 경우
       else {
@@ -330,6 +343,15 @@ export function SimpleEditor({
       }
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  // checkUpdates() : 현재 fileName, content와 savedSnapshot(마지막 저장 시점 스냅샷)
+  //                  을 비교해 변경되었다면 isHaveUpdate를 true로 변환
+  const checkUpdates = (currentFileName: string, currentContent: string) => {
+    if( currentFileName !== savedSnapshot.current.itemName ||
+      currentContent !== savedSnapshot.current.content) {
+      setIsHaveUpdate(true);
     }
   };
 
@@ -343,6 +365,11 @@ export function SimpleEditor({
       setMobileView("main")
     }
   }, [isMobile, mobileView])
+
+  // fileName이 변경됬다면, 업데이트 유무를 체크하는 checkUpdates() 실행
+  useEffect(() => {
+    checkUpdates(fileName, editor?.getHTML() ?? savedSnapshot.current.content)
+  }, [fileName]);
 
   return (
     <div className="simple-editor-wrapper">
@@ -364,7 +391,8 @@ export function SimpleEditor({
               onSave={handleSave}   // MainToolbarContent에 onSave 이름으로 저장 로직 전달
               isSaving={isSaving}   // MainToolbarContent에 isSaving도 전달
               isMobile={isMobile}
-              canSave={canEdit}
+              canSave={canSave}
+              canEdit={canEdit}
             />
           ) : (
             <MobileToolbarContent

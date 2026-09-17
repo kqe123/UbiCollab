@@ -34,7 +34,7 @@ function  PermissionModal ({
     const hasSnapshot = useRef(false);   // Snapshot을 찍었는지 안찍었는지 여부
     const [deleteTarget, setDeleteTarget] = useState<{ userId: string; driveItemId: string } | null>(null); // 권한 삭제 대상 (x버튼 클릭 시)
 
-    // 화면 표시용 정렬: 소유자(OWNER)를 맨 위로, 나머지는 닉네임 가나다/ABC 순 (editedPermissions 원본 순서/상태는 그대로 둠)
+    // 화면 표시용 정렬: 소유자를 맨 위로, 나머지는 닉네임 가나다/ABC 순 (editedPermissions 원본 순서/상태는 그대로 둠)
     const sortedPermissions = useMemo(
         () => [...editedPermissions].sort((a, b) => {
             if (a.isOwner && !b.isOwner) return -1;
