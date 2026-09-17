@@ -16,7 +16,8 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import com.ubicollab.driveitem.dto.DriveItemCreateDto;
 import com.ubicollab.driveitem.dto.DriveItemResponseDto;
-import com.ubicollab.driveitem.dto.DriveItemUpdateDto;
+import com.ubicollab.driveitem.dto.FileSaveDto;
+import com.ubicollab.driveitem.dto.ItemNameChangeDto;
 
 import jakarta.validation.Valid;
 
@@ -90,14 +91,25 @@ public class DriveItemController {
 				.body(driveService.getTrash(username));
 	}
 	
-	// [메뉴, 편집기 등] 폴더/파일 수정 API (PATCH '/api/driveitem/{id}')
-	@PatchMapping("/{id}")
-	public ResponseEntity<String> updateDriveItem(@PathVariable("id") UUID publicId,
-			@Valid @RequestBody DriveItemUpdateDto request,
+	// [메뉴] 폴더/파일 이름 변경 API (PATCH '/api/driveitem/name-change/{id}')
+	@PatchMapping("/name-change/{id}")
+	public ResponseEntity<String> updateItemName(@PathVariable("id") UUID publicId,
+		@Valid @RequestBody ItemNameChangeDto request,
+		Authentication authentication) {
+			
+		String username = authentication.getName(); // 현재 로그인 사용자
+		driveService.updateItemName(publicId, request, username);
+		return ResponseEntity.status(HttpStatus.OK).build();
+	}
+	
+	// [편집기] 파일 저장 API (PATCH '/api/driveitem/save/{id}')
+	@PatchMapping("/save/{id}")
+	public ResponseEntity<String> saveFile(@PathVariable("id") UUID publicId,
+			@Valid @RequestBody FileSaveDto request,
 			Authentication authentication) {
 		
 		String username = authentication.getName(); // 현재 로그인 사용자
-		driveService.updateDriveItem(publicId, request, username);
+		driveService.saveFile(publicId, request, username);
 		return ResponseEntity.status(HttpStatus.OK).build();
 	}
 	

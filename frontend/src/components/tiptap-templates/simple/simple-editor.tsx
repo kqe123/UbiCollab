@@ -81,6 +81,7 @@ import toast from "react-hot-toast";
 import LoadDocumentModal from "@/components/modal/LoadDocumentModal";
 import Text from '@mui/material/Typography';
 import DOMPurify from "dompurify";
+import { useQueryClient } from "@tanstack/react-query";
 
 const MainToolbarContent = ({
   onHighlighterClick,
@@ -241,6 +242,7 @@ export function SimpleEditor({
   const canEdit = permission === "MANAGER" || permission === "EDITOR";
   const canSave = canEdit && isHaveUpdate
   const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
+  const queryClient = useQueryClient(); // QueryClient 가져옴
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -296,26 +298,25 @@ export function SimpleEditor({
     }
   
     // 문서명 앞뒤 공백 제거
-    const trimmedFileName = fileName.trim();
-  
-    // backend api에 보낼 body
+    const trimFileName = fileName.trim();
+    const sanitizedContent = DOMPurify.sanitize(editor.getHTML());
+    
+    // 변경사항이 있을시에만 body에 추가
     const fileData = {
-      itemName:
-        trimmedFileName === ""
-          ? "제목 없는 문서"
-          : trimmedFileName,
-  
-    // 저장 버튼을 누른 순간의 최신 에디터 내용
-      content: DOMPurify.sanitize(editor.getHTML()),
-      extension: "UC",
+      ...((fileName !== savedSnapshot.current.itemName) && {
+        itemName: trimFileName === "" ? "제목 없는 문서" : trimFileName,
+      }),
+      ...((sanitizedContent !== savedSnapshot.current.content) && {
+        content: sanitizedContent,
+      })
     };
   
     try {
       setIsSaving(true);
         
-      // 문서 저장 Backend API 호출
-      const response = await axios.patch(
-        `http://localhost:8080/api/driveitem/${fileId}`,
+      // 파일 저장 Backend API 호출
+      await axios.patch(
+        `http://localhost:8080/api/driveitem/save/${fileId}`,
         fileData,
         {
           headers: {
@@ -326,8 +327,13 @@ export function SimpleEditor({
         
       console.log("알림 : 문서 저장 성공");
       toast.success("성공적으로 저장되었습니다.");
-      savedSnapshot.current = { itemName: trimmedFileName, content: fileData.content };
-      setIsHaveUpdate(false);
+      savedSnapshot.current = { itemName: trimFileName, content: sanitizedContent }; // 스냅샷 교체
+      setIsHaveUpdate(false); // 업데이트 유무를 false로 전환
+      
+      // 변경된 DriveItem 내용을 실시간으로 최신화
+      await queryClient.invalidateQueries({
+        queryKey: ["driveItems"]
+      });
     } catch (error: unknown) {
       console.error("문서 저장 실패:", error);
       

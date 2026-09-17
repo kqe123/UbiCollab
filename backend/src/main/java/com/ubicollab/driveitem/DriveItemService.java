@@ -12,7 +12,8 @@ import com.ubicollab.common.exception.PermissionDeniedException;
 import com.ubicollab.common.exception.ResourceNotFoundException;
 import com.ubicollab.driveitem.dto.DriveItemCreateDto;
 import com.ubicollab.driveitem.dto.DriveItemResponseDto;
-import com.ubicollab.driveitem.dto.DriveItemUpdateDto;
+import com.ubicollab.driveitem.dto.FileSaveDto;
+import com.ubicollab.driveitem.dto.ItemNameChangeDto;
 import com.ubicollab.driveitem.enums.DriveItemExtension;
 import com.ubicollab.driveitem.enums.DriveItemType;
 import com.ubicollab.favorite.FavoriteRepository;
@@ -282,9 +283,30 @@ public class DriveItemService {
 
 		return result;
 	}
+	
+	// 폴더/파일 이름 변경 메서드 (MANAGER만)
+	public void updateItemName(UUID publicId, ItemNameChangeDto request, String username) {
+		// 현재 로그인 사용자
+		User user = getUserOrThrow(username);
 
-	// DriveItem(folder/file)를 수정하는 메서드 (파일/폴더명 변경, 파일 내용 변경, 파일/폴더 이동) (접근 권한 필요)
-	public void updateDriveItem(UUID publicId, DriveItemUpdateDto request, String username) {
+		// 수정 대상 driveItem
+		DriveItem driveItem = getDriveItemOrThrow(publicId);
+
+		// 현재 갖고있는 권한(MANAGER 등...)
+		PermissionType permissionType = permissionService.getPermission(driveItem, user);
+		boolean canManage = permissionService.isManager(permissionType); // 이름 변경 : MANAGER만
+			
+		// 변경사항이 있을 시에 업데이트를 진행함.(itemName)
+		// 필드가 null이면 뒤의 조건 검사를 안하고 패스 (Short Circuit)
+		if (request.itemName() != null && !(request.itemName().equals(driveItem.getItemName()))) 
+			updateItemName(driveItem, request.itemName(), canManage);
+		
+		driveRepository.save(driveItem);
+	}
+	
+	
+	// 파일 저장 메서드 (EDITOR 이상)
+	public void saveFile(UUID publicId, FileSaveDto request, String username) {
 	    // 현재 로그인 사용자
 	    User user = getUserOrThrow(username);
 
@@ -294,16 +316,27 @@ public class DriveItemService {
 		// 현재 갖고있는 권한(MANAGER 등...)
 		PermissionType permissionType = permissionService.getPermission(driveItem, user);
 		boolean canEdit = permissionService.canEdit(permissionType); // 파일 내용 수정 : MANAGER | EDITOR
-		boolean canManage = permissionService.isManager(permissionType); // 이름 변경 / 이동 : MANAGER만
-
-		updateItemName(driveItem, request.itemName(), canManage);
-		updateParent(driveItem, request.parentId(), user, canManage);
-		updateContent(driveItem, request.content(), canEdit);
+		boolean canManage = permissionService.isManager(permissionType); // 이름 변경 : MANAGER만
+		
+		
+		// (예외처리) itemName, Content 모두 null일때 예외처리
+		if (request.itemName() == null && request.content() == null)
+			throw new IllegalArgumentException("잘못된 요청입니다.");
+		
+		// 각 변경사항이 있을 시에 각각 업데이트를 진행함.(itemName || content)
+		// 각 필드가 null이면 뒤의 조건 검사를 안하고 패스 (Short Circuit)
+		if (request.itemName() != null && !(request.itemName().equals(driveItem.getItemName()))) 
+			updateItemName(driveItem, request.itemName(), canManage);
+		
+		if (request.content() != null && !(request.content().equals(driveItem.getContent()))) 
+			updateContent(driveItem, request.content(), canEdit);
 
 		driveRepository.save(driveItem);
 	}
+	
+	
 
-	// itemName이 요청에 포함된 경우 유효성 검사 + 권한 검사 후 변경
+	// itemName이 요청에 포함된 경우 유효성 검사 후 변경
 	private void updateItemName(DriveItem driveItem, String itemName, boolean canManage) {
 		if (itemName == null) {
 			return;
@@ -314,19 +347,38 @@ public class DriveItemService {
 		if (trimmedItemName.isEmpty()) {
 			throw new IllegalArgumentException("itemName은 비어 있을 수 없습니다.");
 		}
-
+		
 		if (trimmedItemName.length() > MAX_ITEM_NAME_LENGTH) {
 			throw new IllegalArgumentException("fileName은 " + MAX_ITEM_NAME_LENGTH + "자 이하여야 합니다.");
 		}
-
-		// [접근 제어] MANAGER 권한 필요 (EDITOR는 이름 변경 불가)
+		
+		// (접근 제어) 폴더/파일명  변경은  MANAGER 권한 필요 (EDITOR는 이름 변경 불가)
 		if (!canManage) {
-			throw new PermissionDeniedException("아이템명을 변경할 권한이 없습니다.");
+			throw new PermissionDeniedException("파일명을 변경할 권한이 없습니다.");
 		}
 
 		driveItem.setItemName(trimmedItemName);
 	}
 
+	// content가 요청에 포함된 경우 유효성 검사후 변경 (파일만 가능)
+	private void updateContent(DriveItem driveItem, String content, boolean canEdit) {
+		if (content == null) {
+			return;
+		}
+
+		if (driveItem.getType() != DriveItemType.FILE) {
+			throw new IllegalArgumentException("폴더는 content를 수정할 수 없습니다.");
+		}
+		
+		// (접근 제어) 파일 내용 변경은  EDIT 이상 권한 필요 (EDITOR는 이름 변경 불가)
+		if (!canEdit) {
+			throw new PermissionDeniedException("파일 내용을 변경할 권한이 없습니다.");
+		}
+
+		driveItem.setContent(content);
+		driveItem.setSize((long) content.getBytes(StandardCharsets.UTF_8).length);
+	}
+	
 	// parentId가 요청에 포함된 경우(이동) 유효성 검사 + 권한 검사 후 변경
 	private void updateParent(DriveItem driveItem, UUID parentId, User user, boolean canMove) {
 		if (parentId == null) {
@@ -334,7 +386,7 @@ public class DriveItemService {
 		}
 
 		DriveItem parent = driveRepository.findByPublicId(parentId)
-				.orElseThrow(() -> new IllegalArgumentException("이동할 부모 폴더가 존재하지 않습니다."));
+			.orElseThrow(() -> new IllegalArgumentException("이동할 부모 폴더가 존재하지 않습니다."));
 
 		if (parent.getType() != DriveItemType.FOLDER) {
 			throw new IllegalArgumentException("부모는 폴더여야 합니다.");
@@ -352,25 +404,6 @@ public class DriveItemService {
 		}
 
 		driveItem.setParent(parent);
-	}
-
-	// content가 요청에 포함된 경우 유효성 검사 + 권한 검사 후 변경 (파일만 가능)
-	private void updateContent(DriveItem driveItem, String content, boolean canEdit) {
-		if (content == null) {
-			return;
-		}
-
-		if (driveItem.getType() != DriveItemType.FILE) {
-			throw new IllegalArgumentException("폴더는 content를 수정할 수 없습니다.");
-		}
-
-		// [접근 제어] MANAGER | EDITOR 권한 필요
-		if (!canEdit) {
-			throw new PermissionDeniedException("파일 내용을 변경할 권한이 없습니다.");
-		}
-
-		driveItem.setContent(content);
-		driveItem.setSize((long) content.getBytes(StandardCharsets.UTF_8).length);
 	}
 
 	// 해당 DriveItem(folder/file)과 모든 자식 요소들을 휴지통으로 보내는 메서드 (MANAGER 권한 필요)
