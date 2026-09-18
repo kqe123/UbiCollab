@@ -76,6 +76,7 @@ import "@/components/tiptap-templates/simple/simple-editor.scss"
 // 사용자 정의 components
 import SaveButton from "@/components/editor/toolbar/SaveButton"
 import LoadButton from "@/components/editor/toolbar/LoadButton"
+import MyBubbleMenu from "@/components/editor/menu/BubbleMenu"
 import axios from "axios";
 import toast from "react-hot-toast";
 import LoadDocumentModal from "@/components/modal/LoadDocumentModal";
@@ -229,7 +230,7 @@ export function SimpleEditor({
     "main"
   )
   const [isSaving, setIsSaving] = useState<boolean>(false); // 저장 상태를 나타내는 isSaving 추가
-  const [isHaveUpdate, setIsHaveUpdate] = useState<boolean>(false); // 업데이트 유무를 나타내는 상태값
+  const [isHaveUpdate, setIsHaveUpdate] = useState<boolean>(false); // 업데이트 유무를 나타내는 true/false
   const toolbarRef = useRef<HTMLDivElement>(null)
 
   // 마지막 저장 상태의 스냅샷
@@ -250,6 +251,12 @@ export function SimpleEditor({
     // 에디터 내용이 변경되면, 업데이트 유무를 체크하는 checkUpdates() 실행
     onUpdate: ({ editor }) => {
       checkUpdates(fileName, DOMPurify.sanitize(editor.getHTML()));
+    },
+
+    // 에디터 선택 영역이 변경될때 발생하는 콜백 함수
+    onSelectionUpdate: ({ editor }) => {
+        const { from, to } = editor.state.selection
+        const text = editor.state.doc.textBetween(from, to, ' ')
     },
     editorProps: {
       attributes: {
@@ -413,6 +420,7 @@ export function SimpleEditor({
           role="presentation"
           className="simple-editor-content"
         />
+        {editor && <MyBubbleMenu editor={editor} />}
       </EditorContext.Provider>
     </div>
   )
