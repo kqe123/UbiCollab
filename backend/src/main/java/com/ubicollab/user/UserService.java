@@ -41,7 +41,6 @@ import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
-import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 import software.amazon.awssdk.services.rekognition.model.Image;
 
 @Service
@@ -94,15 +93,7 @@ public class UserService {
 	// 대상 유저는 인증된 username으로 조회 — 요청 파라미터로 임의의 userId를 신뢰하지 않는다.
 	public void uploadProfileImage(MultipartFile file, String username) {
 		
-		// 1. 기본 유효성 검사 — 비어있는지, 크기, Content-Type 화이트리스트
-	    if (file.isEmpty()) {
-	        throw new IllegalArgumentException("파일이 비어있습니다.");
-	    }
-	    
-	    String contentType = file.getContentType();
-	    if (contentType == null || !List.of("image/png", "image/jpeg", "image/webp").contains(contentType)) {
-	        throw new IllegalArgumentException("허용되지 않는 파일 형식입니다.");
-	    }
+		String contentType = validateFile(file);
 
 	    // 2. 바이트로 읽기 (Rekognition, S3 업로드 둘 다 이 바이트를 씀)
 	    byte[] bytes;
@@ -166,6 +157,20 @@ public class UserService {
 	        s3Client.deleteObject(DeleteObjectRequest.builder().bucket(bucket).key(key).build());
 	        throw e;
 	    }
+	}
+
+
+	private String validateFile(MultipartFile file) {
+		// 1. 기본 유효성 검사 — 비어있는지, 크기, Content-Type 화이트리스트
+	    if (file.isEmpty()) {
+	        throw new IllegalArgumentException("파일이 비어있습니다.");
+	    }
+	    
+	    String contentType = file.getContentType();
+	    if (contentType == null || !List.of("image/png", "image/jpeg", "image/webp").contains(contentType)) {
+	        throw new IllegalArgumentException("허용되지 않는 파일 형식입니다.");
+	    }
+		return contentType;
 	}
 
 

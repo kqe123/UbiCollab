@@ -9,7 +9,7 @@ import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
 import Badge from '@mui/material/Badge';
 import IconButton from  '@mui/material/IconButton';
-import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
 import { useState, useRef, useEffect } from "react";
 import { useCurrentUser } from "../../../hooks/use-current-user";
 
@@ -173,7 +173,7 @@ function ProfileEdit() {
                     anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                     badgeContent={
                     <IconButton component="label" size="large">
-                        <AddIcon sx={{ color: 'white', bgcolor: 'blue', borderRadius: '6px', width : 25, height : 25}} />
+                        <EditIcon sx={{ color: 'white', bgcolor: 'blue', borderRadius: '6px', width : 25, height : 25}} />
                         <input
                             type="file"
                             accept="image/*"

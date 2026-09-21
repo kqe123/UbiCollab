@@ -76,11 +76,15 @@ import "@/components/tiptap-templates/simple/simple-editor.scss"
 // 사용자 정의 components
 import SaveButton from "@/components/editor/toolbar/SaveButton"
 import LoadButton from "@/components/editor/toolbar/LoadButton"
+import Comment from "@/components/editor/panel/Comment"
+import Notice from "@/components/editor/panel/Notice"
 import MyBubbleMenu from "@/components/editor/menu/BubbleMenu"
 import axios from "axios";
 import toast from "react-hot-toast";
 import LoadDocumentModal from "@/components/modal/LoadDocumentModal";
 import Text from '@mui/material/Typography';
+import Box from '@mui/material/Box';
+import Slide from '@mui/material/Slide'
 import DOMPurify from "dompurify";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -112,7 +116,7 @@ const MainToolbarContent = ({
   };
   return (
     <>
-      <Spacer />
+      <Spacer size="6px"/>
        {/* 저장 버튼 추가 */}
       <ToolbarGroup>
         <LoadButton onClick={openLoadModal} />
@@ -177,9 +181,6 @@ const MainToolbarContent = ({
           {isLoadModalOpen && (
              <LoadDocumentModal onClose={closeLoadModal} />
           )}
-      <ToolbarGroup>
-        <ThemeToggle />
-      </ToolbarGroup>
     </>
   )
 }
@@ -218,11 +219,15 @@ export function SimpleEditor({
   fileId,
   initialContent,
   permission,
+  sidePanel,
+  setSidePanel,
   } : { 
     fileName: string;
     fileId : string | undefined;
     initialContent: string;
     permission : "VIEWER" | "COMMENTOR" | "EDITOR" |"MANAGER" | "OWNER" | null;
+    sidePanel : "NONE" | "COMMENT" | "NOTICE";
+    setSidePanel : React.Dispatch<React.SetStateAction<"NONE" | "COMMENT" | "NOTICE">>;
   }) {
   const isMobile = useIsBreakpoint()
   const { height } = useWindowSize()
@@ -420,6 +425,35 @@ export function SimpleEditor({
           role="presentation"
           className="simple-editor-content"
         />
+
+        <Slide direction="left" in={sidePanel !== "NONE"} mountOnEnter unmountOnExit timeout={400}>
+          <Box
+            sx={{
+              position: "fixed",  // fixed
+              top: "70px",        // 헤더 높이만큼 내려서 헤더와 안 겹치게
+              right : 0,
+              width : '320px',
+              height : '100%',
+              background: '#fff',
+              zIndex: 50,
+              boxShadow: '-2px 0 8px rgba(0,0,0,0.1)'
+            }}
+          >
+            {sidePanel === "NOTICE" && (
+              <Notice 
+                sidePanel={sidePanel}
+                setSidePanel={setSidePanel}
+              />
+            )}
+            {sidePanel === "COMMENT" && (
+              <Comment 
+                sidePanel={sidePanel}
+                setSidePanel={setSidePanel}
+              />
+            )}
+            
+          </Box>
+        </Slide>
         {editor && <MyBubbleMenu editor={editor} />}
       </EditorContext.Provider>
     </div>

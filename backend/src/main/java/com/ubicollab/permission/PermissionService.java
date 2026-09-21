@@ -207,6 +207,7 @@ public class PermissionService {
 			if (permission.isPresent()) {
 				return permission.get().getType();
 			}
+			
 
 			// 부모로 이동
 			driveItem = driveItem.getParent();
