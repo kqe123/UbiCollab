@@ -7,6 +7,7 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.hibernate.annotations.UuidGenerator;
 
+import com.ubicollab.comment.enums.CommentAnchorType;
 import com.ubicollab.driveitem.DriveItem;
 import com.ubicollab.driveitem.enums.DriveItemExtension;
 import com.ubicollab.driveitem.enums.DriveItemType;
@@ -41,7 +42,12 @@ public class Comment {
 	@OnDelete(action = OnDeleteAction.SET_NULL)
 	private Comment parent;
 	
-    // 댓글 대상 파일
+	// 댓글이 달린 대상(텍스트/이미지)
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = true)
+	private CommentAnchorType anchorType;   // null이면 "대상 없는 일반 댓글"
+
+	// 댓글 대상 파일
  	@ManyToOne(fetch = FetchType.LAZY)
  	@JoinColumn(name = "file_id", nullable = false)
  	@OnDelete(action = OnDeleteAction.CASCADE)
@@ -64,9 +70,10 @@ public class Comment {
 	//생성자
 	public Comment() {}
 		
-	public Comment(Comment parent, DriveItem file, User user,
+	public Comment(Comment parent, CommentAnchorType anchorType,DriveItem file, User user,
 			    		 String content, LocalDateTime createdDate) {
 			this.parent = parent;
+			this.anchorType = anchorType;
 			this.file = file;
 			this.user = user;
 			this.content = content;
@@ -87,6 +94,14 @@ public class Comment {
 
 	public void setParent(Comment parent) {
 		this.parent = parent;
+	}
+	
+	public CommentAnchorType getAnchorType() {
+		return anchorType;
+	}
+
+	public void setAnchorType(CommentAnchorType anchorType) {
+		this.anchorType = anchorType;
 	}
 
 	public DriveItem getFile() {

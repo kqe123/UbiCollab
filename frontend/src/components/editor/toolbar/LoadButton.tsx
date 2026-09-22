@@ -37,7 +37,6 @@ function LoadButton({onClick} : {onClick : () => void}) {
                             pointerEvents: 'auto', // ← 이거 추가해야 cursor가 실제로 적용됨
                         },
                     }}
-                    title="불러오기"
                 >
                     <LoadIcon sx={{ color: '#007FFF'}} />
                 </IconButton>

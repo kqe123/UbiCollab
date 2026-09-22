@@ -208,7 +208,6 @@ public class PermissionService {
 				return permission.get().getType();
 			}
 			
-
 			// 부모로 이동
 			driveItem = driveItem.getParent();
 		}

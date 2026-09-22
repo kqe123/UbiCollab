@@ -223,9 +223,9 @@ export function SimpleEditor({
   setSidePanel,
   } : { 
     fileName: string;
-    fileId : string | undefined;
+    fileId : string;
     initialContent: string;
-    permission : "VIEWER" | "COMMENTOR" | "EDITOR" |"MANAGER" | "OWNER" | null;
+    permission : "VIEWER" | "COMMENTOR" | "EDITOR" |"MANAGER" | null;
     sidePanel : "NONE" | "COMMENT" | "NOTICE";
     setSidePanel : React.Dispatch<React.SetStateAction<"NONE" | "COMMENT" | "NOTICE">>;
   }) {
@@ -432,23 +432,29 @@ export function SimpleEditor({
               position: "fixed",  // fixed
               top: "70px",        // 헤더 높이만큼 내려서 헤더와 안 겹치게
               right : 0,
-              width : '320px',
+              width : '25%',
               height : '100%',
               background: '#fff',
               zIndex: 50,
-              boxShadow: '-2px 0 8px rgba(0,0,0,0.1)'
+              boxShadow: '0 0 8px rgba(0,0,0,0.1)',
+              p : 2,
+              gap : 2,
+              display : 'flex',
+              flexDirection : 'column'
             }}
           >
             {sidePanel === "NOTICE" && (
               <Notice 
                 sidePanel={sidePanel}
                 setSidePanel={setSidePanel}
+                permission={permission}
               />
             )}
             {sidePanel === "COMMENT" && (
               <Comment 
-                sidePanel={sidePanel}
+                fileId={fileId}
                 setSidePanel={setSidePanel}
+                permission={permission}
               />
             )}
             

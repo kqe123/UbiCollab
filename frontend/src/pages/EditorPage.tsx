@@ -1,6 +1,6 @@
 import EditorHeader from "../components/editor/header/EditorHeader.tsx";
 import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
@@ -60,6 +60,15 @@ function EditorPage() {
     // useEffect가 아니라 컴포넌트 함수 몸통(return 이전)에 그냥 이렇게 씀
     if (file && fileName === "") {
         setFileName(file.itemName);
+    }
+
+    // fileId가 없는 잘못된 경로 대비
+    if (!fileId) {
+        return (
+            <Box sx={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center' }}>
+                <Typography>잘못된 접근입니다.</Typography>
+            </Box>
+        );
     }
 
     // 문서를 받아오기 전에 편집기를 렌더링하지 않음
