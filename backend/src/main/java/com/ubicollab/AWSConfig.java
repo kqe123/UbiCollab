@@ -12,7 +12,7 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.rekognition.RekognitionClient;
 
 @Configuration
-public class S3Config {
+public class AWSConfig {
 	// S3 Presigned URI 발급해주는 S3 Presigner 객체
     @Bean
     public S3Presigner s3Presigner(@Value("${AWS_S3_REGION}") String region,

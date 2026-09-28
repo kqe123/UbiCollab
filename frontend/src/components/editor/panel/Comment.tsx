@@ -9,6 +9,9 @@ import CloseIcon from '@mui/icons-material/Close';
 import TextField from '@mui/material/TextField';
 import { useCurrentUser } from "../../../hooks/use-current-user";
 import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import type {Comment} from "../../../types/comment.ts";
+
 function Comment ({
     fileId,
     setSidePanel,
@@ -28,11 +31,47 @@ function Comment ({
 
     const [content, setContent] = useState<string>(""); // 댓글 내용
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
+    const queryClient = useQueryClient(); // QueryClient 가져옴
 
     // 댓글 내용 업데이트 함수
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setContent(event.target.value);
     }
+
+    // 댓글 목록 불러오기 메서드
+    const getComments = async () => {
+        try {
+            // axios로 백엔드 api 호출
+            const response = await axios.get(
+                `http://localhost:8080/api/comment/${fileId}`,
+                {   
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`
+                    }
+                }
+            );
+            
+            console.log(response.data);
+            return response.data;
+        } catch (error: unknown) {
+            if (axios.isAxiosError(error)) {
+                const message = error.response?.data?.message ?? "댓글 목록 불러오기에 실패했습니다.";
+                toast.error(message) 
+            }
+            throw error;
+        }
+    };
+
+    const {
+        data : comments = [],       // 댓글 목록 데이터
+        isLoading : isCommentLoading,  // 현재 요청 중인지 여부
+        isError : isCommentError,      // 요청이 실패했는지 여부
+        error : commentError          // 실패했을 때 오류 정보
+    } = useQuery<Comment[]>({
+        queryKey : ["comments", fileId],
+        queryFn : getComments
+    }) 
+
 
     // 댓글 생성 메서드
     const createComment = async (e : React.FormEvent<HTMLFormElement>) => {
@@ -72,6 +111,9 @@ function Comment ({
             toast.success(response.data);
             console.log(response.data);
             setContent("");
+            await queryClient.invalidateQueries({
+                queryKey: ["comments"]
+            })
         } catch (error: unknown) {
             if (axios.isAxiosError(error)) {
                 const message = error.response?.data?.message ?? "댓글 생성에 실패했습니다.";
@@ -100,11 +142,27 @@ function Comment ({
                 sx={{
                     width : "100%", 
                     display : 'flex',
+                    flexDirection: 'column', 
                     flex : 1,
-                    border : 2,
-                    borderRadius : 4,
+                    gap : 2,
+                    overflowY: 'auto'
                 }}
             >
+                {[...comments].map((comment : Comment) => (
+                    <Box 
+                        key={comment.commentId}
+                        sx={{
+                            width : "100%",
+                            border : '0.5px solid #81c0ff',
+                            height : "20%",
+                            borderRadius : 4,
+                            flexShrink: 0 // 요소 크기가 줄어들지 않게함.
+                            }}>
+                        {comment.content}
+                        {comment.nickname}
+                        {comment.createdDate}
+                    </Box>
+                ))}
             </Box>
             
             {/* 댓글 작성 영역 */}

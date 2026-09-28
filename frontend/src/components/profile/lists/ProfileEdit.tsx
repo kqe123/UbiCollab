@@ -51,7 +51,7 @@ function ProfileEdit() {
 
     // 백엔드에 File 객체를 Multipart로 보내어, S3 버킷에 프로필 사진 업데이트를 수행하는 함수
     // 인증 필요 — 대상 유저는 accessToken(JWT)에서 백엔드가 직접 알아내므로 userId를 따로 안 보낸다.
-    const uploadToS3 = async (file: File) => {
+    const uploadProfileFile = async (file: File) => {
         const formData = new FormData();
         formData.append("file", file);
         const response = await axios.post("http://localhost:8080/api/user/profile-upload",
@@ -103,7 +103,6 @@ function ProfileEdit() {
                     }
                 );
                 console.log("닉네임 변경 성공");
-                toast.success("닉네임 변경 완료");
             } catch (error: unknown) {
                 console.error("닉네임 변경 실패:", error);
                 if (axios.isAxiosError(error)) {
@@ -117,10 +116,11 @@ function ProfileEdit() {
         // 5. (선택사항) 업데이트될 프로필 사진이 있다면, 백엔드에게 해당 프로필 사진을 보낸다.
         if (avatarFile) {
             try {
-                await uploadToS3(avatarFile);
-                toast.success("프로필 사진 업데이트 완료");
+                await uploadProfileFile(avatarFile);
+                setAvatarFile(null);
+                console.log("프로필 사진 업데이트 성공");
             } catch (error: unknown) {
-                console.error("아바타 업데이트 실패:", error);
+                console.error("프로필 사진 업데이트 실패:", error);
                 if (axios.isAxiosError(error)) {
                     toast.error(error.response?.data?.message ?? "프로필 사진 업데이트 실패");
                 } else {
@@ -129,6 +129,7 @@ function ProfileEdit() {
             }
         }
         await queryClient.invalidateQueries({queryKey: ["currentUser"]});
+        toast.success("프로필 수정 완료");
     } 
 
 
@@ -176,7 +177,7 @@ function ProfileEdit() {
                         <EditIcon sx={{ color: 'white', bgcolor: 'blue', borderRadius: '6px', width : 25, height : 25}} />
                         <input
                             type="file"
-                            accept="image/*"
+                            accept="image/png,image/jpeg,image/webp"
                             hidden
                             onChange={handleAvatarChange}
                         />
