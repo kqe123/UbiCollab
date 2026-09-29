@@ -2,15 +2,17 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import Box from '@mui/material/Box';
 import IconButton from  '@mui/material/IconButton';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import CloseIcon from '@mui/icons-material/Close';
 import TextField from '@mui/material/TextField';
 import { useCurrentUser } from "../../../hooks/use-current-user";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type {Comment} from "../../../types/comment.ts";
+import CommentMenu from "../menu/CommentMenu";
 
 function Comment ({
     fileId,
@@ -30,8 +32,12 @@ function Comment ({
     } = useCurrentUser();
 
     const [content, setContent] = useState<string>(""); // 댓글 내용
+    const [commentMenuOpen, setCommentMenuOpen] = useState<boolean>(false); // 댓글 메뉴 열림/닫힘 상태
+    const [selectedComment, setSelectedComment] = useState<Comment | null>(null); // 선택된 댓글
+    const anchorRef = useRef<HTMLButtonElement | null>(null); // 댓글 메뉴(⋮) 버튼 참조
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
     const queryClient = useQueryClient(); // QueryClient 가져옴
+
 
     // formatDate() : 날짜 가독성을 높여주는 함수
     const formatDate = (dateString: string) => {
@@ -45,12 +51,26 @@ function Comment ({
         });
     };
 
-    // 댓글 내용 업데이트 함수
+    // 댓글 메뉴(⋮) 버튼 클릭 시 발생하는 이벤트 함수 
+    const openCommentMenu = (event : React.MouseEvent<HTMLButtonElement>, comment : Comment) => {
+        setCommentMenuOpen(true);
+        setSelectedComment(comment);
+        anchorRef.current = event.currentTarget;
+    }
+
+    // 댓글 메뉴(⋮) 클릭 후 바깥 클릭 시 발생하는 이벤트 함수 
+    const closeCommentMenu = () => {
+        setCommentMenuOpen(false);
+        setSelectedComment(null);
+    }
+
+
+    // 댓글 내용 상태 실시간 업데이트 함수
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setContent(event.target.value);
     }
 
-    // 댓글 목록 불러오기 메서드
+    // 댓글 목록 불러오기 API 호출 함수
     const getComments = async () => {
         try {
             // axios로 백엔드 api 호출
@@ -85,7 +105,7 @@ function Comment ({
     }) 
 
 
-    // 댓글 생성 메서드
+    // 댓글 생성 API 호출 함수
     const createComment = async (e : React.FormEvent<HTMLFormElement>) => {
         e.preventDefault(); // 폼 기본 동작 방지
         
@@ -169,29 +189,39 @@ function Comment ({
                         key={comment.commentId}
                         sx={{
                             width : "100%",
-                            border : '0.5px solid #81c0ff',
                             height : "20%",
                             borderRadius : 4,
                             p : 0.5,
-                            flexShrink: 0 // 요소 크기가 줄어들지 않게함.
+                            flexShrink: 0, // 요소 크기가 줄어들지 않게함.
+                            bgcolor : 'white',
+                            border : '1px solid #E3ECF8',
+                            boxShadow : '0 1px 2px rgba(30, 70, 140, 0.06)'
                             }}>
-                        <Box sx={{ display : 'flex', flexDirection: 'row', alignItems : 'center', gap : 0.5 }}>
+                        <Box sx={{ display : 'flex', flexDirection: 'row', alignItems : 'center', gap : 1 }}>
                             {comment?.profileUrl ? (
                                 <Avatar 
                                     src={comment.profileUrl}
                                     alt="프로필사진"
-                                    sx={{ width: 30, height: 30, border : '0.5px solid #fdbdbdcd' }}
+                                    sx={{ width: 30, height: 30, border : '1px solid #D6E6FA' }}
                                 />
                             ) : (
                                 <Avatar 
                                     alt="프로필사진"
-                                    sx={{ width: 30, height: 30 }}
+                                    sx={{ width: 30, height: 30, border : '1px solid #D6E6FA' }}
                                 />
                             )}
                             <Box sx={{ display : 'flex', flexDirection: 'column'}}>
                                 <Typography variant="body2" sx={{fontWeight : 600}}>{comment.nickname}</Typography>
-                                <Typography sx={{fontSize: '13px', color :'gray'}}>{formatDate(comment.createdDate)}</Typography>
+                                <Typography sx={{fontSize: '13px', color :'#8A94A6'}}>{formatDate(comment.createdDate)}</Typography>
                             </Box>
+
+                            <IconButton 
+                                size="small"    
+                                sx={{ml : 'auto', color : '#8A94A6'}}
+                                onClick={(e) => openCommentMenu(e, comment)}
+                            >
+                                <MoreVertIcon />
+                            </IconButton>
                         </Box>
                         <Typography variant="body2" sx={{p : 1}}>{comment.content}</Typography>
                     </Box>
@@ -205,9 +235,11 @@ function Comment ({
                 sx={{
                     width : "100%", 
                     height : "21%",
-                    border: '1px solid #e0e0e0',
+                    border: '1px solid #E3ECF8',
                     borderRadius : 4,
                     p : 1,
+                    bgcolor : 'white',
+                    boxShadow : '0 2px 8px rgba(30, 70, 140, 0.08)'
                 }}
             >   
                 {/* 프로필사진, 닉네임 */}
@@ -216,15 +248,15 @@ function Comment ({
                         <Avatar 
                             src={currentUser.profileUri}
                             alt="프로필사진"
-                            sx={{ width: 30, height: 30, border : '0.5px solid #fdbdbdcd' }}
+                            sx={{ width: 30, height: 30, border : '1px solid #D6E6FA' }}
                         />
                     ) : (
                         <Avatar 
                             alt="프로필사진"
-                            sx={{ width: 30, height: 30, border : '0.5px solid #fdbdbdcd' }}
+                            sx={{ width: 30, height: 30, border : '1px solid #D6E6FA' }}
                         />
                     )}
-                    <Typography variant="body2">{currentUser?.nickname}</Typography>
+                    <Typography variant="body2" sx={{fontWeight : 600}}>{currentUser?.nickname}</Typography>
                 </Box>
                 
                 {/* 댓글 내용 입력칸 */}
@@ -240,7 +272,10 @@ function Comment ({
                     sx={{
                         width : '100%',
                         mt : 1,
-                        '& .MuiInputBase-input': { fontSize: '14px'} }}
+                        '& .MuiInputBase-input': { fontSize: '14px'},
+                        '& .MuiOutlinedInput-notchedOutline': { borderColor: '#D6E6FA' },
+                        '&:hover .MuiOutlinedInput-root:not(.Mui-focused) .MuiOutlinedInput-notchedOutline': { borderColor: '#A9C8F0' },
+                    }}
                 />
                 
                 {/* 댓글 제출 */}
@@ -257,6 +292,17 @@ function Comment ({
             
             {/* 빈 공간 (댓글 작성 영역이 화면 밖으로 안 나가도록 하기 위한 장치) */}
             <Box sx={{ width : "100%", height : "13%"}}></Box>
+
+            {/* 댓글 메뉴 */}
+            {commentMenuOpen && selectedComment && (
+                <CommentMenu 
+                    open={commentMenuOpen}
+                    onClose={closeCommentMenu}
+                    anchor={anchorRef.current}
+                    comment={selectedComment}
+                />
+            )}
+
         </>
     );
 }

@@ -434,9 +434,9 @@ export function SimpleEditor({
               right : 0,
               width : '25%',
               height : '100%',
-              background: '#fff',
+              background: '#f1f6ff',
               zIndex: 50,
-              boxShadow: '0 0 8px rgba(0,0,0,0.1)',
+              
               p : 2,
               gap : 2,
               display : 'flex',

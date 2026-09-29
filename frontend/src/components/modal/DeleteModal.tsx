@@ -5,7 +5,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import WarningIcon from '@mui/icons-material/Warning';
-function DeletePopup ({
+function DeleteModal ({
     open, title, message, onConfirm ,onClose
 } : {
     open : boolean;
@@ -75,4 +75,4 @@ function DeletePopup ({
 
 }
 
-export default DeletePopup;
+export default DeleteModal;

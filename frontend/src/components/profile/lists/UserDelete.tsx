@@ -9,7 +9,7 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-import DeletePopup from '../../popup/DeletePopup';
+import DeleteModal from '../../modal/DeleteModal';
 
 function UserDelete() {
 
@@ -135,7 +135,7 @@ function UserDelete() {
         </Button>
 
         {/* 삭제 팝업 */}
-        <DeletePopup
+        <DeleteModal
             open={deleteConfirm}
             title="회원 탈퇴"
             message="정말 회원 탈퇴를 진행하시겠습니까? 탈퇴 시 모든 정보가 삭제되며 복구할 수 없습니다."

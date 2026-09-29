@@ -18,7 +18,7 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
-import DeletePopup from '../popup/DeletePopup';
+import DeleteModal from './DeleteModal';
 function  PermissionModal ({
     driveItem,
     onClose
@@ -343,7 +343,7 @@ function  PermissionModal ({
         </Dialog>
 
         {/* 삭제 팝업 */}
-        <DeletePopup
+        <DeleteModal
             open={deleteTarget !== null}
             title="권한 삭제"
             message="해당 권한을 삭제하시겠습니까?"

@@ -39,8 +39,6 @@ function ProfileMenu({
                     sx: { 
                         width: 300,
                         borderRadius: 2,
-                        border : "0.5px solid #81c0ff",
-                        boxShadow: 'none'
                     }
                 },
                 list: {

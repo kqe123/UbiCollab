@@ -11,7 +11,7 @@ import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
 import RestoreIcon from '@mui/icons-material/RestoreFromTrash';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-import DeletePopup from "../popup/DeletePopup";
+import DeleteModal from "../modal/DeleteModal";
 function TrashMenu({
     open, x, y, driveItem, onClose
 } : {
@@ -143,7 +143,7 @@ function TrashMenu({
         </Menu>
         
         {/* 삭제 팝업 */}
-        <DeletePopup
+        <DeleteModal
             open={deleteConfirm}
             title="영구 삭제"
             message="이 항목을 영구 삭제하시겠습니까?"

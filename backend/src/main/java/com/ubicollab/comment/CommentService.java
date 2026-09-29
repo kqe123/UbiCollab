@@ -100,6 +100,21 @@ public class CommentService {
 		return result;
 	}
 	
+	// 댓글 삭제  메서드
+	public void deleteComment(String username, UUID commentId) {
+		Comment comment = getCommentOrThrow(commentId); // 삭제할 댓글
+		User user = getUserOrThrow(username); // 현재 로그인 사용자
+		
+		// 1. (접근 제어) 현재 로그인 유저 ≠ 해당 댓글 작성자인 경우 접근 제한
+		if (!comment.getUser().getId().equals(user.getId())) 
+			throw new PermissionDeniedException("댓글을 삭제할 권한이 없습니다.");
+		
+		// 2. 댓글 삭제
+		commentRepository.delete(comment);
+		
+	}
+	
+	
 	// 현재 로그인 사용자(username)를 조회하는 공통 헬퍼
 	private User getUserOrThrow(String username) {
 		return userRepository.findByUsername(username)
@@ -109,6 +124,12 @@ public class CommentService {
 	// publicId로 DriveItem을 조회하는 공통 헬퍼
 	private DriveItem getDriveItemOrThrow(UUID publicId) {
 		return driveRepository.findByPublicId(publicId)
-			.orElseThrow(() -> new ResourceNotFoundException("해당 아이템을 찾을 수 없습니다. publicId=" + publicId));
+			.orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 아이템입니다. publicId=" + publicId));
+	}
+	
+	// publicId로 Comment을 조회하는 공통 헬퍼
+	private Comment getCommentOrThrow(UUID publicId) {
+		return commentRepository.findByPublicId(publicId)
+			.orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 댓글입니다. publicId=" + publicId));
 	}
 }
