@@ -5,4 +5,5 @@ export type permission = {
     profileUri: string | null;
     driveItemId : string;
     type : string;
+    isOwner: boolean;
 };

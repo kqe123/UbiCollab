@@ -18,7 +18,6 @@ function ProfileMenu({
     currentUser : User | undefined
     anchor : HTMLButtonElement | null
 }) {
-    const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
     const navigate = useNavigate();
 
     const logout = () => {
@@ -34,7 +33,12 @@ function ProfileMenu({
             anchorEl={anchor}
             slotProps={{
                 paper: {
-                    sx: { width: 300, borderRadius: 2 } // 기존 Paper의 width/borderRadius만 유지
+                    sx: { 
+                        width: 300,
+                        borderRadius: 2,
+                        border : "0.5px solid #81c0ff",
+                        boxShadow: 'none'
+                    }
                 },
                 list: {
                     sx: { py: 0.5 } // 기존 Paper의 py도 여기로
@@ -56,7 +60,7 @@ function ProfileMenu({
                 </Box>
             </Box>
 
-            <Divider sx={{my : 0.5}}/>
+            <Divider sx={{ borderBottomWidth: "0.5px" }}/>
 
             <MenuList>
                 <MenuItem
@@ -67,7 +71,7 @@ function ProfileMenu({
                     <Typography variant="body2" sx={{color: 'black' }}>개인 설정</Typography>
                 </MenuItem>
 
-                <Divider sx={{my : 0.5}}/>
+                <Divider sx={{ borderBottomWidth: "0.5px"}}/>
                 
                 <MenuItem
                     sx={{

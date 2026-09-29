@@ -8,7 +8,7 @@ function DocumentName({
 } : {
     fileName : string;
     setFileName : React.Dispatch<React.SetStateAction<string>>;
-    permission : "VIEWER" | "COMMENTOR" | "EDITOR" |"MANAGER" | "OWNER" | null;
+    permission : "VIEWER" | "COMMENTOR" | "EDITOR" |"MANAGER" | null;
 }) {
 
     const defaultName = "제목 없는 문서"; // 기본 파일명
@@ -38,8 +38,8 @@ function DocumentName({
         }
     };
 
-    // 권한이 OWNER | MANAGER | EDITOR이면 True
-    const canRename = permission === "OWNER" || permission === "MANAGER" || permission === "EDITOR";
+    // 권한이 MANAGER이면 True
+    const canRename = permission === "MANAGER";
 
     return (
         <>  

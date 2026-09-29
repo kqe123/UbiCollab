@@ -31,7 +31,7 @@ function App() {
         {/* 최초 접속 시 내 드라이브로 이동 */}
         <Route path="/" element={<Navigate to="/drive/my-drive" replace />}/>
 
-        {/* 공통 Driver 화면 */}
+        {/* Driver 화면 */}
         <Route path="/drive" element={<DriverPage />}>
           {/* /drive 접속 시 /drive/my-drive로 이동 */}
           <Route index element={<Navigate to="my-drive" replace />}/>
@@ -44,7 +44,8 @@ function App() {
           <Route path="shared/:folderId" element={<SharedList />} />  {/* folderId : string */}
           <Route path="trash" element={<TrashList />} /> 
         </Route>
-        {/* 공통 Profile 화면 */}
+
+        {/* Profile 화면 */}
         <Route path="/profile" element={<ProfilePage />} >
            {/* /profile 접속 시 /profile/profile-edit로 이동 */}
           <Route index element={<Navigate to="profile-edit" replace />}/>
@@ -52,6 +53,8 @@ function App() {
           <Route path="password-edit" element={<PasswordEdit />} />
           <Route path="user-delete" element={<UserDelete />} /> 
         </Route>
+
+        {/* 에디터 화면 */}
         <Route path="/editor/:fileId" element={<EditorPage />} />
       </Route>
     </Routes>

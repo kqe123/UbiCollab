@@ -38,7 +38,7 @@ function ChangeNameModal ({
         try {
             // 문서 변경 Backend API 호출  
             await axios.patch(
-                `http://localhost:8080/api/driveitem/${driveItem.publicId}`,
+                `http://localhost:8080/api/driveitem/name-change/${driveItem.publicId}`,
                 driveItemData,
                 {
                     headers: {

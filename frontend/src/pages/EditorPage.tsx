@@ -1,6 +1,6 @@
 import EditorHeader from "../components/editor/header/EditorHeader.tsx";
 import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
@@ -17,6 +17,10 @@ function EditorPage() {
     const [fileName, setFileName] = useState<string>("");
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
     document.title = `${fileName} - Ubicollab`;
+
+    // 사이드 바 열림/닫힘 상태
+    // 공지 버튼을 클릭했을때 NOTICE, 댓글 버튼을 클릭했을때 COMMENT, 열린 사이드 바가 없을때는 NONE
+    const [sidePanel, setSidePanel] = useState<"NONE" | "NOTICE" | "COMMENT" >("NONE");
 
     // 백엔드 api(파일 하나 가져오기)를 호출하는 비동기 함수
     const getFile = async () => {
@@ -44,22 +48,28 @@ function EditorPage() {
 
     // useQuery 실행 (첫 렌더링 시, queryKey가 변경될 시에 실행한다.)
     const {
-        data: file, // 백엔드에서 받아온 데이터
+        data: file, // 백엔드에서 받은 데이터
         isLoading,    // 현재 요청 중인지 여부
-        isError,        // 요청이 실패했는지 여부
-        error,            // 실패했을 때 오류 정보
+        isError,      // 요청이 실패했는지 여부
+        error,        // 실패했을 때 오류 정보
     } = useQuery<DriveItem>({
         queryKey: ["driveItems", "editor" , fileId], // 서버 데이터를 해당 이름으로 관리
-        queryFn: getFile,   // getDriveItems() 실행
+        queryFn: getFile,   // getFile() 실행
     });
 
+    // useEffect가 아니라 컴포넌트 함수 몸통(return 이전)에 그냥 이렇게 씀
+    if (file && fileName === "") {
+        setFileName(file.itemName);
+    }
 
-    // file이 도착한 시점에 외부 데이터로 로컬 State 초기화
-    useEffect(() => {
-        if (file) {
-            setFileName(file.itemName);
-        }
-    }, [file]);
+    // fileId가 없는 잘못된 경로 대비
+    if (!fileId) {
+        return (
+            <Box sx={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center' }}>
+                <Typography>잘못된 접근입니다.</Typography>
+            </Box>
+        );
+    }
 
     // 문서를 받아오기 전에 편집기를 렌더링하지 않음
     if (isLoading) {
@@ -96,16 +106,21 @@ function EditorPage() {
 	return (
 		<>
 		{/* Header에 SimpleEditor에게 fileName 전달 */}
-		<EditorHeader 
-			fileName={fileName}
-			setFileName={setFileName}
-            permission={file?.permissionType ?? null}/>
-		<SimpleEditor 
-			fileId={fileId}
-            fileName={fileName}
-            initialContent={file?.content ?? ""}
-            permission={file?.permissionType ?? null}
-		/>
+        <Box sx={{display: 'flex', flexDirection: 'column'}}>
+            <EditorHeader 
+                fileName={fileName}
+                setFileName={setFileName}
+                permission={file?.permissionType ?? null}
+                setSidePanel={setSidePanel}/>
+            <SimpleEditor 
+                fileId={fileId}
+                fileName={fileName}
+                initialContent={file?.content ?? ""}
+                permission={file?.permissionType ?? null}
+                sidePanel={sidePanel}
+                setSidePanel={setSidePanel}
+            />
+        </Box>
 		</>
 	);
 }

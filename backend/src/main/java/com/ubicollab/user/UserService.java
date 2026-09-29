@@ -2,7 +2,6 @@ package com.ubicollab.user;
 
 
 import java.io.IOException;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,14 +33,10 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.Delete;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.presigner.S3Presigner;
-import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
-import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 import software.amazon.awssdk.services.rekognition.model.Image;
 
 @Service
@@ -51,7 +46,7 @@ public class UserService {
 	private final PasswordEncoder passwordEncoder;
 	private final PermissionService permissionService;
 	private final S3Client s3Client;
-	private final S3Presigner s3Presigner;
+	private final String cloudFrontDomain;
     private final String bucket;
     private final RekognitionClient rekognitionClient;
     
@@ -60,17 +55,17 @@ public class UserService {
 			PasswordEncoder passwordEncoder,
 			PermissionService permissionService,
 			S3Client s3Client,
-			S3Presigner s3Presigner,
 			RekognitionClient rekognitionClient,
-			@Value("${AWS_S3_BUCKET}") String bucket) {
+			@Value("${AWS_S3_BUCKET}") String bucket,
+			@Value("${CLOUDFRONT_DOMAIN}") String cloudFrontDomain) {
 		this.userRepository = userRepository;
 		this.driveRepository = driveRepository;
 		this.passwordEncoder = passwordEncoder;
 		this.permissionService = permissionService;
 		this.s3Client = s3Client;
-		this.s3Presigner = s3Presigner;
 		this.rekognitionClient = rekognitionClient;
         this.bucket = bucket;
+        this.cloudFrontDomain = cloudFrontDomain;
 	}
 	
 	
@@ -95,14 +90,7 @@ public class UserService {
 	public void uploadProfileImage(MultipartFile file, String username) {
 		
 		// 1. 기본 유효성 검사 — 비어있는지, 크기, Content-Type 화이트리스트
-	    if (file.isEmpty()) {
-	        throw new IllegalArgumentException("파일이 비어있습니다.");
-	    }
-	    
-	    String contentType = file.getContentType();
-	    if (contentType == null || !List.of("image/png", "image/jpeg", "image/webp").contains(contentType)) {
-	        throw new IllegalArgumentException("허용되지 않는 파일 형식입니다.");
-	    }
+		String contentType = validateFile(file);
 
 	    // 2. 바이트로 읽기 (Rekognition, S3 업로드 둘 다 이 바이트를 씀)
 	    byte[] bytes;
@@ -113,6 +101,73 @@ public class UserService {
 	    }
 	    
 	    // 3. AWS Rekognition로 유해 콘텐츠 검사 — 여기서 걸리면 아래로 못 내려감 (S3 저장 자체가 안 됨)
+	    verifyProfileImage(bytes);
+	    
+	    // 4. User 존재 확인 (인증된 본인 계정)
+	    User user = getUserOrThrow(username);
+	    String oldKey = user.getProfileImageKey();
+	    UUID userId = user.getPublicId();
+
+	    // 5. S3 key(경로) 생성 : 'profiles/(User의 UUID)/profile_(currentTimeMillis)'
+        String newKey = "profiles/" + userId + "/profile_" + System.currentTimeMillis();
+
+	    // 6. S3에 실제 업로드 — presigned URL 없이 백엔드에서 자기 자격증명으로 직접 PUT
+        // "S3의 어느 버킷, 어느 경로(key)에, 어떤 타입(image/png 등)으로 파일을 넣을 것인가"를 정의하는 명세 생성
+	    PutObjectRequest objectRequest = PutObjectRequest.builder()
+	            .bucket(bucket)
+	            .key(newKey)
+	            .contentType(contentType)
+	            .build();
+	    
+	    // S3Client가 명세를 기반으로 해당 bytes 배열(이미지)를 S3 버킷에 PUT시킴 (Image Upload)
+	    s3Client.putObject(objectRequest, RequestBody.fromBytes(bytes));
+	    
+	    // 7. DB에 key 반영 + 만약 중간에 예외 발생 시 롤백
+	    try {
+	        user.setProfileImageKey(newKey);
+	        userRepository.save(user);
+	    } catch (Exception e) {
+	        // DB 저장 실패 시 방금 올린 S3 객체를 다시 지워서 고아 파일 방지
+	        s3Client.deleteObject(DeleteObjectRequest.builder().bucket(bucket).key(newKey).build());
+	        throw e;
+	    }
+	    
+	    // 8. (선택사항) 기존 프로필 사진이 있다면 삭제
+		if (oldKey != null) {
+			// "S3의 어느 버킷, 어느 경로(key)의 파일을 지울 것인가"를 정의하는 요청(명세) 생성
+			DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
+					.bucket(bucket)
+					.key(oldKey)
+					.build();
+
+			// 삭제 요청을 실제로 S3에 전송
+			try {
+				s3Client.deleteObject(deleteRequest);
+			} catch (Exception e) {
+				// 실패하면 고아 파일이 남지만, 탈퇴할 때 prefix 단위로 삭제되니까 로그만 남긴다
+				System.err.println("기존 프로필 사진 삭제 실패 (key: " + oldKey + "): " + e.getMessage());
+			}
+		}	
+	}
+
+	
+	// File의 유효성 검사를 실시하는 헬퍼 메서드
+	private String validateFile(MultipartFile file) {
+		// 1. 기본 유효성 검사 — 비어있는지, 크기, Content-Type 화이트리스트
+	    if (file.isEmpty()) {
+	        throw new IllegalArgumentException("파일이 비어있습니다.");
+	    }
+	    
+	    String contentType = file.getContentType();
+	    if (contentType == null || !List.of("image/png", "image/jpeg", "image/webp").contains(contentType)) {
+	        throw new IllegalArgumentException("허용되지 않는 파일 형식입니다.");
+	    }
+		return contentType;
+	}
+	
+	// 프로필 사진의 유효성 검사를 실시하는 헬퍼 메서드
+	private void verifyProfileImage(byte[] bytes) {
+		// 3. AWS Rekognition로 유해 콘텐츠 검사 — 여기서 걸리면 아래로 못 내려감 (S3 저장 자체가 안 됨)
 	    // Rekognition이 "이 라벨이 맞다"고 판단하는 신뢰도(confidence score)가 70% 이상인 것만 결과에 포함시킴.
 	    DetectModerationLabelsRequest moderationRequest = DetectModerationLabelsRequest.builder()
 	            .image(Image.builder().bytes(SdkBytes.fromByteArray(bytes)).build())
@@ -136,36 +191,6 @@ public class UserService {
 	    if (!moderationResponse.moderationLabels().isEmpty()) {
 	        throw new S3UploadDeniedException("부적절한 이미지는 업로드할 수 없습니다.");
 	    }
-	    
-	    // 4. User 존재 확인 (인증된 본인 계정)
-	    User user = getUserOrThrow(username);
-	    UUID userId = user.getPublicId();
-
-	    // 5. S3 key(경로) 생성 : 'profiles/(User의 UUID)/profile'
-	    // 확장자를 key에 넣지 않음 — 렌더링은 아래 contentType 헤더가 담당하므로,
-	    // 나중에 다른 형식(png -> jpg 등)으로 사진을 바꿔도 항상 같은 key라 S3가 자동으로 덮어쓰고, 고아 파일이 안 생김.
-        String key = "profiles/" + userId + "/profile";
-
-	    // 6. S3에 실제 업로드 — presigned URL 없이 백엔드에서 자기 자격증명으로 직접 PUT
-        // "S3의 어느 버킷, 어느 경로(key)에, 어떤 타입(image/png 등)으로 파일을 넣을 것인가"를 정의하는 명세만 만드는 단계이다.
-	    PutObjectRequest objectRequest = PutObjectRequest.builder()
-	            .bucket(bucket)
-	            .key(key)
-	            .contentType(contentType)
-	            .build();
-	    
-	    // S3Client가 명세를 기반으로 해당 bytes 배열(이미지)를 S3 버킷에 PUT시킴 (Image Upload)
-	    s3Client.putObject(objectRequest, RequestBody.fromBytes(bytes));
-
-	    // 7. DB에 key 반영 + 만약 중간에 예외 발생 시 롤백
-	    try {
-	        user.setProfileImageKey(key);
-	        userRepository.save(user);
-	    } catch (Exception e) {
-	        // DB 저장 실패 시 방금 올린 S3 객체를 다시 지워서 고아 파일 방지
-	        s3Client.deleteObject(DeleteObjectRequest.builder().bucket(bucket).key(key).build());
-	        throw e;
-	    }
 	}
 
 
@@ -185,8 +210,8 @@ public class UserService {
 		DriveItem driveItem = driveRepository.findByPublicId(publicId).orElseThrow(
 				() -> new ResourceNotFoundException("해당 아이템을 찾을 수 없습니다. publicId="+ publicId));
 
-		// [권한 제어] 공유 대상을 검색하는 API이므로, createPermission과 동일하게 OWNER | MANAGER 권한 필요
-		if (!permissionService.isOwnerOrManager(driveItem, currentUser)) {
+		// [접근 제어] 공유 대상을 검색하는 API이므로, createPermission과 동일하게 MANAGER 권한 필요
+		if (!permissionService.isManager(driveItem, currentUser)) {
 			throw new PermissionDeniedException("사용자를 검색할 권한이 없습니다.");
 		}
 
@@ -243,7 +268,7 @@ public class UserService {
 	// [프로필] 회원 탈퇴 메서드
 	public void deleteUser(String username) {
 		// 현재 로그인된 유저
-		User user = getUserOrThrow(username);
+		User user = getUserOrThrow(username); 
 		
 		// 1. DB 해당  User 삭제
 		userRepository.delete(user);
@@ -288,27 +313,13 @@ public class UserService {
 		}
 	}
 	
-	// 프로필 사진을 로드할 Presigned URI를 반환하는 헬퍼 메서드
+	// 프로필 사진의 CloudFront URL을  반환 (https://[CloudFront Domain 주소]/[S3 객체 키])
+	// profiles/* 경로는 뷰어 액세스 제한이 없어 서명 없이 바로 접근 가능
 	private String getProfileUri(String key) {
-		String profileUri = null;
-		// 프로필 키가 존재할 경우에만 수행
-		if (key != null) {
-			// 1. "S3의 어느 버킷, 어느 key를 GET할 것인가"를 정의하는 요청 명세 (아직 서명 X)
-			GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-					.bucket(bucket)
-					.key(key)
-					.build();
-			
-			// 2. 위 요청에 "10분간만 유효한 GET"이라는 서명 조건을 씌운 presign 요청 생성
-	        GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
-	                .signatureDuration(Duration.ofMinutes(10)) // URL 유효기간 10분
-	                .getObjectRequest(getObjectRequest)
-	                .build();
-			
-	        // 3. 실제 서명 수행 — AWS 자격증명으로 로컬에서 HMAC 서명 계산 (네트워크 호출 없음, 빠름)
-	        profileUri = s3Presigner.presignGetObject(presignRequest).url().toString();
+		if (key == null) {
+			return null;
 		}
-		return profileUri;
+		return "https://" + cloudFrontDomain + "/" + key;
 	}
 	
 	// username으로 User를 조회하는 공통 헬퍼 메서드

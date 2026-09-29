@@ -104,7 +104,7 @@ function SignupPage () {
     // 백엔드에 File 객체를 Multipart로 보내어,
     // S3 버킷에 업로드를 수행하는 함수
     // 인증 필요 — 대상 유저는 accessToken(JWT)에서 백엔드가 직접 알아내므로 userId를 따로 안 보낸다.
-    const uploadToS3 = async (file: File, accessToken : string) => {
+    const uploadProfileImage = async (file: File, accessToken : string) => {
         const formData = new FormData();
         formData.append("file", file);
         const response = await axios.post("http://localhost:8080/api/user/profile-upload",
@@ -164,7 +164,7 @@ function SignupPage () {
             //    보내고, S3 버킷에 업로드한 뒤, 해당 유저의 ProfileImageKey를 수정한다.
             if (avatarFile && accessToken) {
                 try {
-                    await uploadToS3(avatarFile, accessToken);
+                    await uploadProfileImage(avatarFile, accessToken);
                     toast.success("프로필 사진 업데이트에 성공하였습니다!" )
                 } catch (error: unknown) {
                     console.error("아바타 업로드 실패:", error);

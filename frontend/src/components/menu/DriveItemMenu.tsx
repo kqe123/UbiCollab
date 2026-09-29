@@ -163,8 +163,7 @@ function DriveItemMenu({
                 <MenuList>
                     <MenuItem
                         onClick={() => {setMenuMode("RENAME")}}
-                        disabled={!(driveItem.permissionType === "OWNER" || driveItem.permissionType === "MANAGER" ||
-                                    driveItem.permissionType === "EDITOR")}
+                        disabled={!(driveItem.permissionType === "MANAGER")}
                         >
                             <ListItemIcon>
                                 <EditIcon fontSize="small" />
@@ -198,7 +197,7 @@ function DriveItemMenu({
 
                     <MenuItem
                         onClick={() => {setMenuMode("SHARE")}}
-                        disabled={!(driveItem.permissionType === "OWNER" || driveItem.permissionType === "MANAGER")}
+                        disabled={!(driveItem.permissionType === "MANAGER")}
                     >
                         <ListItemIcon> <ShareIcon fontSize="small" /> </ListItemIcon>
                         <Typography variant="body2">
@@ -208,7 +207,7 @@ function DriveItemMenu({
 
                     <MenuItem
                         onClick={() => {setMenuMode("PERMISSION")}}
-                        disabled={!(driveItem.permissionType === "OWNER" || driveItem.permissionType === "MANAGER")}
+                        disabled={!(driveItem.permissionType === "MANAGER")}
                     >
                         <ListItemIcon> <PermissionIcon fontSize="small" /> </ListItemIcon>
                         <Typography variant="body2">
@@ -226,7 +225,7 @@ function DriveItemMenu({
                                 bgcolor: '#fdc2c2'
                             },
                         }}
-                        disabled={!(driveItem.permissionType === "OWNER" || driveItem.permissionType === "MANAGER")}
+                        disabled={!(driveItem.permissionType === "MANAGER")}
                     >
                         <ListItemIcon> <DeleteIcon fontSize="small" /> </ListItemIcon>
                         <Typography variant="body2" sx={{fontWeight: 600}}>

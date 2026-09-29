@@ -13,5 +13,6 @@ public interface PermissionRepository extends CrudRepository<Permission, Long>{
 	Optional<Permission> findByItemAndUser(DriveItem item, User user);
 	boolean existsByItem(DriveItem item);
 	boolean existsByItemAndUser(DriveItem item, User user);
+	boolean existsByItemAndUserNot(DriveItem item, User user);
 	
 }

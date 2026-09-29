@@ -70,7 +70,8 @@ public class FavoriteService {
 
 		for (Favorite favorite : favoriteRepository.findByUserUsername(username)) {
 			PermissionType permissionType = permissionService.getPermission(favorite.getItem(), user);
-			result.add(new DriveItemResponseDto(favorite.getItem(), true, permissionType));
+			boolean isOwner = permissionService.isOwner(favorite.getItem(), user);
+			result.add(new DriveItemResponseDto(favorite.getItem(), true, permissionType, isOwner));
 		}
 
 		return result;
@@ -92,7 +93,8 @@ public class FavoriteService {
 
 		for (DriveItem driveItem : driveRepository.findByParentPublicId(foldId)) {
 			boolean isFavorite = favoriteRepository.existsByUserUsernameAndItem(username, driveItem);
-			result.add(new DriveItemResponseDto(driveItem, isFavorite, permissionType));
+			boolean isOwner = permissionService.isOwner(driveItem, user);
+			result.add(new DriveItemResponseDto(driveItem, isFavorite, permissionType, isOwner));
 		}
 
 		return result;
@@ -121,7 +123,8 @@ public class FavoriteService {
 		// Parent O -> 부모로 거슬러 올라가면서 경로를 추적한다.(단, 즐겨찾기로 등록된 경로까지만!)
 		while (parent != null) {
 			boolean isFavorite = favoriteRepository.existsByUserUsernameAndItem(username, parent);
-			path.add(new DriveItemResponseDto(parent, isFavorite, null));
+			boolean isOwner = permissionService.isOwner(parent, user);
+			path.add(new DriveItemResponseDto(parent, isFavorite, null, isOwner));
 			// 부모가 즐겨찾기에 등록되어 있다면, 경로 추적 중지
 			if (isFavorite) {
 				break;

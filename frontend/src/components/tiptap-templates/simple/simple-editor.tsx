@@ -76,11 +76,17 @@ import "@/components/tiptap-templates/simple/simple-editor.scss"
 // 사용자 정의 components
 import SaveButton from "@/components/editor/toolbar/SaveButton"
 import LoadButton from "@/components/editor/toolbar/LoadButton"
+import Comment from "@/components/editor/panel/Comment"
+import Notice from "@/components/editor/panel/Notice"
+import MyBubbleMenu from "@/components/editor/menu/BubbleMenu"
 import axios from "axios";
 import toast from "react-hot-toast";
 import LoadDocumentModal from "@/components/modal/LoadDocumentModal";
 import Text from '@mui/material/Typography';
+import Box from '@mui/material/Box';
+import Slide from '@mui/material/Slide'
 import DOMPurify from "dompurify";
+import { useQueryClient } from "@tanstack/react-query";
 
 const MainToolbarContent = ({
   onHighlighterClick,
@@ -88,6 +94,7 @@ const MainToolbarContent = ({
   onSave,
   isSaving,
   isMobile,
+  canSave,
   canEdit
 }: {
   onHighlighterClick: () => void
@@ -95,6 +102,7 @@ const MainToolbarContent = ({
   onSave : () => Promise<void>
   isSaving : boolean
   isMobile: boolean
+  canSave : boolean
   canEdit : boolean
 }) => {
   const [isLoadModalOpen, setIsLoadModalOpen] = useState<boolean>(false);
@@ -108,14 +116,14 @@ const MainToolbarContent = ({
   };
   return (
     <>
-      <Spacer />
+      <Spacer size="6px"/>
        {/* 저장 버튼 추가 */}
       <ToolbarGroup>
         <LoadButton onClick={openLoadModal} />
         <SaveButton 
           onSave={onSave}
           isSaving={isSaving}
-          canEdit={canEdit}/>
+          canSave={canSave}/>
       </ToolbarGroup>
       <ToolbarSeparator />
       <ToolbarGroup>
@@ -173,9 +181,6 @@ const MainToolbarContent = ({
           {isLoadModalOpen && (
              <LoadDocumentModal onClose={closeLoadModal} />
           )}
-      <ToolbarGroup>
-        <ThemeToggle />
-      </ToolbarGroup>
     </>
   )
 }
@@ -214,11 +219,15 @@ export function SimpleEditor({
   fileId,
   initialContent,
   permission,
+  sidePanel,
+  setSidePanel,
   } : { 
     fileName: string;
-    fileId : string | undefined;
+    fileId : string;
     initialContent: string;
-    permission : "VIEWER" | "COMMENTOR" | "EDITOR" |"MANAGER" | "OWNER" | null;
+    permission : "VIEWER" | "COMMENTOR" | "EDITOR" |"MANAGER" | null;
+    sidePanel : "NONE" | "COMMENT" | "NOTICE";
+    setSidePanel : React.Dispatch<React.SetStateAction<"NONE" | "COMMENT" | "NOTICE">>;
   }) {
   const isMobile = useIsBreakpoint()
   const { height } = useWindowSize()
@@ -226,13 +235,34 @@ export function SimpleEditor({
     "main"
   )
   const [isSaving, setIsSaving] = useState<boolean>(false); // 저장 상태를 나타내는 isSaving 추가
+  const [isHaveUpdate, setIsHaveUpdate] = useState<boolean>(false); // 업데이트 유무를 나타내는 true/false
   const toolbarRef = useRef<HTMLDivElement>(null)
-  const canEdit = permission === "OWNER" || permission === "MANAGER" || permission === "EDITOR";
+
+  // 마지막 저장 상태의 스냅샷
+  // EditorPage에서 file이 isLoading일때는 SimpleEditor 자체를 렌더링 하지 않으므로
+  // fileName, initialContent가 확정된 값이다. 그래서 그냥 초기값으로 채운다.
+  const savedSnapshot = useRef<{itemName : string, content: string}>({
+    itemName: fileName,
+    content: DOMPurify.sanitize(initialContent),
+  }); 
+  const canEdit = permission === "MANAGER" || permission === "EDITOR";
+  const canSave = canEdit && isHaveUpdate
   const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
+  const queryClient = useQueryClient(); // QueryClient 가져옴
 
   const editor = useEditor({
     immediatelyRender: false,
-    editable : canEdit,
+    editable : canEdit, // false이면 편집 불가
+    // 에디터 내용이 변경되면, 업데이트 유무를 체크하는 checkUpdates() 실행
+    onUpdate: ({ editor }) => {
+      checkUpdates(fileName, DOMPurify.sanitize(editor.getHTML()));
+    },
+
+    // 에디터 선택 영역이 변경될때 발생하는 콜백 함수
+    onSelectionUpdate: ({ editor }) => {
+        const { from, to } = editor.state.selection
+        const text = editor.state.doc.textBetween(from, to, ' ')
+    },
     editorProps: {
       attributes: {
         autocomplete: "off",
@@ -268,7 +298,7 @@ export function SimpleEditor({
         onError: (error) => console.error("Upload failed:", error),
       }),
     ],
-    content: DOMPurify.sanitize(initialContent), // 에디터 내용 업데이트
+    content : DOMPurify.sanitize(initialContent), // 에디터 내용 업데이트
   })
 
   // handleSave() : fileName, content, extension을 보내서 DB에 Document를 저장하도록
@@ -280,26 +310,25 @@ export function SimpleEditor({
     }
   
     // 문서명 앞뒤 공백 제거
-    const trimmedFileName = fileName.trim();
-  
-    // backend api에 보낼 body
+    const trimFileName = fileName.trim();
+    const sanitizedContent = DOMPurify.sanitize(editor.getHTML());
+    
+    // 변경사항이 있을시에만 body에 추가
     const fileData = {
-      itemName:
-        trimmedFileName === ""
-          ? "제목 없는 문서"
-          : trimmedFileName,
-  
-    // 저장 버튼을 누른 순간의 최신 에디터 내용
-      content: DOMPurify.sanitize(editor.getHTML()),
-      extension: "UC",
+      ...((fileName !== savedSnapshot.current.itemName) && {
+        itemName: trimFileName === "" ? "제목 없는 문서" : trimFileName,
+      }),
+      ...((sanitizedContent !== savedSnapshot.current.content) && {
+        content: sanitizedContent,
+      })
     };
   
     try {
       setIsSaving(true);
         
-      // 문서 저장 Backend API 호출
-      const response = await axios.patch(
-        `http://localhost:8080/api/driveitem/${fileId}`,
+      // 파일 저장 Backend API 호출
+      await axios.patch(
+        `http://localhost:8080/api/driveitem/save/${fileId}`,
         fileData,
         {
           headers: {
@@ -310,18 +339,20 @@ export function SimpleEditor({
         
       console.log("알림 : 문서 저장 성공");
       toast.success("성공적으로 저장되었습니다.");
-      } catch (error: unknown) {
+      savedSnapshot.current = { itemName: trimFileName, content: sanitizedContent }; // 스냅샷 교체
+      setIsHaveUpdate(false); // 업데이트 유무를 false로 전환
+      
+      // 변경된 DriveItem 내용을 실시간으로 최신화
+      await queryClient.invalidateQueries({
+        queryKey: ["driveItems"]
+      });
+    } catch (error: unknown) {
       console.error("문서 저장 실패:", error);
       
       // axios에서 발생한 오류인 경우
       if (axios.isAxiosError(error)) {
         console.error("백엔드 응답:", error.response?.data);
         toast.error(error.response?.data?.message ?? "문서 저장에 실패했습니다.");
-      } 
-      // 일반 오류인 경우
-      else if (error instanceof Error) {
-        console.error("일반 오류:", error.message);
-        toast.error(error.message);
       } 
       // 그 외의 오류인 경우
       else {
@@ -330,6 +361,15 @@ export function SimpleEditor({
       }
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  // checkUpdates() : 현재 fileName, content와 savedSnapshot(마지막 저장 시점 스냅샷)
+  //                  을 비교해 변경되었다면 isHaveUpdate를 true로 변환
+  const checkUpdates = (currentFileName: string, currentContent: string) => {
+    if( currentFileName !== savedSnapshot.current.itemName ||
+      currentContent !== savedSnapshot.current.content) {
+      setIsHaveUpdate(true);
     }
   };
 
@@ -343,6 +383,11 @@ export function SimpleEditor({
       setMobileView("main")
     }
   }, [isMobile, mobileView])
+
+  // fileName이 변경됬다면, 업데이트 유무를 체크하는 checkUpdates() 실행
+  useEffect(() => {
+    checkUpdates(fileName, editor?.getHTML() ?? savedSnapshot.current.content)
+  }, [fileName]);
 
   return (
     <div className="simple-editor-wrapper">
@@ -364,6 +409,7 @@ export function SimpleEditor({
               onSave={handleSave}   // MainToolbarContent에 onSave 이름으로 저장 로직 전달
               isSaving={isSaving}   // MainToolbarContent에 isSaving도 전달
               isMobile={isMobile}
+              canSave={canSave}
               canEdit={canEdit}
             />
           ) : (
@@ -379,6 +425,42 @@ export function SimpleEditor({
           role="presentation"
           className="simple-editor-content"
         />
+
+        <Slide direction="left" in={sidePanel !== "NONE"} mountOnEnter unmountOnExit timeout={400}>
+          <Box
+            sx={{
+              position: "fixed",  // fixed
+              top: "70px",        // 헤더 높이만큼 내려서 헤더와 안 겹치게
+              right : 0,
+              width : '25%',
+              height : '100%',
+              background: '#fff',
+              zIndex: 50,
+              boxShadow: '0 0 8px rgba(0,0,0,0.1)',
+              p : 2,
+              gap : 2,
+              display : 'flex',
+              flexDirection : 'column'
+            }}
+          >
+            {sidePanel === "NOTICE" && (
+              <Notice 
+                sidePanel={sidePanel}
+                setSidePanel={setSidePanel}
+                permission={permission}
+              />
+            )}
+            {sidePanel === "COMMENT" && (
+              <Comment 
+                fileId={fileId}
+                setSidePanel={setSidePanel}
+                permission={permission}
+              />
+            )}
+            
+          </Box>
+        </Slide>
+        {editor && <MyBubbleMenu editor={editor} />}
       </EditorContext.Provider>
     </div>
   )
