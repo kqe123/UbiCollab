@@ -10,6 +10,7 @@ import Typography from '@mui/material/Typography';
 import SettingsIcon from '@mui/icons-material/Settings';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import type { User } from "../../types/user";
+import { useQueryClient } from "@tanstack/react-query";
 function ProfileMenu({
     open, onClose, currentUser, anchor
 } : {
@@ -19,9 +20,11 @@ function ProfileMenu({
     anchor : HTMLButtonElement | null
 }) {
     const navigate = useNavigate();
+    const queryClient = useQueryClient(); // QueryClient 가져옴
 
     const logout = () => {
         localStorage.removeItem("accessToken");
+        queryClient.clear();
         navigate('/login');
         console.log("로그아웃 완료");
     }

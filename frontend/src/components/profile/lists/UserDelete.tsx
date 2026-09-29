@@ -2,6 +2,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import Button from '@mui/material/Button';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -14,6 +15,7 @@ function UserDelete() {
 
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
     const navigate = useNavigate();
+    const queryClient = useQueryClient(); // QueryClient 가져옴
     const [isChecked, setIsChecked] = useState<boolean>(false); // 체크박스 체크/비체크
     const [deleteConfirm, setDeleteConfirm] = useState(false); // delete 팝업창 열림/닫힘
 
@@ -46,7 +48,8 @@ function UserDelete() {
 
             console.log("알림 : 회원 탈퇴 완료");
             toast.success("회원 탈퇴가 완료되었습니다.");
-            localStorage.removeItem("accessToken");
+            localStorage.removeItem("accessToken"); // JWT 토큰 제거
+            queryClient.clear(); // 모든 쿼리 데이터 초기화
             navigate('/login');
         } catch (error: unknown) {
             console.error("회원 탈퇴 실패... : ", error);
