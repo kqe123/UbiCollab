@@ -3,6 +3,7 @@ package com.ubicollab.user.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 
+// 회원가입 DTO
 public record SignupDto(
 	@NotBlank(message = "아이디를 입력해주세요.")
 	@Pattern(

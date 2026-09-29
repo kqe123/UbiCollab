@@ -4,6 +4,7 @@ export type Comment = {
     anchorType: "TEXT" | "IMAGE" | null;
     fileId : string;
     nickname : string;
+    profileUrl : string | null;
     content: string;
     createdDate: string;
 };

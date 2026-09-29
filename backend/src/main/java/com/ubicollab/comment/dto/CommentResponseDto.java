@@ -33,17 +33,20 @@ public record CommentResponseDto(
 	 	UUID fileId,
 		// 댓글 작성자 (외래키)
 		String nickname,
+		// 댓글 작성자의 프로필 사진 URL
+		String profileUrl,
 		// 내용
 		String content,
 		// 댓글 작성 날짜
 		LocalDateTime createdDate
 ) {
-	public CommentResponseDto(Comment comment) {
+	public CommentResponseDto(Comment comment, String profileUrl) {
 		this(	comment.getPublicId(),
 				comment.getParent() == null ? null : comment.getParent().getPublicId(), // getParent()가 null이면 바로 null 반환
 				comment.getAnchorType(),
 				comment.getFile().getPublicId(),
 				comment.getUser().getNickname(),
+				profileUrl,
 				comment.getContent(),
 				comment.getCreatedDate()
 			);

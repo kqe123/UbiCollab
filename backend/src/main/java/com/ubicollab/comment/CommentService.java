@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import com.ubicollab.comment.dto.CommentCreateDto;
 import com.ubicollab.comment.dto.CommentResponseDto;
@@ -17,6 +18,7 @@ import com.ubicollab.permission.PermissionService;
 import com.ubicollab.permission.enums.PermissionType;
 import com.ubicollab.user.User;
 import com.ubicollab.user.UserRepository;
+import com.ubicollab.user.dto.UserResponse;
 
 @Service
 public class CommentService {
@@ -24,15 +26,18 @@ public class CommentService {
 	private final DriveItemRepository driveRepository;
 	private final UserRepository userRepository;
 	private final PermissionService permissionService;
+	private final String cloudFrontDomain;
 	
 	public CommentService(CommentRepository commentRepository,
 			 DriveItemRepository driveRepository,
 			 UserRepository userRepository,
-			 PermissionService permissionService) {
+			 PermissionService permissionService,
+			 @Value("${CLOUDFRONT_DOMAIN}") String cloudFrontDomain) {
 		this.commentRepository = commentRepository;
 		this.driveRepository = driveRepository;
 		this.userRepository = userRepository;
 		this.permissionService = permissionService;
+		this.cloudFrontDomain = cloudFrontDomain;
 	}
 			
 	// 댓글 생성 메서드
@@ -67,16 +72,16 @@ public class CommentService {
 		commentRepository.save(newComment);
 	}
 	
-	// 댓글 생성 메서드
+	// 댓글 리스트 조회 메서드
 	public List<CommentResponseDto> getComments(String username, UUID fileId) {
 		List<CommentResponseDto> result = new ArrayList<>();
 		
 		// 1. 현재 로그인 사용자, 대상 파일이 존재하는지 검색
-		User user = getUserOrThrow(username);
+		User currentUser = getUserOrThrow(username);
 		DriveItem file = getDriveItemOrThrow(fileId);
 		
 		// 2. (접근 제어) VIEWER이거나 권한이 없는 경우 접근 제한
-		PermissionType permission = permissionService.getPermission(file ,user);
+		PermissionType permission = permissionService.getPermission(file ,currentUser);
 		if (permission == PermissionType.VIEWER || permission == null) {
 			throw new PermissionDeniedException("댓글을 조회할 권한이 없습니다.");
 		}
@@ -84,7 +89,12 @@ public class CommentService {
 		// 3. 댓글 목록을 ResponseDTO에 담아서 반환
 		List<Comment> comments = commentRepository.findByFile(file);
 		for (Comment comment :  comments) {
-			result.add(new CommentResponseDto(comment));
+			String profileUrl = null;
+			String userProfileKey = comment.getUser().getProfileImageKey();
+			if (userProfileKey != null ) {
+				profileUrl = "https://" + cloudFrontDomain + "/" + userProfileKey;
+			}
+			result.add(new CommentResponseDto(comment, profileUrl));
 		}
 		
 		return result;

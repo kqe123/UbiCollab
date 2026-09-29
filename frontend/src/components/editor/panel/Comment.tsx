@@ -33,6 +33,18 @@ function Comment ({
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
     const queryClient = useQueryClient(); // QueryClient 가져옴
 
+    // formatDate() : 날짜 가독성을 높여주는 함수
+    const formatDate = (dateString: string) => {
+        return new Date(dateString).toLocaleString("ko-KR", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+        });
+    };
+
     // 댓글 내용 업데이트 함수
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setContent(event.target.value);
@@ -127,7 +139,11 @@ function Comment ({
         <>
             {/* 헤더 */}
             <Box sx={{display : 'flex', flexDirection: 'row'}}>
-                <Typography variant="h6">댓글</Typography>
+                <Typography variant="h6">댓글 
+                    <Typography component="span" variant="h6" color="primary" >
+                        {" "}{comments.length}
+                    </Typography>
+                </Typography>
                 <IconButton
                     size="small"    
                     sx={{ml : 'auto'}}
@@ -156,11 +172,28 @@ function Comment ({
                             border : '0.5px solid #81c0ff',
                             height : "20%",
                             borderRadius : 4,
+                            p : 0.5,
                             flexShrink: 0 // 요소 크기가 줄어들지 않게함.
                             }}>
-                        {comment.content}
-                        {comment.nickname}
-                        {comment.createdDate}
+                        <Box sx={{ display : 'flex', flexDirection: 'row', alignItems : 'center', gap : 0.5 }}>
+                            {comment?.profileUrl ? (
+                                <Avatar 
+                                    src={comment.profileUrl}
+                                    alt="프로필사진"
+                                    sx={{ width: 30, height: 30, border : '0.5px solid #fdbdbdcd' }}
+                                />
+                            ) : (
+                                <Avatar 
+                                    alt="프로필사진"
+                                    sx={{ width: 30, height: 30 }}
+                                />
+                            )}
+                            <Box sx={{ display : 'flex', flexDirection: 'column'}}>
+                                <Typography variant="body2" sx={{fontWeight : 600}}>{comment.nickname}</Typography>
+                                <Typography sx={{fontSize: '13px', color :'gray'}}>{formatDate(comment.createdDate)}</Typography>
+                            </Box>
+                        </Box>
+                        <Typography variant="body2" sx={{p : 1}}>{comment.content}</Typography>
                     </Box>
                 ))}
             </Box>
@@ -183,12 +216,12 @@ function Comment ({
                         <Avatar 
                             src={currentUser.profileUri}
                             alt="프로필사진"
-                            sx={{ width: 30, height: 30 }}
+                            sx={{ width: 30, height: 30, border : '0.5px solid #fdbdbdcd' }}
                         />
                     ) : (
                         <Avatar 
                             alt="프로필사진"
-                            sx={{ width: 30, height: 30 }}
+                            sx={{ width: 30, height: 30, border : '0.5px solid #fdbdbdcd' }}
                         />
                     )}
                     <Typography variant="body2">{currentUser?.nickname}</Typography>

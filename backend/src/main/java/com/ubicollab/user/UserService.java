@@ -319,8 +319,6 @@ public class UserService {
 		if (key == null) {
 			return null;
 		}
-		System.out.println("@Value = " + bucket);
-	    System.out.println("OS env = " + System.getenv("AWS_S3_BUCKET"));
 		return "https://" + cloudFrontDomain + "/" + key;
 	}
 	
