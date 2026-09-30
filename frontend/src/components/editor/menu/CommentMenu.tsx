@@ -4,27 +4,33 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import MenuList from '@mui/material/MenuList';
 import ListItemIcon from '@mui/material/ListItemIcon';
-import Divider from '@mui/material/Divider';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import ReplyIcon from '@mui/icons-material/SubdirectoryArrowRight';
 import Typography from '@mui/material/Typography';
 import DeleteModal from '../../modal/DeleteModal';
 import type {Comment} from "../../../types/comment.ts";
+import { useCurrentUser } from "../../../hooks/use-current-user";
 
 function CommentMenu ({
-    open, onClose, anchor, comment
+    open, onClose, anchor, comment, openEdit
 } : {
     open: boolean;
     onClose : () => void;
     anchor : HTMLButtonElement | null
     comment : Comment
+    openEdit : (comment : Comment) => void;
 }) {
 
-    const queryClient = useQueryClient(); // QueryClient 가져옴
     const [deleteConfirm, setDeleteConfirm] = useState<boolean>(false); // delete 팝업창 열림/닫힘
+    const queryClient = useQueryClient(); // QueryClient 가져옴
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
+
+    // 현재 로그인된 User 정보 
+    const {
+        data: currentUser, // 백엔드에서 받아온 데이터
+    } = useCurrentUser();
 
     // 댓글 삭제 API 호출 함수
     const deleteComment = async () => {
@@ -76,17 +82,33 @@ function CommentMenu ({
                 }
             }} 
         >
-            <MenuList>
-                <MenuItem
-                    sx={{width : '100%', justifyContent: 'flex-start', px : 2, color: 'black'}}
+            {/* 수정 버튼 (댓글 작성자가 아니면 표시 X)*/}
+            {comment.userId === currentUser?.publicId && (
+                <MenuItem 
+                    dense
+                    sx={{
+                        width : '100%',
+                        justifyContent: 'flex-start',
+                        px : 2,
+                        color: 'black'
+                    }}
+                    onClick={() => openEdit(comment)}
                 >
                     <ListItemIcon> <EditIcon fontSize="small" /></ListItemIcon>
                     <Typography variant="body2" sx={{color: 'black' }}>수정</Typography>
                 </MenuItem>
+            )}
 
-                <Divider sx={{ borderBottomWidth: "0.5px"}}/>
-                
+            {/* 답글 버튼 */}
+            <MenuItem dense sx={{width : '100%', justifyContent: 'flex-start', px : 2, color: 'black'}}>
+                <ListItemIcon> <ReplyIcon fontSize="small" /></ListItemIcon>
+                <Typography variant="body2" sx={{color: 'black' }}>답글</Typography>
+            </MenuItem>
+            
+            {/* 삭제 버튼 (댓글 작성자가 아니면 표시 X)*/}
+            {comment.userId === currentUser?.publicId && (
                 <MenuItem
+                    dense
                     sx={{
                         width : '100%',
                         justifyContent: 'flex-start',
@@ -101,7 +123,7 @@ function CommentMenu ({
                     <ListItemIcon> <DeleteIcon fontSize="small" /></ListItemIcon>
                     <Typography variant="body2" sx={{fontWeight: 600 }}>삭제</Typography>
                 </MenuItem>
-            </MenuList>
+            )}
         </Menu>
 
         <DeleteModal

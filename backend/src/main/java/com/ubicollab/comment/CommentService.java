@@ -100,6 +100,21 @@ public class CommentService {
 		return result;
 	}
 	
+	// 댓글 수정  메서드
+	public void updateComment(String username, UUID commentId, String content) {
+		Comment comment = getCommentOrThrow(commentId); // 수정할 댓글 
+		User user = getUserOrThrow(username); // 현재 로그인 사용자
+			
+		// 1. (접근 제어) 현재 로그인 유저 ≠ 해당 댓글 작성자인 경우 접근 제한
+		if (!comment.getUser().getId().equals(user.getId())) 
+			throw new PermissionDeniedException("댓글을 수정할 권한이 없습니다.");
+			
+		// 2. 댓글  수정
+		comment.setContent(content);
+		comment.setUpdatedDate(LocalDateTime.now());
+		commentRepository.save(comment);
+	}
+	
 	// 댓글 삭제  메서드
 	public void deleteComment(String username, UUID commentId) {
 		Comment comment = getCommentOrThrow(commentId); // 삭제할 댓글

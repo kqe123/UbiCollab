@@ -31,10 +31,14 @@ function Comment ({
         error,            // 실패했을 때 오류 정보
     } = useCurrentUser();
 
-    const [content, setContent] = useState<string>(""); // 댓글 내용
     const [commentMenuOpen, setCommentMenuOpen] = useState<boolean>(false); // 댓글 메뉴 열림/닫힘 상태
     const [selectedComment, setSelectedComment] = useState<Comment | null>(null); // 선택된 댓글
-    const anchorRef = useRef<HTMLButtonElement | null>(null); // 댓글 메뉴(⋮) 버튼 참조
+    const anchorRef = useRef<HTMLButtonElement | null>(null); // 댓글 메뉴(⋮) 버튼 Dom 요소 참조
+    const [newContent, setNewContent] = useState<string>(""); // '작성' 중인 댓글 내용
+    const [editCommentId, setEditCommentId] = useState<string | null>(null); // '수정' 중인 댓글 Id
+    const [editContent, setEditContent] = useState<string>(""); // '수정' 중인 댓글 내용
+
+
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
     const queryClient = useQueryClient(); // QueryClient 가져옴
 
@@ -51,23 +55,69 @@ function Comment ({
         });
     };
 
-    // 댓글 메뉴(⋮) 버튼 클릭 시 발생하는 이벤트 함수 
+    // 댓글 메뉴(⋮) 표시
     const openCommentMenu = (event : React.MouseEvent<HTMLButtonElement>, comment : Comment) => {
-        setCommentMenuOpen(true);
-        setSelectedComment(comment);
-        anchorRef.current = event.currentTarget;
+        setCommentMenuOpen(true); // 댓글 메뉴 open
+        setSelectedComment(comment); // 해당 댓글 선택
+        anchorRef.current = event.currentTarget; // 
     }
 
-    // 댓글 메뉴(⋮) 클릭 후 바깥 클릭 시 발생하는 이벤트 함수 
+    // 댓글 메뉴(⋮) 숨김
     const closeCommentMenu = () => {
-        setCommentMenuOpen(false);
-        setSelectedComment(null);
+        setCommentMenuOpen(false); // 댓글 메뉴 close
+        setSelectedComment(null); // 해당 댓글 해제
     }
 
+    // 수정 모드 진입
+    const startEdit = (comment : Comment) => {
+        setEditCommentId(comment.commentId);
+        setEditContent(comment.content);
+    }
 
-    // 댓글 내용 상태 실시간 업데이트 함수
-    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setContent(event.target.value);
+    // 수정 모드 종료
+    const closeEdit = () => {
+        setEditCommentId(null);
+        setEditContent("");
+    }
+
+    // 댓글 '수정' 내용 업데이트
+    const updateEditContent = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setEditContent(event.target.value);
+    }
+
+    // 댓글 수정 API 호출 함수
+    const updateComment = async () => {
+        // [예외처리] 수정된 내용이 0자일때 
+        if (editContent.length === 0) {
+            toast.error("댓글 내용을 작성해주세요.");
+            return;
+        }
+
+        try {
+            // axios로 백엔드 api 호출
+             await axios.patch(
+                `http://localhost:8080/api/comment/update/${editCommentId}`,
+                { content : editContent },
+                {   
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`
+                    }
+                }
+            );
+            await queryClient.invalidateQueries({ queryKey: ["comments"] });
+            closeEdit();
+        } catch (error: unknown) {
+            if (axios.isAxiosError(error)) {
+                const message = error.response?.data?.message ?? "댓글 업데이트에 실패했습니다.";
+                toast.error(message) 
+            }
+            throw error;
+        }
+    }
+
+    // 댓글 '작성' 내용 업데이트
+    const updateNewContent = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setNewContent(event.target.value);
     }
 
     // 댓글 목록 불러오기 API 호출 함수
@@ -109,7 +159,8 @@ function Comment ({
     const createComment = async (e : React.FormEvent<HTMLFormElement>) => {
         e.preventDefault(); // 폼 기본 동작 방지
         
-        if (content.length === 0) {
+        // [예외처리] 작성 내용이 0자일때 
+        if (newContent.length === 0) {
             toast.error("댓글 내용을 작성해주세요.");
             return;
         }
@@ -125,7 +176,7 @@ function Comment ({
             parentId : null, 
             anchorType : null,
             fileId : fileId,
-            content : content,
+            content : newContent,
         }
 
         try {
@@ -142,7 +193,7 @@ function Comment ({
             
             toast.success(response.data);
             console.log(response.data);
-            setContent("");
+            setNewContent("");
             await queryClient.invalidateQueries({
                 queryKey: ["comments"]
             })
@@ -184,19 +235,23 @@ function Comment ({
                     overflowY: 'auto'
                 }}
             >
+                {/* 댓글 목록들 */}
                 {[...comments].map((comment : Comment) => (
                     <Box 
                         key={comment.commentId}
                         sx={{
                             width : "100%",
-                            height : "20%",
+                            minHeight : "20%",
                             borderRadius : 4,
                             p : 0.5,
                             flexShrink: 0, // 요소 크기가 줄어들지 않게함.
                             bgcolor : 'white',
                             border : '1px solid #E3ECF8',
                             boxShadow : '0 1px 2px rgba(30, 70, 140, 0.06)'
-                            }}>
+                        }}
+                    >
+
+                        {/* 댓글 작성자(프로필 사진, 닉네임), 더보기 버튼 */}
                         <Box sx={{ display : 'flex', flexDirection: 'row', alignItems : 'center', gap : 1 }}>
                             {comment?.profileUrl ? (
                                 <Avatar 
@@ -212,9 +267,12 @@ function Comment ({
                             )}
                             <Box sx={{ display : 'flex', flexDirection: 'column'}}>
                                 <Typography variant="body2" sx={{fontWeight : 600}}>{comment.nickname}</Typography>
-                                <Typography sx={{fontSize: '13px', color :'#8A94A6'}}>{formatDate(comment.createdDate)}</Typography>
+                                <Typography sx={{fontSize: '13px', color :'#8A94A6'}}>
+                                    {formatDate(comment.createdDate)}
+                                    {" "}{comment.isUpdated === true && "(수정됨)"}
+                                </Typography>
                             </Box>
-
+                            
                             <IconButton 
                                 size="small"    
                                 sx={{ml : 'auto', color : '#8A94A6'}}
@@ -223,7 +281,43 @@ function Comment ({
                                 <MoreVertIcon />
                             </IconButton>
                         </Box>
-                        <Typography variant="body2" sx={{p : 1}}>{comment.content}</Typography>
+
+                        {/* 댓글 내용 or 댓글 수정칸 */}
+                        {editCommentId === comment.commentId ? (
+                            <>
+                                <TextField
+                                    required
+                                    type="text"
+                                    size="small"
+                                    value={editContent}
+                                    onChange={updateEditContent}
+                                    multiline
+                                    rows={2}
+                                    sx={{
+                                        width : '100%',
+                                        mt : 1,
+                                        '& .MuiInputBase-input': { fontSize: '14px'},
+                                        '& .MuiOutlinedInput-notchedOutline': { borderColor: '#D6E6FA' },
+                                        '&:hover .MuiOutlinedInput-root:not(.Mui-focused) .MuiOutlinedInput-notchedOutline': { borderColor: '#A9C8F0' },
+                                    }}
+                                />
+                                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt : 1 }}>
+                                    <Button variant="outlined" size="small" onClick={closeEdit}>취소</Button>
+                                    <Button variant="contained" size="small" onClick={updateComment}>수정</Button>
+                                </Box>
+                            </>
+                        ) : (
+                            <Typography 
+                                variant="body2" 
+                                sx={{
+                                    p : 1,
+                                    whiteSpace : 'pre-wrap',
+                                    wordBreak : 'break-word'
+                                }}
+                            >
+                                {comment.content}
+                            </Typography>
+                        )}
                     </Box>
                 ))}
             </Box>
@@ -264,11 +358,11 @@ function Comment ({
                     required
                     type="text"
                     size="small"
-                    name="content"
-                    value={content}
-                    onChange={handleChange}
+                    value={newContent}
+                    onChange={updateNewContent}
                     multiline
                     rows={2}
+                    slotProps={{ htmlInput: { maxLength: 500 } }} // 최대 글자 수 500자
                     sx={{
                         width : '100%',
                         mt : 1,
@@ -300,6 +394,7 @@ function Comment ({
                     onClose={closeCommentMenu}
                     anchor={anchorRef.current}
                     comment={selectedComment}
+                    openEdit={startEdit}
                 />
             )}
 
