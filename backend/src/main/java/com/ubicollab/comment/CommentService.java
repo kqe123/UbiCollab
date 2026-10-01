@@ -96,7 +96,6 @@ public class CommentService {
 			}
 			result.add(new CommentResponseDto(comment, profileUrl));
 		}
-		
 		return result;
 	}
 	

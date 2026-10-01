@@ -47,14 +47,10 @@ function ProfileMenu({
             }} 
         >   
             <Box sx={{p : 1, display : 'flex'}}>
-                {currentUser?.profileUri ? (
-                        <Avatar 
-                            src={currentUser.profileUri}
-                            alt="프로필사진" sx={{ width: 50, height: 50}}
-                        />
-                    ) : (
-                        <Avatar alt="프로필사진" sx={{ width: 50, height: 50}} />
-                )}
+                <Avatar
+                    src={currentUser?.profileUri ?? undefined}
+                    alt="프로필사진" sx={{ width: 50, height: 50}}
+                />
                 <Box sx={{display : 'flex', flexDirection : "column", ml : 2 }}>
                     <Typography variant="body2" sx={{ fontWeight : 500, flex : 1}}>{currentUser?.nickname}</Typography>
                     <Typography variant="body2" sx={{ color : 'gray', flex : 1}}>{currentUser?.username}</Typography>

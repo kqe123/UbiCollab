@@ -7,7 +7,7 @@ import MenuItem from '@mui/material/MenuItem';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import ReplyIcon from '@mui/icons-material/SubdirectoryArrowRight';
+import ReportIcon from '@mui/icons-material/Report';
 import Typography from '@mui/material/Typography';
 import DeleteModal from '../../modal/DeleteModal';
 import type {Comment} from "../../../types/comment.ts";
@@ -99,11 +99,21 @@ function CommentMenu ({
                 </MenuItem>
             )}
 
-            {/* 답글 버튼 */}
-            <MenuItem dense sx={{width : '100%', justifyContent: 'flex-start', px : 2, color: 'black'}}>
-                <ListItemIcon> <ReplyIcon fontSize="small" /></ListItemIcon>
-                <Typography variant="body2" sx={{color: 'black' }}>답글</Typography>
-            </MenuItem>
+            {/* 신고 버튼 (댓글 작성자가 아니면 표시 O)*/}
+            {comment.userId !== currentUser?.publicId && (
+                <MenuItem 
+                    dense
+                    sx={{
+                        width : '100%',
+                        justifyContent: 'flex-start',
+                        px : 2,
+                        color: 'black'
+                    }}
+                >
+                    <ListItemIcon> <ReportIcon fontSize="small" /></ListItemIcon>
+                    <Typography variant="body2" sx={{color: 'black' }}>신고</Typography>
+                </MenuItem>
+            )}
             
             {/* 삭제 버튼 (댓글 작성자가 아니면 표시 X)*/}
             {comment.userId === currentUser?.publicId && (

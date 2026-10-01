@@ -432,7 +432,7 @@ export function SimpleEditor({
               position: "fixed",  // fixed
               top: "70px",        // 헤더 높이만큼 내려서 헤더와 안 겹치게
               right : 0,
-              width : '25%',
+              width : '30%',
               height : '100%',
               background: '#f1f6ff',
               zIndex: 50,
