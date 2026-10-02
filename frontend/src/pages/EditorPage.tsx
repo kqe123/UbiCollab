@@ -19,8 +19,8 @@ function EditorPage() {
     document.title = `${fileName} - Ubicollab`;
 
     // 사이드 바 열림/닫힘 상태
-    // 공지 버튼을 클릭했을때 NOTICE, 댓글 버튼을 클릭했을때 COMMENT, 열린 사이드 바가 없을때는 NONE
-    const [sidePanel, setSidePanel] = useState<"NONE" | "NOTICE" | "COMMENT" >("NONE");
+    // 공지 버튼을 클릭했을때 ANNOUNCEMENT, 댓글 버튼을 클릭했을때 COMMENT, 열린 사이드 바가 없을때는 NONE
+    const [sidePanel, setSidePanel] = useState<"NONE" | "ANNOUNCEMENT" | "COMMENT" >("NONE");
 
     // 백엔드 api(파일 하나 가져오기)를 호출하는 비동기 함수
     const getFile = async () => {

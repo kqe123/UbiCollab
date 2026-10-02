@@ -18,7 +18,7 @@ function EditorHeader({
     fileName : string;
     setFileName : React.Dispatch<React.SetStateAction<string>>;
     permission : "VIEWER" | "COMMENTOR" | "EDITOR" | "MANAGER" | null;
-    setSidePanel : React.Dispatch<React.SetStateAction<"NONE" | "COMMENT" | "NOTICE">>;
+    setSidePanel : React.Dispatch<React.SetStateAction<"NONE" | "COMMENT" | "ANNOUNCEMENT">>;
 }) {
     // 현재 로그인된 User 정보 
     const {
@@ -63,7 +63,7 @@ function EditorHeader({
             <Box sx={{ width : '20%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap : 1}}>
                 {/* 공지사항 버튼 */}
                 <Tooltip 
-                    title="Notification"
+                    title="Announcement"
                     arrow
                     placement="bottom"
                     slotProps={{
@@ -82,7 +82,7 @@ function EditorHeader({
                     >
                     <IconButton 
                         size="large"
-                        onClick={() => setSidePanel("NOTICE")}
+                        onClick={() => setSidePanel("ANNOUNCEMENT")}
                         disabled={!(permission === "EDITOR" || permission === "MANAGER")}
                     >
                         <CampaignIcon sx={{ color: !(permission === "EDITOR" || permission === "MANAGER")

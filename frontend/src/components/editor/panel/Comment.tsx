@@ -16,7 +16,7 @@ import InputAdornment from '@mui/material/InputAdornment';
 import { useCurrentUser } from "../../../hooks/use-current-user";
 import { useState, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type {Comment} from "../../../types/comment.ts";
+import type { Comment as CommentType } from "../../../types/comment.ts";
 import CommentMenu from "../menu/CommentMenu";
 import Badge from '@mui/material/Badge';
 
@@ -26,7 +26,7 @@ function Comment ({
     permission
 } : { 
     fileId : string;
-    setSidePanel : React.Dispatch<React.SetStateAction<"NONE" | "COMMENT" | "NOTICE">>;
+    setSidePanel : React.Dispatch<React.SetStateAction<"NONE" | "COMMENT" | "ANNOUNCEMENT">>;
     permission : "VIEWER" | "COMMENTOR" | "EDITOR" |"MANAGER" | null;
 }) {
     // 현재 로그인된 User 정보 
@@ -38,7 +38,7 @@ function Comment ({
     } = useCurrentUser();
 
     const [commentMenuOpen, setCommentMenuOpen] = useState<boolean>(false); // 댓글 메뉴 열림/닫힘 상태
-    const [selectedComment, setSelectedComment] = useState<Comment | null>(null); // 선택된 댓글
+    const [selectedComment, setSelectedComment] = useState<CommentType | null>(null); // 선택된 댓글
     const anchorRef = useRef<HTMLButtonElement | null>(null); // 댓글 메뉴(⋮) 버튼 Dom 요소 참조
 
     const [newContent, setNewContent] = useState<string>(""); // '작성' 중인 댓글 내용
@@ -66,7 +66,7 @@ function Comment ({
 
 
     // 댓글 메뉴(⋮) 표시
-    const openCommentMenu = (event : React.MouseEvent<HTMLButtonElement>, comment : Comment) => {
+    const openCommentMenu = (event : React.MouseEvent<HTMLButtonElement>, comment : CommentType) => {
         setCommentMenuOpen(true); // 댓글 메뉴 open
         setSelectedComment(comment); // 해당 댓글 선택
         anchorRef.current = event.currentTarget; // 
@@ -79,7 +79,7 @@ function Comment ({
     }
 
     // 댓글 수정 모드 진입
-    const openEdit = (comment : Comment) => {
+    const openEdit = (comment : CommentType) => {
         setEditCommentId(comment.commentId);
         setEditContent(comment.content);
         closeCommentMenu(); 
@@ -97,7 +97,7 @@ function Comment ({
     }
 
     // 댓글 수정 API 호출 함수
-    const updateComment = async (comment : Comment) => {
+    const updateComment = async (comment : CommentType) => {
         // [예외처리] 수정된 내용이 0자일때 
         if (editContent.trim().length === 0) {
             toast.error("댓글 내용을 작성해주세요.");
@@ -186,7 +186,7 @@ function Comment ({
         isLoading : isCommentLoading,  // 현재 요청 중인지 여부
         isError : isCommentError,      // 요청이 실패했는지 여부
         error : commentError          // 실패했을 때 오류 정보
-    } = useQuery<Comment[]>({
+    } = useQuery<CommentType[]>({
         queryKey : ["comments", fileId],
         queryFn : getComments
     }) 
@@ -405,7 +405,7 @@ function Comment ({
                 {/* 댓글 목록들 */}
                 {comments.filter((comment) => comment.parentId === null)
                 .sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()) // 댓글은 최신순
-                .map((currentComment : Comment) => (
+                .map((currentComment : CommentType) => (
                     <>
                     <Box 
                         key={currentComment.commentId}
@@ -508,9 +508,9 @@ function Comment ({
                         {openReplies.has(currentComment.commentId) && (
                             <>
                             <Divider sx={{ my : 1, borderColor : '#E3ECF8' }}  />
-                            {comments.filter((reply : Comment) => currentComment.commentId === reply.parentId)
+                            {comments.filter((reply : CommentType) => currentComment.commentId === reply.parentId)
                             .sort((a, b) => new Date(a.createdDate).getTime() - new Date(b.createdDate).getTime()) // 답글은 오래된순
-                            .map((reply : Comment) => (
+                            .map((reply : CommentType) => (
                                 <Box 
                                     key={reply.commentId}
                                     sx={{

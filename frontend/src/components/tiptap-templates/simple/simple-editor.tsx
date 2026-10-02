@@ -77,7 +77,7 @@ import "@/components/tiptap-templates/simple/simple-editor.scss"
 import SaveButton from "@/components/editor/toolbar/SaveButton"
 import LoadButton from "@/components/editor/toolbar/LoadButton"
 import Comment from "@/components/editor/panel/Comment"
-import Notice from "@/components/editor/panel/Notice"
+import Announcement from "@/components/editor/panel/Announcement"
 import MyBubbleMenu from "@/components/editor/menu/BubbleMenu"
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -226,8 +226,8 @@ export function SimpleEditor({
     fileId : string;
     initialContent: string;
     permission : "VIEWER" | "COMMENTOR" | "EDITOR" |"MANAGER" | null;
-    sidePanel : "NONE" | "COMMENT" | "NOTICE";
-    setSidePanel : React.Dispatch<React.SetStateAction<"NONE" | "COMMENT" | "NOTICE">>;
+    sidePanel : "NONE" | "COMMENT" | "ANNOUNCEMENT";
+    setSidePanel : React.Dispatch<React.SetStateAction<"NONE" | "COMMENT" | "ANNOUNCEMENT">>;
   }) {
   const isMobile = useIsBreakpoint()
   const { height } = useWindowSize()
@@ -443,8 +443,8 @@ export function SimpleEditor({
               flexDirection : 'column'
             }}
           >
-            {sidePanel === "NOTICE" && (
-              <Notice 
+            {sidePanel === "ANNOUNCEMENT" && (
+              <Announcement 
                 sidePanel={sidePanel}
                 setSidePanel={setSidePanel}
                 permission={permission}

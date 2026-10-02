@@ -3,18 +3,15 @@ import IconButton from  '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import CloseIcon from '@mui/icons-material/Close';
 import Container from '@mui/material/Container';
-function Notice ({
+function Announcement ({
     sidePanel,
     setSidePanel,
     permission
 } : { 
-    sidePanel : "NONE" | "COMMENT" | "NOTICE";
-    setSidePanel : React.Dispatch<React.SetStateAction<"NONE" | "COMMENT" | "NOTICE">>;
+    sidePanel : "NONE" | "COMMENT" | "ANNOUNCEMENT";
+    setSidePanel : React.Dispatch<React.SetStateAction<"NONE" | "COMMENT" | "ANNOUNCEMENT">>;
     permission : "VIEWER" | "COMMENTOR" | "EDITOR" |"MANAGER" | null;
 }) {
-
-    
-
     return (
         <Box>
             <Box sx={{display : 'flex', flexDirection: 'row'}}>
@@ -34,4 +31,4 @@ function Notice ({
     );
     
 }
-export default Notice;
+export default Announcement;

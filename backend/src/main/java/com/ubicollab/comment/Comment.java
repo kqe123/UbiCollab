@@ -70,7 +70,7 @@ public class Comment {
 	// 댓글 수정 날짜 (null O)
 	private LocalDateTime updatedDate;
 
-	//생성자
+	// 생성자
 	public Comment() {}
 		
 	public Comment(Comment parent, CommentAnchorType anchorType,DriveItem file, User user,
@@ -83,6 +83,7 @@ public class Comment {
 			this.createdDate = createdDate;
 	}
 	
+	// ID, publicId, Parent, anchorType, File, User, createdDate는 Setter가 필요없으므로 Setter가 없음
 	public Long getId() {
 		return id;
 	}
@@ -94,33 +95,17 @@ public class Comment {
 	public Comment getParent() {
 		return parent;
 	}
-
-	public void setParent(Comment parent) {
-		this.parent = parent;
-	}
 	
 	public CommentAnchorType getAnchorType() {
 		return anchorType;
-	}
-
-	public void setAnchorType(CommentAnchorType anchorType) {
-		this.anchorType = anchorType;
 	}
 
 	public DriveItem getFile() {
 		return file;
 	}
 
-	public void setFile(DriveItem file) {
-		this.file = file;
-	}
-
 	public User getUser() {
 		return user;
-	}
-
-	public void setUser(User user) {
-		this.user = user;
 	}
 
 	public String getContent() {
@@ -133,10 +118,6 @@ public class Comment {
 
 	public LocalDateTime getCreatedDate() {
 		return createdDate;
-	}
-
-	public void setCreatedDate(LocalDateTime createdDate) {
-		this.createdDate = createdDate;
 	}
 	
 	public LocalDateTime getUpdatedDate() {
