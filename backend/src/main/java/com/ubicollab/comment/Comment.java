@@ -60,13 +60,16 @@ public class Comment {
 	private User user;
 	
 	// 내용
-	@Column(columnDefinition = "TEXT")
+	@Column(length = 500, nullable = false)
 	private String content;
 		
 	// 댓글 작성 날짜
 	@Column(nullable=false, updatable = false)
 	private LocalDateTime createdDate;
 	
+	// 댓글 수정 날짜 (null O)
+	private LocalDateTime updatedDate;
+
 	//생성자
 	public Comment() {}
 		
@@ -135,4 +138,13 @@ public class Comment {
 	public void setCreatedDate(LocalDateTime createdDate) {
 		this.createdDate = createdDate;
 	}
+	
+	public LocalDateTime getUpdatedDate() {
+		return updatedDate;
+	}
+
+	public void setUpdatedDate(LocalDateTime updatedDate) {
+		this.updatedDate = updatedDate;
+	}
+	
 }

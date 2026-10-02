@@ -10,6 +10,7 @@ import Typography from '@mui/material/Typography';
 import SettingsIcon from '@mui/icons-material/Settings';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import type { User } from "../../types/user";
+import { useQueryClient } from "@tanstack/react-query";
 function ProfileMenu({
     open, onClose, currentUser, anchor
 } : {
@@ -19,9 +20,11 @@ function ProfileMenu({
     anchor : HTMLButtonElement | null
 }) {
     const navigate = useNavigate();
+    const queryClient = useQueryClient(); // QueryClient 가져옴
 
     const logout = () => {
         localStorage.removeItem("accessToken");
+        queryClient.clear();
         navigate('/login');
         console.log("로그아웃 완료");
     }
@@ -36,8 +39,6 @@ function ProfileMenu({
                     sx: { 
                         width: 300,
                         borderRadius: 2,
-                        border : "0.5px solid #81c0ff",
-                        boxShadow: 'none'
                     }
                 },
                 list: {
@@ -46,14 +47,10 @@ function ProfileMenu({
             }} 
         >   
             <Box sx={{p : 1, display : 'flex'}}>
-                {currentUser?.profileUri ? (
-                        <Avatar 
-                            src={currentUser.profileUri}
-                            alt="프로필사진" sx={{ width: 50, height: 50}}
-                        />
-                    ) : (
-                        <Avatar alt="프로필사진" sx={{ width: 50, height: 50}} />
-                )}
+                <Avatar
+                    src={currentUser?.profileUri ?? undefined}
+                    alt="프로필사진" sx={{ width: 50, height: 50}}
+                />
                 <Box sx={{display : 'flex', flexDirection : "column", ml : 2 }}>
                     <Typography variant="body2" sx={{ fontWeight : 500, flex : 1}}>{currentUser?.nickname}</Typography>
                     <Typography variant="body2" sx={{ color : 'gray', flex : 1}}>{currentUser?.username}</Typography>

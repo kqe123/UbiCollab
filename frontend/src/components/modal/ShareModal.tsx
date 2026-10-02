@@ -205,10 +205,7 @@ function  ShareModal ({
                                         }
                                     }
                                 >
-                                    {user.profileUri === null ? 
-                                    (<Avatar alt="기본프로필사진" sx={{ width: 32, height: 32}} />)
-                                    : (<Avatar src={user.profileUri} alt="프로필사진" sx={{ width: 32, height: 32}} />)
-                                    }
+                                    <Avatar src={user.profileUri ?? undefined} alt="프로필사진" sx={{ width: 32, height: 32}} />
                                     
                                     <Box sx={{display : 'flex', flexDirection : "column", ml : 2 }}>
                                         <Typography variant="body2" sx={{ fontWeight : 500, flex : 1}}>{user.nickname}</Typography>
@@ -240,10 +237,7 @@ function  ShareModal ({
                                         my : 1
                                     }}
                                 >
-                                    {sharedUser.profileUri === null ? 
-                                    (<Avatar alt="기본프로필사진" sx={{ width: 32, height: 32}} />)
-                                    : (<Avatar src={sharedUser.profileUri} alt="프로필사진" sx={{ width: 32, height: 32}} />)
-                                    }
+                                    <Avatar src={sharedUser.profileUri ?? undefined} alt="프로필사진" sx={{ width: 32, height: 32}} />
                                     <Box sx={{ display : 'flex', flexDirection : "column", ml : 2 }}>
                                         <Typography variant="body2" sx={{ fontWeight : 500, flex : 1}}>{sharedUser.nickname}</Typography>
                                         <Typography variant="body2" sx={{ color : 'gray', flex : 1}}>{sharedUser.username}</Typography>

@@ -5,6 +5,8 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -45,5 +47,15 @@ public class GlobalExceptionHandler {
 		body.put("message", e.getMessage());
 		
 		return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
+	}
+
+	// @Valid 검증 실패 시 (@NotBlank, @Size 등) DTO에 작성한 message를 반환
+	@ExceptionHandler(MethodArgumentNotValidException.class)
+	public ResponseEntity<Map<String, String>> handleValidation(MethodArgumentNotValidException e) {
+		Map<String, String> body = new HashMap<>();
+		FieldError fieldError = e.getBindingResult().getFieldError();
+		body.put("message", fieldError != null ? fieldError.getDefaultMessage() : "잘못된 요청입니다.");
+
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
 	}
 }

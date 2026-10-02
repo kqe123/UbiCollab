@@ -18,7 +18,7 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
-import DeletePopup from '../popup/DeletePopup';
+import DeleteModal from './DeleteModal';
 function  PermissionModal ({
     driveItem,
     onClose
@@ -258,10 +258,7 @@ function  PermissionModal ({
                                     alignItems : 'center',
                                 }}
                             >
-                                {permission.profileUri === null ?
-                                (<Avatar alt="기본프로필사진" sx={{ width: 32, height: 32}} />)
-                                : (<Avatar src={permission.profileUri} alt="프로필사진" sx={{ width: 32, height: 32}} />)
-                                }
+                                <Avatar src={permission.profileUri ?? undefined} alt="프로필사진" sx={{ width: 32, height: 32}} />
                                 <Box sx={{ display : 'flex', flexDirection : "column", ml : 2 }}>
                                     <Typography variant="body2" sx={{ fontWeight : 500, flex : 1}}>
                                         {permission.nickname}
@@ -343,7 +340,7 @@ function  PermissionModal ({
         </Dialog>
 
         {/* 삭제 팝업 */}
-        <DeletePopup
+        <DeleteModal
             open={deleteTarget !== null}
             title="권한 삭제"
             message="해당 권한을 삭제하시겠습니까?"

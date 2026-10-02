@@ -2,18 +2,20 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import Button from '@mui/material/Button';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-import DeletePopup from '../../popup/DeletePopup';
+import DeleteModal from '../../modal/DeleteModal';
 
 function UserDelete() {
 
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
     const navigate = useNavigate();
+    const queryClient = useQueryClient(); // QueryClient 가져옴
     const [isChecked, setIsChecked] = useState<boolean>(false); // 체크박스 체크/비체크
     const [deleteConfirm, setDeleteConfirm] = useState(false); // delete 팝업창 열림/닫힘
 
@@ -46,7 +48,8 @@ function UserDelete() {
 
             console.log("알림 : 회원 탈퇴 완료");
             toast.success("회원 탈퇴가 완료되었습니다.");
-            localStorage.removeItem("accessToken");
+            localStorage.removeItem("accessToken"); // JWT 토큰 제거
+            queryClient.clear(); // 모든 쿼리 데이터 초기화
             navigate('/login');
         } catch (error: unknown) {
             console.error("회원 탈퇴 실패... : ", error);
@@ -132,7 +135,7 @@ function UserDelete() {
         </Button>
 
         {/* 삭제 팝업 */}
-        <DeletePopup
+        <DeleteModal
             open={deleteConfirm}
             title="회원 탈퇴"
             message="정말 회원 탈퇴를 진행하시겠습니까? 탈퇴 시 모든 정보가 삭제되며 복구할 수 없습니다."

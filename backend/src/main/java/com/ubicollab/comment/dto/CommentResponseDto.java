@@ -31,24 +31,31 @@ public record CommentResponseDto(
 		CommentAnchorType anchorType,
 		// 댓글 대상 파일
 	 	UUID fileId,
-		// 댓글 작성자 (외래키)
+	 	// 댓글 작성자 publicId
+	 	UUID userId,
+		// 댓글 작성자 닉네임 (외래키)
 		String nickname,
 		// 댓글 작성자의 프로필 사진 URL
 		String profileUrl,
 		// 내용
 		String content,
 		// 댓글 작성 날짜
-		LocalDateTime createdDate
+		LocalDateTime createdDate,
+		// 댓글 수정 유무(true/false)
+		boolean isUpdated
+		
 ) {
 	public CommentResponseDto(Comment comment, String profileUrl) {
 		this(	comment.getPublicId(),
 				comment.getParent() == null ? null : comment.getParent().getPublicId(), // getParent()가 null이면 바로 null 반환
 				comment.getAnchorType(),
 				comment.getFile().getPublicId(),
+				comment.getUser().getPublicId(),
 				comment.getUser().getNickname(),
 				profileUrl,
 				comment.getContent(),
-				comment.getCreatedDate()
+				comment.getCreatedDate(),
+				comment.getUpdatedDate() == null ? false : true // 업데이트 일자가 있다면 true, 아니면 false
 			);
 	}
 }

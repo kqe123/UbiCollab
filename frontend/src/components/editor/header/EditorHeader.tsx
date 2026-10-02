@@ -117,22 +117,13 @@ function EditorHeader({
                                             ? 'text.disabled' :  '#007FFF'}}/>
                     </IconButton>
                 </Tooltip>
-                {currentUser?.profileUri ? (
-                    <Avatar 
-                        src={currentUser.profileUri}
-                        onClick={() => setIsProfileMenuOpen(true)}
-                        alt="프로필사진"
-                        ref={anchorRef}
-                        sx={{ width: 50, height: 50, cursor : 'pointer', boxShadow: '0 0 0 0.5px #007FFF'}} 
-                    />
-                ) : (
-                    <Avatar 
-                        onClick={() => setIsProfileMenuOpen(true)}
-                        alt="프로필사진"
-                        ref={anchorRef}
-                        sx={{ width: 50, height: 50, cursor : 'pointer', boxShadow: '0 0 0 0.5px #007FFF'}} 
-                    />
-                )}
+                <Avatar
+                    src={currentUser?.profileUri ?? undefined}
+                    onClick={() => setIsProfileMenuOpen(true)}
+                    alt="프로필사진"
+                    ref={anchorRef}
+                    sx={{ width: 50, height: 50, cursor : 'pointer', boxShadow: '0 0 0 0.5px #007FFF'}}
+                />
             </Box>
         </Box>
         {/* 프로필 메뉴 */}

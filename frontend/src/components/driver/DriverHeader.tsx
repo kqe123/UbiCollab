@@ -59,20 +59,12 @@ function DriverHeader() {
                         <Typography variant="body2" sx={{ color: 'error.main' ,textAlign: 'center',}}>{error.message}</Typography>
                     </Box>
                 )}
-                {currentUser?.profileUri ? (
-                    <Avatar 
-                        src={currentUser.profileUri}
-                        alt="프로필사진" sx={{ width: 50, height: 50, cursor : 'pointer'}}
-                        ref={anchorRef}
-                        onClick={() => setIsProfileMenuOpen(true)}
-                     />
-                ) : (
-                    <Avatar 
-                        alt="프로필사진" sx={{ width: 50, height: 50, cursor : 'pointer'}}
-                        ref={anchorRef}
-                        onClick={() => setIsProfileMenuOpen(true)}
-                    />
-                )}
+                <Avatar
+                    src={currentUser?.profileUri ?? undefined}
+                    alt="프로필사진" sx={{ width: 50, height: 50, cursor : 'pointer'}}
+                    ref={anchorRef}
+                    onClick={() => setIsProfileMenuOpen(true)}
+                />
             </Box>
         </Box>
 

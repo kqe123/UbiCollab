@@ -1,6 +1,6 @@
 import axios from "axios";
 import toast from "react-hot-toast";
-import { useQuery } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
@@ -27,6 +27,7 @@ function PasswordEdit() {
     const [errors,setErrors] = useState<string[]>([]); // 에러 메시지 목록
     const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
     const navigate = useNavigate();
+    const queryClient = useQueryClient(); // QueryClient 가져옴
 
     // State 변경 함수
     const handleChange = (event : React.ChangeEvent<HTMLInputElement>) => {
@@ -71,7 +72,7 @@ function PasswordEdit() {
 
             try {
                 // 비밀번호 변경 Backend API 호출  
-                const response = await axios.patch("http://localhost:8080/api/user/change-password",
+                await axios.patch("http://localhost:8080/api/user/change-password",
                     passwordData,
                     {
                         headers: {
@@ -83,6 +84,7 @@ function PasswordEdit() {
                 toast.success("비밀번호 변경이 완료되었습니다.")
                 setInput({currentPw:"", newPw:"", newPwConfirm:""})
                 localStorage.removeItem("accessToken"); // JWT 토큰 삭제(로그아웃)
+                queryClient.clear(); // 모든 쿼리 데이터 초기화
                 navigate('/login'); // Login 페이지로 이동
             } catch (error: unknown) {
                 console.error("비밀번호 변경 실패 : ", error);

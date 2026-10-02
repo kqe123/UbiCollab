@@ -1,4 +1,5 @@
 import { Navigate, Outlet } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 
 type JwtPayload = {
     exp?: number;
@@ -6,6 +7,7 @@ type JwtPayload = {
 
 function ProtectedRoute() {
     const accessToken = localStorage.getItem("accessToken");
+    const queryClient = useQueryClient(); // QueryClient 가져옴
 
     // 토큰 자체가 없으면 로그인 페이지로 이동
     if (!accessToken) {
@@ -18,6 +20,7 @@ function ProtectedRoute() {
         // payLoad가 없다면
         if (!payloadBase64) {
             localStorage.removeItem("accessToken");
+            queryClient.clear(); // 모든 쿼리 데이터 초기화
             return <Navigate to="/login" replace />;
         }
 
@@ -33,12 +36,14 @@ function ProtectedRoute() {
         // exp가 없거나 토큰이 만료된 경우 제거
         if (!payload.exp || payload.exp <= currentTime) {
             localStorage.removeItem("accessToken");
+            queryClient.clear(); // 모든 쿼리 데이터 초기화
             return <Navigate to="/login" replace />;
         }
     } catch (error) {
         // 토큰 형식이 잘못된 경우에도 제거
         console.error("유효하지 않은 JWT 토큰입니다.", error);
         localStorage.removeItem("accessToken");
+        queryClient.clear(); // 모든 쿼리 데이터 초기화
 
         return <Navigate to="/login" replace />;
     }

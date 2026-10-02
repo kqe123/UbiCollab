@@ -7,7 +7,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.ubicollab.comment.dto.CommentCreateDto;
 import com.ubicollab.comment.dto.CommentResponseDto;
+import com.ubicollab.comment.dto.CommentUpdateDto;
 
 import jakarta.validation.Valid;
 
@@ -29,7 +32,7 @@ public class CommentController {
 		this.commentService = commentService;
 	}
 	
-	// [댓글] 댓글 생성 API (GET 'api/comment/create')
+	// [댓글] 댓글 생성 API (POST 'api/comment/create')
 	@PostMapping("/create")
 	public ResponseEntity<String> createComment(
 			@Valid @RequestBody CommentCreateDto request,
@@ -48,9 +51,28 @@ public class CommentController {
 			@PathVariable("id") UUID fileId) {
 		String username = authentication.getName();
 		return ResponseEntity
-		        .status(HttpStatus.CREATED)
+		        .status(HttpStatus.OK)
 		        .body(commentService.getComments(username, fileId));
 	}
 	
+	// [댓글] 댓글  수정 API (PATCH 'api/comment/update/{id}')
+	@PatchMapping("/update/{id}")
+	public ResponseEntity<?> updateComment(Authentication authentication,
+				@PathVariable("id") UUID commentId,
+				@Valid @RequestBody CommentUpdateDto request) {
+			String username = authentication.getName();
+			String content = request.content();
+			commentService.updateComment(username, commentId, content);
+			return ResponseEntity.status(HttpStatus.OK).build();
+	}
+	
+	// [댓글] 댓글 삭제  API (DELETE 'api/comment/delete/{id}')
+	@DeleteMapping("/delete/{id}")
+	public ResponseEntity<?> deleteComment(Authentication authentication,
+			@PathVariable("id") UUID commentId) {
+		String username = authentication.getName();
+		commentService.deleteComment(username, commentId);
+		return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+	}
 	
 }
