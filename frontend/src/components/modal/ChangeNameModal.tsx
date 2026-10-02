@@ -74,7 +74,7 @@ function ChangeNameModal ({
             fullWidth
             maxWidth="xs"
         >
-            {/* 메뉴명 */}
+            {/* 명 */}
             <DialogTitle sx={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap : 1 }}>
                 <EditIcon /> 이름 변경
             </DialogTitle>

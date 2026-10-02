@@ -46,7 +46,11 @@ public class Announcement {
 	@JoinColumn(name = "user_id", nullable = false)
 	@OnDelete(action = OnDeleteAction.CASCADE)
 	private User user;
-		
+	
+	// 공지 내용
+	@Column(length = 50, nullable = false)
+	private String title;
+	
 	// 공지 내용
 	@Column(length = 1000, nullable = false)
 	private String content;
@@ -84,6 +88,14 @@ public class Announcement {
 
 	public User getUser() {
 		return user;
+	}
+	
+	public String getTitle() {
+		return title;
+	}
+
+	public void setTitle(String title) {
+		this.title = title;
 	}
 
 	public String getContent() {

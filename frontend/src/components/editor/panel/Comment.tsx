@@ -389,7 +389,7 @@ function Comment ({
                     <CloseIcon />
                 </IconButton>
             </Box>
-            
+
             {/* 댓글 목록 영역 */}
             <Box 
                 sx={{

@@ -436,7 +436,6 @@ export function SimpleEditor({
               height : '100%',
               background: '#f1f6ff',
               zIndex: 50,
-              
               p : 2,
               gap : 2,
               display : 'flex',
