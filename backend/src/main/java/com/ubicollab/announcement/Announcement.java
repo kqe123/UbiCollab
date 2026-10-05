@@ -65,10 +65,11 @@ public class Announcement {
 	//생성자
 	public Announcement() {}
 			
-	public Announcement(DriveItem file, User user,
-				    		 String content, LocalDateTime createdDate) {
+	public Announcement(DriveItem file, User user, String title,
+						String content, LocalDateTime createdDate) {
 		this.file = file;
 		this.user = user;
+		this.title = title;
 		this.content = content;
 		this.createdDate = createdDate;
 	}

@@ -112,7 +112,7 @@ function Comment ({
 
         try {
             // axios로 백엔드 api 호출
-             await axios.patch(
+            const response =  await axios.patch(
                 `http://localhost:8080/api/comment/update/${editCommentId}`,
                 { content : editContent },
                 {   
@@ -121,6 +121,8 @@ function Comment ({
                     }
                 }
             );
+            toast.success(response.data);
+            console.log(response.data);
             await queryClient.invalidateQueries({ queryKey: ["comments"] });
             closeEdit();
         } catch (error: unknown) {
@@ -170,7 +172,6 @@ function Comment ({
                     }
                 }
             );
-            console.log(response.data);
             return response.data;
         } catch (error: unknown) {
             if (axios.isAxiosError(error)) {
@@ -188,7 +189,8 @@ function Comment ({
         error : commentError          // 실패했을 때 오류 정보
     } = useQuery<CommentType[]>({
         queryKey : ["comments", fileId],
-        queryFn : getComments
+        queryFn : getComments,
+        retry: false, // 재시도 없음 (기본값은 3번)
     }) 
 
 

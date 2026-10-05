@@ -444,7 +444,7 @@ export function SimpleEditor({
           >
             {sidePanel === "ANNOUNCEMENT" && (
               <Announcement 
-                sidePanel={sidePanel}
+                fileId={fileId}
                 setSidePanel={setSidePanel}
                 permission={permission}
               />
