@@ -1,8 +1,7 @@
-import axios from "axios";
 import toast from "react-hot-toast";
 import type {DriveItem} from "../../types/driveitem";
 import type {permission} from "../../types/permission";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useRef, useEffect, useMemo } from "react";
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -19,6 +18,8 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import DeleteModal from './DeleteModal';
+import { getPermissions, updatePermission, deletePermission } from "../../api/permissionApi.ts";
+
 function  PermissionModal ({
     driveItem,
     onClose
@@ -27,7 +28,6 @@ function  PermissionModal ({
     onClose : () => void;
 }) {
     const queryClient = useQueryClient(); // QueryClient 가져옴
-    const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
     const { data: currentUser } = useCurrentUser(); // 현재 로그인 유저 정보 (DriverHeader와 캐시 공유됨)
     const initialPermissions = useRef<permission[]>([]); // 공유된 사용자들의 권한 초기 상태 스냅샷
     const [editedPermissions, setEditedPermissions] = useState<permission[]>([]);
@@ -44,46 +44,16 @@ function  PermissionModal ({
         [editedPermissions]
     );
 
-    // 현재 공유된 사용자 목록 불러오는 함수
-    const getPermissions = async () => {
-        try {
-            const response = await axios.get("http://localhost:8080/api/permission/sharedUser",
-                {
-                    params: {
-                        publicId: driveItem.publicId
-                    },
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`
-                    }
-                }
-            )
-            console.log("알림 : 공유 사용자 불러오기 성공");
-            return response.data;
-        } catch (error: unknown) {
-            console.error("공유 사용자 불러오기 실패 : ", error);
-            // axios에서 발생한 오류인 경우
-            if (axios.isAxiosError(error)) {
-                console.error("백엔드 응답:", error.response?.data);
-                toast.error(error.response?.data?.message ?? "공유 사용자 불러오기에 실패했습니다.");
-            }
-            // 그 외의 오류인 경우
-            else {
-                console.error("알 수 없는 오류:", error);
-                toast.error("알 수 없는 오류가 발생했습니다.");
-            }
-        }
-    }
-
-    // useQuery로 DriveItem이 바뀔때마다 새로운 공유 사용자를 불러옴.
+    // 현재 공유된 사용자 목록 불러오기 (useQuery)
     const {
         data : permissions = [],
-        isLoading,            // 이 쿼리를 한 번도 받아온 적 없는지 여부 (캐시가 있으면 바로 false)
-        isFetching,           // 지금 실제로 네트워크 요청 중인지 여부 (캐시가 있어도 백그라운드 재조회면 true)
+        isLoading,          // 이 쿼리를 한 번도 받아온 적 없는지 여부 
+        isFetching,         // 지금 실제로 네트워크 요청 중인지 여부 
         isError,            // 요청이 실패했는지 여부
-        error                // 실패했을 때 오류 정보
+        error               // 실패했을 때 오류 정보
     } = useQuery({
         queryKey : ["permissions", driveItem.publicId],
-        queryFn : getPermissions,
+        queryFn : () => getPermissions(driveItem.publicId),
         refetchInterval: 5 * 60 * 1000, // 5분마다 백그라운드에서 자동 재요청 
     })
 
@@ -104,100 +74,63 @@ function  PermissionModal ({
         return changedPermissions;
     }
 
-    // 권한 업데이트 함수
-    const updatePermission = async () => {
-        const updateUsers = updateUser();
-
-        if (updateUsers.length === 0) {
-            toast("변경사항이 없습니다.");
-            return;
-        }
-        try {
-
-            const response = await axios.patch(
-                "http://localhost:8080/api/permission/update",
-                {
-                    currentItemId: driveItem.publicId,
-                    permissionList: updateUsers.map((permission : permission) => ({
-                        driveItemId : permission.driveItemId,
-                        userId: permission.userId,
-                        type: permission.type,
-                    })),
-                },
-                {
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`,
-                    },
-                }
-            );
-
-            console.log(`알림 : ${response.data}명 권한 업데이트 성공`);
-            toast.success("권한 업데이트에 성공하였습니다!");
+    // 권한 업데이트 (useMutation)
+    const { mutate : savePermissions, isPending : isUpdatePending } = useMutation({
+        // 실제로 수행할 함수 (mutate에 넘긴 값을 변수로 받음)
+        mutationFn : (updateUsers : permission[]) => updatePermission(driveItem.publicId, updateUsers),
+        // 성공 시 수행할 명령들
+        onSuccess : async () => {
+            console.log(`알림 : 권한 업데이트 성공`);
+            toast.success("권한 업데이트 완료");
             await queryClient.invalidateQueries({
                 queryKey: ["permissions"]
             });
             onClose();
-        } catch (error: unknown) {
-            console.error("권한 업데이트 실패... : ", error);
-            // axios에서 발생한 오류인 경우
-            if (axios.isAxiosError(error)) {
-                console.error("백엔드 응답:", error.response?.data);
-                toast.error(error.response?.data?.message ?? "권한 업데이트에 실패했습니다.");
-            }
-            // 그 외의 오류인 경우
-            else {
-                console.error("알 수 없는 오류:", error);
-                toast.error("알 수 없는 오류가 발생했습니다.");
-            }
+        },
+        // 오류 시 수행할 명령들
+        onError : (error) => {
+            toast.error(error.message);
         }
+    })
+
+    // 완료 버튼 클릭 시 실행
+    const doUpdate = () => {
+        const updateUsers = updateUser();
+        if (updateUsers.length === 0) {
+            toast("변경사항이 없습니다.");
+            return;
+        }
+        savePermissions(updateUsers);
     }
 
-    // 해당 권한을 삭제하는 함수
-    const deletePermission = async (userId : string, driveItemId : string) => {
-        try {
-            const response = await axios.delete(
-                `http://localhost:8080/api/permission/delete/${userId}/${driveItemId}`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`
-                    }
-                }
-            )
-            console.log("권한 삭제에 성공했습니다.");
-            toast.success("해당 권한이 삭제되었습니다.");
-            return response.data;
-        } catch (error: unknown) {
-            console.error("권한 삭제 실패 : ", error);
-            // axios에서 발생한 오류인 경우
-            if (axios.isAxiosError(error)) {
-                console.error("백엔드 응답:", error.response?.data);
-                toast.error(error.response?.data?.message ?? "권한 삭제에 실패했습니다.");
-            }
-            else {
-                console.error("알 수 없는 오류:", error);
-                toast.error("알 수 없는 오류가 발생했습니다.");
-            }
+    // 권한 삭제 (useMutation)
+    const { mutate : removePermission } = useMutation({
+        mutationFn : ({ userId, driveItemId } : { userId : string; driveItemId : string }) =>
+            deletePermission(userId, driveItemId),
+        onSuccess : async (_, { userId, driveItemId }) => {
+            console.log("알림 : 권한 삭제 성공");
+            toast.success("해당 권한 삭제됨");
+            await queryClient.invalidateQueries({
+                queryKey: ["permissions", driveItem.publicId]
+            });
+
+            // EditedPermissions(State)를 최신 상태로 업데이트
+            setEditedPermissions(prev =>
+                prev.filter(p => !(p.userId === userId && p.driveItemId === driveItemId))
+            );
+
+            // initialPermission(초기 스냅샷) 또한 최신 상태로 업데이트
+            initialPermissions.current = initialPermissions.current.filter(
+                p => !(p.userId === userId && p.driveItemId === driveItemId)
+            );
+        },
+        onError : (error) => {
+            toast.error(error.message);
+        },
+        onSettled : () => {
+            setDeleteTarget(null); // 삭제 팝업 닫힘
         }
-    }
-
-    // Confirm창으로 간략하게 물어보고 삭제
-    const doDelete = async (userId : string, driveItemId : string) => {
-        await deletePermission(userId,driveItemId);
-        await queryClient.invalidateQueries({
-            queryKey: ["permissions", driveItem.publicId]
-        });
-
-        // EditedPermissions(State)를 최신 상태로 업데이트
-        setEditedPermissions(prev =>
-            prev.filter(p => !(p.userId === userId && p.driveItemId === driveItemId))
-        );
-
-        // initialPermission(초기 스냅샷) 또한 최신 상태로 업데이트
-        initialPermissions.current = initialPermissions.current.filter(
-            p => !(p.userId === userId && p.driveItemId === driveItemId)
-        );
-        setDeleteTarget(null);
-    };
+    })
 
     // 초기 스냅샷 찍음.
     useEffect(() => {
@@ -331,7 +264,8 @@ function  PermissionModal ({
                         size="large"
                         variant="contained"
                         color='primary'
-                        onClick={updatePermission}
+                        disabled={isUpdatePending}
+                        onClick={doUpdate}
                         sx={{ borderRadius: '8px', fontWeight: 500}}
                     >
                         완료
@@ -346,7 +280,7 @@ function  PermissionModal ({
             message="해당 권한을 삭제하시겠습니까?"
             onConfirm={() => {
                 if (deleteTarget) {
-                    doDelete(deleteTarget.userId, deleteTarget.driveItemId);
+                    removePermission(deleteTarget);
                 }
             }}
             onClose={() => setDeleteTarget(null)}

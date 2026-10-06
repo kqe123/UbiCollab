@@ -1,9 +1,8 @@
-import axios from "axios";
 import toast from "react-hot-toast";
 import fileIcon from "../../../assets/file.png";
 import folderIcon from "../../../assets/folder.png";
 import noFavoriteImg from "../../../assets/empty-favorite.png";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, skipToken } from "@tanstack/react-query";
 import { useNavigate, useParams, useOutletContext, NavLink } from "react-router-dom";
 import DriveItemMenu from "../../menu/DriveItemMenu"
 import type {DriveItem} from "../../../types/driveitem";
@@ -20,6 +19,7 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Breadcrumbs from '@mui/material/Breadcrumbs';
+import { getFavorites, getFavoritePath } from '../../../api/driveitemApi.ts';
 
 function FavoriteList() {
    // 상태(state)들
@@ -33,7 +33,6 @@ function FavoriteList() {
         closeDriveItemMenu,
         formatDate
     } = useOutletContext<DirectoryOutletContext>();
-    const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
     const navigate = useNavigate();
 
     // 요소 더블클릭 시 발생하는 이벤트 함수
@@ -72,41 +71,7 @@ function FavoriteList() {
         setSelectedDriveItem(null); 
     };
 
-  // 백엔드 api(즐겨찾기 디렉토리 조회)를 호출하는 비동기 함수
-    const getFavorites = async () => {
-        // 백엔드에 보낼 폴더 ID
-        const DriveItemData = {
-            foldId: currentFolderId
-        }
-
-        // axios로 백엔드 api 호출
-        const response = await axios.get(
-            "http://localhost:8080/api/favorite",
-            {   
-                params: DriveItemData,
-                headers: {
-                    Authorization: `Bearer ${accessToken}`
-                }
-            }
-        );
-        return response.data;
-    };
-
-    // 백엔드 api(현재 경로 조회)를 호출하는 비동기 함수
-    const getDrivePath = async ()  => {
-        const response = await axios.get(
-            `http://localhost:8080/api/favorite/path/${currentFolderId}`,
-            {
-                headers : {
-                    Authorization: `Bearer ${accessToken}`
-                }
-            }
-        )
-        console.log(response.data)
-        return response.data;
-    };
-
-    // useQuery 실행 (첫 렌더링 시, queryKey가 변경될 시에 실행한다.)
+    // 즐겨찾기 목록을 불러오는 API 호출 (useQuery)
     const {
         data: favorites = [], // 백엔드에서 받아온 데이터
         isLoading : isFavoritesLoading,    // 현재 요청 중인지 여부
@@ -114,19 +79,13 @@ function FavoriteList() {
         error : favoritesError,            // 실패했을 때 오류 정보
     } = useQuery({
         queryKey: ["driveItems", "favorite", currentFolderId], // 서버 데이터를 해당 이름으로 관리
-        queryFn: getFavorites,   // getFavorites() 실행
+        queryFn: () => getFavorites(currentFolderId),   // getFavorites() 실행
     });
 
-    // useQuery 실행 
-    const {
-        data: paths = [] , // 백엔드에서 받아온 데이터
-        isLoading : isPathLoading,            // 현재 요청 중인지 여부
-        isError : isPathError,              // 요청이 실패했는지 여부
-        error : pathError,                // 실패했을 때 오류 정보
-    } = useQuery({
+    // 현재 즐겨찾기 경로를 불러오는 API 호출 (useQuery) 
+    const { data: paths = [] } = useQuery({
         queryKey: ["driveItems","path", currentFolderId], // 서버 데이터를 해당 이름으로 관리
-        queryFn: getDrivePath,   // getDrivePath() 실행
-        enabled: currentFolderId !== null, // 루트 디렉터리에서는 경로 API를 실행하지 않음
+        queryFn: currentFolderId ? () => getFavoritePath(currentFolderId) : skipToken   // getFavoritePath() 실행
     });
     
 

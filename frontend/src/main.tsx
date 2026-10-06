@@ -1,4 +1,3 @@
-import axios from "axios";
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from "./App.tsx";
@@ -6,6 +5,7 @@ import { BrowserRouter} from 'react-router-dom';
 import { QueryClient, QueryClientProvider} from '@tanstack/react-query'
 import "pretendard/dist/web/variable/pretendardvariable.css";
 import "./index.css";
+import { ApiError } from './api/client';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 
 // MUI 전역
@@ -21,11 +21,11 @@ const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
             retry: (failureCount, error) => {
-                // axios 에러이고, 4xx 상태 코드면 재시도 안 함
-                if (axios.isAxiosError(error) && error.response?.status && error.response.status < 500) {
+                // 4xx면 재시도 안 함
+                if (error instanceof ApiError && error.status && error.status < 500) {
                     return false;
                 }
-                // 그 외(5xx, 네트워크 에러)는 최대 2번까지만 재시도
+                // 5xx, 네트워크 에러는 최대 2번까지 재시도
                 return failureCount < 2;
             },
         },

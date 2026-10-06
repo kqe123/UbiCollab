@@ -1,19 +1,23 @@
 import logo from "../assets/logo.png"
-import axios from "axios";
 import toast from "react-hot-toast";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import Divider from '@mui/material/Divider';
+import { login } from '../api/userApi.ts';
+
 
 function LoginPage () {
     const [username, setUsername] = useState<string>("");
     const [password, setPassword] = useState<string>("");
     const navigate = useNavigate();
+    const queryClient = useQueryClient(); // QueryClient 가져옴
+
     document.title = "로그인 - Ubicollab";
 
     const changeUsername = (event : React.ChangeEvent<HTMLInputElement>) => {
@@ -24,55 +28,24 @@ function LoginPage () {
         setPassword(event.target.value)
     }
 
-    const login = async (e : React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-
-        // backend api에 보낼 body
-        const credentials = {
-            username : username,
-            password : password
-        };
-
-        try {
-            
-            // Backend Login API 호출
-            const response = await axios.post(
-                `http://localhost:8080/api/login`,
-                credentials
-            );
-            
-            console.log("로그인 성공");
-            
-            // HTTP response에서 authorization 헤더 추출
-            const authorization = response.headers.authorization;
-            if (!authorization) {
-                throw new Error("Authorization 응답 헤더가 없습니다.");
-            }
-            
-            // PREFIX 제거한 JWT 토큰을 Local Storage에 저장
-            const accessToken = authorization.replace("Bearer ", "");
-            localStorage.setItem("accessToken", accessToken);
-
-            // 메인 화면(드라이브)로 이동
+    // 로그인 (useMutation)
+    const loginMutation = useMutation({
+        mutationFn : () => login(username, password),
+        onSuccess : async (accessToken) => {
+            console.log('로그인 성공');
+            localStorage.setItem('accessToken', accessToken);
+            queryClient.clear(); // 이전 계정의 캐시 제거
             navigate('/');
-            } catch (error: unknown) {
-                console.error("로그인 실패 :", error);
-                // axios에서 발생한 오류인 경우
-                if (axios.isAxiosError(error)) {
-                    console.error("백엔드 응답:", error.response?.data);
-                    toast.error(error.response?.data?.message ?? "로그인에 실패했습니다.");
-                } 
-                // 일반 오류인 경우
-                else if (error instanceof Error) {
-                    console.error("일반 오류:", error.message);
-                    toast.error(error.message);
-                } 
-                // 그 외의 오류인 경우
-                else {
-                    console.error("알 수 없는 오류:", error);
-                    toast.error("알 수 없는 오류가 발생했습니다.");
-                }
-            } 
+        },
+        onError : (error) => {
+            toast.error(error.message);
+        }
+    })
+    
+    // 로그인 버튼 클릭 시 동작
+    const doLogin = (e : React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        loginMutation.mutate();
     }
 
     return (
@@ -98,7 +71,7 @@ function LoginPage () {
                 {/* Login Panel */}
                 <Box 
                     component="form"
-                    onSubmit={login}
+                    onSubmit={doLogin}
                     sx={{ width : '60%', mx: 'auto', display: 'flex', flexDirection: 'column',
                         gap: 1.5, mt : 3}}
                 >
@@ -121,6 +94,7 @@ function LoginPage () {
                     {/* Login Button */}
                     <Button 
                         disableElevation
+                        disabled={loginMutation.isPending}
                         type="submit"
                         variant="contained"
                         size="medium"

@@ -1,10 +1,9 @@
-import axios from "axios";
 import toast from "react-hot-toast";
 import fileIcon from "../../../assets/file.png";
 import folderIcon from "../../../assets/folder.png";
 import noDriveImg from "../../../assets/empty-drive.png";
 import noAuthorizedIcon from "../../../assets/noAuthorized.png";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, skipToken } from "@tanstack/react-query";
 import { useState } from "react";
 import { useNavigate, useParams, useOutletContext, NavLink } from "react-router-dom";
 import DriveItemMenu from "../../menu/DriveItemMenu"
@@ -23,6 +22,7 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Breadcrumbs from '@mui/material/Breadcrumbs';
+import { getDriveItems, getDrivePath } from '../../../api/driveitemApi.ts';
 
 function MyDriveList() {
     // 상태(state)들
@@ -41,7 +41,6 @@ function MyDriveList() {
         formatDate
     } = useOutletContext<DirectoryOutletContext>();
 
-    const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
     const navigate = useNavigate();
 
     // 요소 더블클릭 시 발생하는 이벤트 함수
@@ -95,77 +94,24 @@ function MyDriveList() {
         setSelectedDriveItem(null); 
     };
 
-    // 백엔드 api(디렉토리 조회)를 호출하는 비동기 함수
-    const getDriveItems = async () => {
-        try {
-            // axios로 백엔드 api 호출
-            const response = await axios.get(
-                "http://localhost:8080/api/driveitem/driveitems",
-                {   
-                    params: {
-                        parentPublicId: currentFolderId
-                    },
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`
-                    }
-                }
-            );
-            return response.data;
-        } catch (error: unknown) {
-            if (axios.isAxiosError(error)) {
-                const message = error.response?.data?.message ?? "디렉토리 조회에 실패했습니다.";
-                throw new Error(message); // 여기서 백엔드 메시지를 담은 새 Error로 교체
-            }
-            throw error;
-        }
-    };
 
-    // 백엔드 api(현재 경로 조회)를 호출하는 비동기 함수
-    const getDrivePath = async ()  => {
-        try {
-            const response = await axios.get(
-                `http://localhost:8080/api/driveitem/path/${currentFolderId}`,
-                {
-                    headers : {
-                        Authorization: `Bearer ${accessToken}`
-                    }
-                }
-            )
-            console.log(response.data)
-            return response.data;
-        } catch (error: unknown) {
-            if (axios.isAxiosError(error)) {
-                const message = error.response?.data?.message ?? "경로 조회에 실패했습니다.";
-                throw new Error(message); // 여기서 백엔드 메시지를 담은 새 Error로 교체
-            }
-            throw error;
-        }
-    };
-
-    // useQuery 실행 (첫 렌더링 시, queryKey가 변경될 시에 실행한다.)
+    // 내 드라이브 목록을 불러오는 API 호출 (useQuery)
     const {
-        data: driveItems = [], // 백엔드에서 받아온 데이터
-        isLoading : isDriveItemsLoading,    // 현재 요청 중인지 여부
-        isError : isDriveItemsError,        // 요청이 실패했는지 여부
-        error : driveItemsError,            // 실패했을 때 오류 정보
+        data: driveItems = [], // 데이터
+        isLoading : isDriveItemsLoading,   // 현재 요청 중인지 여부
+        isError : isDriveItemsError,       // 요청 실패 여부
+        error : driveItemsError,           // 실패 오류 정보
     } = useQuery({
         queryKey: ["driveItems", currentFolderId], // 서버 데이터를 해당 이름으로 관리
-        queryFn: getDriveItems,   // getDriveItems() 실행
+        queryFn: () => getDriveItems(currentFolderId),   // getDriveItems() 실행
     });
 
-    // useQuery 실행 
-    const {
-        data: paths = [] , // 백엔드에서 받아온 데이터
-        isLoading : isPathLoading,            // 현재 요청 중인지 여부
-        isError : isPathError,              // 요청이 실패했는지 여부
-        error : pathError,                // 실패했을 때 오류 정보
-    } = useQuery({
+    // 현재 내 드라이브 경로를 불러오는 API 호출 (useQuery)
+    const { data: paths = []} = useQuery({
         queryKey: ["driveItems","path", currentFolderId], // 서버 데이터를 해당 이름으로 관리
-        queryFn: getDrivePath,   // getDrivePath() 실행
-        enabled: currentFolderId !== null, // 루트 디렉터리에서는 경로 API를 실행하지 않음
-    });
+        queryFn: currentFolderId ? () => getDrivePath(currentFolderId) : skipToken   // getDrivePath() 실행
+    })
     
-
     // 로딩 처리
     if (isDriveItemsLoading) {
         return (

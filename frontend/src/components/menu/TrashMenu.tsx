@@ -1,8 +1,7 @@
 import type {DriveItem} from "../../types/driveitem";
-import axios from "axios";
 import toast from "react-hot-toast";
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import MenuList from '@mui/material/MenuList';
@@ -12,6 +11,8 @@ import Typography from '@mui/material/Typography';
 import RestoreIcon from '@mui/icons-material/RestoreFromTrash';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import DeleteModal from "../modal/DeleteModal";
+import { restoreTrash, deleteTrash } from '../../api/driveitemApi.ts';
+
 function TrashMenu({
     open, x, y, driveItem, onClose
 } : {
@@ -23,79 +24,42 @@ function TrashMenu({
 }) {
 
     const queryClient = useQueryClient(); // QueryClient 가져옴
-    const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
     const [deleteConfirm, setDeleteConfirm] = useState(false); // delete 팝업창 열림/닫힘
 
-    // "복원" 함수
-    const restoreTrash = async () => {
-        try {
-            // 문서 변경 Backend API 호출
-            const response = await axios.patch(`http://localhost:8080/api/driveitem/restore/${driveItem.publicId}`,
-            null,
-            {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`
-                }
-            }
-            );
-            console.log("알림 : " + response.data);
+    // 폴더/파일 복원 (useMutation)
+    const { mutate : recoverTrash } = useMutation({
+        mutationFn : () => restoreTrash(driveItem.publicId),
+        onSuccess : async () => {
+            console.log("알림 : 폴더/파일 복원 완료");
             await queryClient.invalidateQueries({
                 queryKey: ["driveItems"]
             });
-            toast.success("파일/폴더가 복원되었습니다.");
+            toast.success("파일/폴더 복원 완료");
             onClose();
-        } catch (error: unknown) {
-            console.error("복원 실패... : ", error);
-            // axios에서 발생한 오류인 경우
-            if (axios.isAxiosError(error)) {
-                console.error("백엔드 응답:", error.response?.data);
-                toast.error(error.response?.data?.message ?? "폴더/파일을 복원하는데 실패했습니다.");
-            } 
-            // 그 외의 오류인 경우
-            else {
-                console.error("알 수 없는 오류:", error);
-                toast.error("알 수 없는 오류가 발생했습니다.");
-            }
-        } 
-    }
+        },
+        onError : (error) => {
+            toast.error(error.message);
+        }
+    })
 
-    // "영구 삭제" 함수
-    const deleteTrash = async () => {
-        try {
-            // 영구 삭제 Backend API 호출
-            await axios.delete(`http://localhost:8080/api/driveitem/delete/${driveItem.publicId}`,
-            {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`
-                }
-            }
-            );
-        
+    // 폴더/파일 영구 삭제 (useMutation)
+    const { mutate : removeTrash } = useMutation({
+        mutationFn : () => deleteTrash(driveItem.publicId),
+        onSuccess : async () => {
             console.log("알림 : 영구 삭제 완료");
             await queryClient.invalidateQueries({
                 queryKey: ["driveItems"]
             });
-            toast.success("영구 삭제가 완료되었습니다.");
-        } catch (error: unknown) {
-            console.error("영구 삭제 실패... : ", error);
-            // axios에서 발생한 오류인 경우
-            if (axios.isAxiosError(error)) {
-                console.error("백엔드 응답:", error.response?.data);
-                toast.error(error.response?.data?.message ?? "폴더/파일을 영구 삭제 하는데 실패했습니다.");
-            } 
-            // 그 외의 오류인 경우
-            else {
-                console.error("알 수 없는 오류:", error);
-                toast.error("알 수 없는 오류가 발생했습니다.");
-            }
-        } 
-    }
-
-    const doDelete = async () => {
-        await deleteTrash();
-        setDeleteConfirm(false);
-        onClose();
-    };
+            toast.success("폴더/파일 영구 삭제 완료");
+        },
+        onError : (error) => {
+            toast.error(error.message);
+        },
+        onSettled : () => {
+            setDeleteConfirm(false);
+            onClose();
+        },
+    })
 
     return (
         <>
@@ -115,7 +79,7 @@ function TrashMenu({
         >
             <MenuList>
                 <MenuItem
-                    onClick={restoreTrash}
+                    onClick={() => recoverTrash()}
                     sx={{width : '100%', justifyContent: 'flex-start', px : 2, color: 'black'}}
                 >
                     <ListItemIcon> <RestoreIcon fontSize="small" /></ListItemIcon>
@@ -147,7 +111,7 @@ function TrashMenu({
             open={deleteConfirm}
             title="영구 삭제"
             message="이 항목을 영구 삭제하시겠습니까?"
-            onConfirm={doDelete}
+            onConfirm={() => removeTrash()}
             onClose={() => setDeleteConfirm(false)}
         />
     </>

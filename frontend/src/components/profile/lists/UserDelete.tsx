@@ -1,8 +1,7 @@
-import axios from "axios";
 import toast from "react-hot-toast";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Button from '@mui/material/Button';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -10,10 +9,9 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import DeleteModal from '../../modal/DeleteModal';
+import { deleteUser } from '../../../api/userApi.ts';
 
 function UserDelete() {
-
-    const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
     const navigate = useNavigate();
     const queryClient = useQueryClient(); // QueryClient 가져옴
     const [isChecked, setIsChecked] = useState<boolean>(false); // 체크박스 체크/비체크
@@ -24,47 +22,32 @@ function UserDelete() {
         setIsChecked(event.target.checked);
     };
 
-    // 회원탈퇴 팝업창을 여는 메서드
-    const confirmChange = async () => {
+    // 회원 탈퇴 (useMutation)
+    const userDeleteMutation = useMutation({
+        // 실제로 수행할 함수
+        mutationFn : () => deleteUser(),
+        // 성공 시 수행할 명령들
+        onSuccess : async () => {
+            console.log("알림 : 회원 탈퇴 완료");
+            toast.success("회원 탈퇴 완료");
+            localStorage.removeItem("accessToken"); // JWT 토큰 제거
+            queryClient.clear(); // 모든 쿼리 데이터 초기화
+            navigate('/login');
+        },
+        // 오류 시 수행할 명령들
+        onError : (error) => {
+            toast.error(error.message);
+        }
+    })
+        
+    // 회원 탈퇴 버튼 클릭 시 실행
+    const showConfirm = () => {
         if (!isChecked) {
             toast.error("회원탈퇴 안내사항 확인 후 체크박스를 선택해주세요.")
             return;
         }
-
         setDeleteConfirm(true);
     };
-
-    // "회원 탈퇴" 함수
-    const deleteUser = async () => {
-        try {
-            // 영구 삭제 Backend API 호출
-            await axios.delete("http://localhost:8080/api/user/delete",
-            {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`
-                }
-            }
-        );
-
-            console.log("알림 : 회원 탈퇴 완료");
-            toast.success("회원 탈퇴가 완료되었습니다.");
-            localStorage.removeItem("accessToken"); // JWT 토큰 제거
-            queryClient.clear(); // 모든 쿼리 데이터 초기화
-            navigate('/login');
-        } catch (error: unknown) {
-            console.error("회원 탈퇴 실패... : ", error);
-            // axios에서 발생한 오류인 경우
-            if (axios.isAxiosError(error)) {
-                console.error("백엔드 응답:", error.response?.data);
-                toast.error(error.response?.data?.message ?? "회원 탈퇴 하는데 실패했습니다.");
-            } 
-            // 그 외의 오류인 경우
-            else {
-                console.error("알 수 없는 오류:", error);
-                toast.error("알 수 없는 오류가 발생했습니다.");
-            }
-        } 
-    }
 
     return (
         <>
@@ -130,7 +113,7 @@ function UserDelete() {
             variant="contained"
             size="large"
             color="error"
-            onClick={confirmChange}>
+            onClick={showConfirm}>
             회원탈퇴
         </Button>
 
@@ -139,7 +122,7 @@ function UserDelete() {
             open={deleteConfirm}
             title="회원 탈퇴"
             message="정말 회원 탈퇴를 진행하시겠습니까? 탈퇴 시 모든 정보가 삭제되며 복구할 수 없습니다."
-            onConfirm={deleteUser}
+            onConfirm={() => userDeleteMutation.mutate()}
             onClose={() => setDeleteConfirm(false)}
         />
         </>

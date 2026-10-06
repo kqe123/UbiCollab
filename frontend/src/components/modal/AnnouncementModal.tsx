@@ -1,4 +1,3 @@
-import axios from "axios";
 import toast from "react-hot-toast";
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
@@ -6,11 +5,11 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import TextField from '@mui/material/TextField';
 import IconButton from  '@mui/material/IconButton';
-import Typography from '@mui/material/Typography';
 import CloseIcon from '@mui/icons-material/Close';
 import Button from '@mui/material/Button';
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createAnnouncement } from "../../api/announcementApi.ts";
 
 function AnnouncementModal ({
     open, onClose, fileId, permission
@@ -23,56 +22,42 @@ function AnnouncementModal ({
 
     const [title, setTitle] = useState<string>(""); // 공지 제목
     const [content, setContent] = useState<string>(""); // 공지 내용
-    const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
     const queryClient = useQueryClient(); // QueryClient 가져옴
 
-    // 공지 추가 API 호출 메서드
-    const addAnnouncement = async () => {
-        // [예외 처리] 제목 또는 내용이 0자일때
-        if (title.trim().length === 0) 
-            toast.error("제목을 입력해주세요.")
-        
-        if (content.trim().length === 0) 
-            toast.error("내용을 입력해주세요.")
-        
-        // [권한 제어] 공지 추가 모달은 MANAGER 이상만 열 수 있지만, 우회 클릭을 대비해 한번 더 체크
-        if (!(permission === "MANAGER")) {
-            toast.error("공지를 추가할 권한이 없습니다.");
-            return;
-        }
-        
-        // 공지 데이터
-        const announcementData = {
-            fileId : fileId,
-            title : title,
-            content : content,
-        }
-
-        try {
-            // axios로 백엔드 api 호출
-            const response = await axios.post(
-                "http://localhost:8080/api/announcement/create",
-                announcementData,
-                {   
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`
-                    }
-                }
-            );
-            toast.success(response.data);
-            console.log(response.data);
-            await queryClient.invalidateQueries({ queryKey : ["announcements"]});
+    // 공지 생성 (useMutation)
+    const { mutate : addAnnouncement, isPending } = useMutation({
+        // 실제로 수행할 함수
+        mutationFn : () => createAnnouncement(fileId, title, content),
+        // 성공 시 수행할 명령들
+        onSuccess : async (message : string) => {
+            toast.success(message);
+            await queryClient.invalidateQueries({ queryKey: ["announcements"] })
             setTitle("");
             setContent("");
             onClose();
-        } catch (error: unknown) {
-            if (axios.isAxiosError(error)) {
-                const message = error.response?.data?.message ?? "공지 생성에 실패했습니다.";
-                toast.error(message) // 여기서 백엔드 메시지를 담은 새 Error로 교체
-            }
-            throw error;
+        },
+        // 오류 시 수행할 명령들
+        onError : (error) => {
+            toast.error(error.message);
         }
-    }
+    })
+
+    // 추가 버튼 클릭 시 실행
+    const handleSubmit = () => {
+        if (title.trim().length === 0) {
+            toast.error("제목을 입력해주세요.");
+            return;
+        }
+        if (content.trim().length === 0) {
+            toast.error("내용을 입력해주세요.");
+            return;
+        }
+        if (permission !== "MANAGER") {
+            toast.error("공지를 추가할 권한이 없습니다.");
+            return;
+        }
+        addAnnouncement();   // 공지 생성 요청 실행
+    };
 
     return (
         <Dialog
@@ -145,7 +130,8 @@ function AnnouncementModal ({
                 <Button
                     disableElevation
                     variant="contained"
-                    onClick={addAnnouncement}
+                    onClick={handleSubmit}
+                    disabled={isPending}
                 >
                     추가
                 </Button>

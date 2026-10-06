@@ -1,6 +1,5 @@
-import axios from "axios";
 import toast from "react-hot-toast";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
@@ -10,6 +9,7 @@ import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import { useState } from "react";
+import { changePassword } from '../../../api/userApi.ts';
 
 type Password = {
     currentPw : string;
@@ -25,7 +25,6 @@ function PasswordEdit() {
         newPwConfirm : ""
     });
     const [errors,setErrors] = useState<string[]>([]); // 에러 메시지 목록
-    const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
     const navigate = useNavigate();
     const queryClient = useQueryClient(); // QueryClient 가져옴
 
@@ -36,17 +35,31 @@ function PasswordEdit() {
         })
     }
 
-    // 새 비밀번호로 변경하는 함수 (예외처리 + 변경 로직)
-    const changePassword = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault(); // 네이티브 폼 제출(새로고침 + URL에 값 노출) 차단
-        // currentErrors(임시변수) : 오류 메시지 목록
-        // errors(State)는 바로 업데이트가 안되기 때문... 
-        const currentErrors : string[] = [];
+    // 비밀번호 변경 (useMutation)
+    const changePasswordMutation = useMutation({
+        mutationFn : () => changePassword(input.currentPw, input.newPw),
+        onSuccess : async () => {
+            console.log("알림 : 비밀번호 변경 성공");
+            toast.success("비밀번호 변경 완료");
+            setInput({currentPw:"", newPw:"", newPwConfirm:""});
+            localStorage.removeItem("accessToken"); // JWT 토큰 삭제(로그아웃)
+            queryClient.clear(); // 모든 쿼리 데이터 초기화
+            navigate('/login'); // Login 페이지로 이동
+        },
+        onError : (error) => {
+            toast.error(error.message);
+        }
+    })
+        
+    // 비밀번호 변경 버튼 클릭 시 실행
+    const updatePassword = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault(); // 기본 폼 동작(새로고침 + URL에 값 노출) 차단
+        const currentErrors : string[] = []; // currentErrors(임시변수) : 오류 메시지 목록
 
         // 비밀번호: 8~16자, 대/소문자, 숫자, 특수문자 포함
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,16}$/;
 
-        // 입력값 유효성 체크 (비어있는지, 형식에 맞는지, 새 비밀번호와 새 비밀번호 확인이 일치하는지)
+        // 입력값 유효성 체크 (empty, 형식 체크, 새 비밀번호≠새 비밀번호 확인)
         if (input.currentPw === "") 
             currentErrors.push("현재 비밀번호 : 비밀번호를 입력해주세요.");
         
@@ -62,44 +75,12 @@ function PasswordEdit() {
 
         setErrors(currentErrors);  // errors State를 현재 currentErrors로 업데이트 (함수 모두 끝나면 적용)
 
-        // 오류 메시지가 0개라면 비밀번호 변경 로직 실행
-        if (currentErrors.length === 0) {
-            // backend api에 보낼 body
-            const passwordData = {
-                currentPassword : input.currentPw,
-                newPassword : input.newPw
-            };
+        // 현재 errors State는 [] 상태이니, currentErrors로 조건을 검사
+        if (currentErrors.length === 0) 
+            changePasswordMutation.mutate()
+    };
 
-            try {
-                // 비밀번호 변경 Backend API 호출  
-                await axios.patch("http://localhost:8080/api/user/change-password",
-                    passwordData,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${accessToken}`
-                        }
-                    }
-                );
-                console.log("알림 : 비밀번호 변경 성공")
-                toast.success("비밀번호 변경이 완료되었습니다.")
-                setInput({currentPw:"", newPw:"", newPwConfirm:""})
-                localStorage.removeItem("accessToken"); // JWT 토큰 삭제(로그아웃)
-                queryClient.clear(); // 모든 쿼리 데이터 초기화
-                navigate('/login'); // Login 페이지로 이동
-            } catch (error: unknown) {
-                console.error("비밀번호 변경 실패 : ", error);
-                // axios에서 발생한 오류인 경우
-                if (axios.isAxiosError(error)) {
-                    console.error("백엔드 응답:", error.response?.data);
-                    toast.error(error.response?.data?.message ?? "비밀번호 변경에 실패했습니다.");
-                }
-                else {
-                    console.error("알 수 없는 오류:", error);
-                    toast.error("알 수 없는 오류가 발생했습니다.");
-                }
-            }
-        }
-    }
+
 
     return (
         <>
@@ -129,7 +110,7 @@ function PasswordEdit() {
 
         <Stack 
             component="form"
-            onSubmit={changePassword}
+            onSubmit={updatePassword}
             spacing={2} sx={{mt : 6}}>
             {/* 현재 비밀번호 입력칸 */}
             <Box>

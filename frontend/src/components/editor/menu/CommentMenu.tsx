@@ -1,6 +1,5 @@
-import axios from "axios";
 import toast from "react-hot-toast";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
@@ -12,6 +11,7 @@ import Typography from '@mui/material/Typography';
 import DeleteModal from '../../modal/DeleteModal';
 import type {Comment} from "../../../types/comment.ts";
 import { useCurrentUser } from "../../../hooks/use-current-user";
+import { deleteComment } from '../../../api/commentApi.ts';
 
 function CommentMenu ({
     open, onClose, anchor, comment, openEdit
@@ -25,43 +25,32 @@ function CommentMenu ({
 
     const [deleteConfirm, setDeleteConfirm] = useState<boolean>(false); // delete 팝업창 열림/닫힘
     const queryClient = useQueryClient(); // QueryClient 가져옴
-    const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
 
     // 현재 로그인된 User 정보 
     const {
         data: currentUser, // 백엔드에서 받아온 데이터
     } = useCurrentUser();
 
-    // 댓글 삭제 API 호출 함수
-    const deleteComment = async () => {
-        try {
-            // 댓글 영구 삭제 Backend API 호출
-            await axios.delete(`http://localhost:8080/api/comment/delete/${comment.commentId}`,
-            {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`
-                }
-            }
-            );
-            toast.success("해당 댓글이 삭제되었습니다.");
-            await queryClient.invalidateQueries({ queryKey: ["comments"]})  // 댓글 목록 실시간 업데이트
-        } catch (error: unknown) {
-            console.error("영구 삭제 실패... : ", error);
-            // axios에서 발생한 오류인 경우
-            if (axios.isAxiosError(error)) {
-                console.error("백엔드 응답:", error.response?.data);
-                toast.error(error.response?.data?.message ?? "댓글 삭제에 실패했습니다.");
-            } 
-            // 그 외의 오류인 경우
-            else {
-                console.error("알 수 없는 오류:", error);
-                toast.error("알 수 없는 오류가 발생했습니다.");
-            }
-        } finally {
+
+    // 댓글/답글 삭제 (useMutation)
+    const { mutate } = useMutation({
+        // 실제로 수행할 함수 (mutate에 넘긴 값을 변수로 받음)
+        mutationFn : () => deleteComment(comment.commentId),
+        // 성공 시 수행할 명령들 
+        onSuccess : async () => {
+            toast.success("해당 댓글/답글이 삭제되었습니다.");
+            await queryClient.invalidateQueries({ queryKey: ["comments"]})
+        },
+        // 오류 시 수행할 명령들
+        onError : (error) => {
+            toast.error(error.message);
+        },
+        // 성공/오류 관계없이 무조건 수행할 명령들
+        onSettled: () => {                 
             setDeleteConfirm(false); // DeleteConfirm창 닫힘
             onClose();               // Comment 메뉴 닫힘
-        }
-    }
+        },
+    })
 
     return (
         <>
@@ -140,7 +129,7 @@ function CommentMenu ({
             open={deleteConfirm}
             title="댓글 영구 삭제"
             message="해당 댓글을 영구 삭제하시겠습니까?"
-            onConfirm={deleteComment}
+            onConfirm={mutate}
             onClose={() => setDeleteConfirm(false)}
         />
         </>

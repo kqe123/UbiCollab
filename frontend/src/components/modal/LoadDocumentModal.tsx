@@ -1,4 +1,3 @@
-import axios from "axios";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -14,25 +13,11 @@ import TableRow from '@mui/material/TableRow';
 import Dialog from '@mui/material/Dialog';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
+import { getFiles } from '../../api/driveitemApi.ts';
 
 function LoadDocumentModal({onClose} : {onClose : () => void}) {
     const [selectedFileId, setSelectedFileId] = useState<string|null>(null); // 현재 선택된 문서 ID
     const navigate = useNavigate(); // navigate 훅
-    const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
-
-    const getFiles = async () => {
-        // 문서 목록 가져오는 백엔드 api 호출
-        const response = await axios.get(
-            "http://localhost:8080/api/driveitem/files",
-            {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`
-                }
-            }
-        );
-        return response.data;
-    };
-
     const {
         data: files = [], // 백엔드에서 받아온 데이터
         isLoading,            // 현재 요청 중인지 여부
@@ -40,7 +25,7 @@ function LoadDocumentModal({onClose} : {onClose : () => void}) {
         error,                // 실패했을 때 오류 정보
     } = useQuery({
         queryKey: ["driveItems", "recent"], // 서버 데이터를 해당 이름으로 관리
-        queryFn: getFiles,   // getDocuments() 실행
+        queryFn: getFiles,   // getFiles() 실행
     });
 
     // formatDate() : 날짜 가독성을 높여주는 함수

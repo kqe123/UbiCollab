@@ -1,5 +1,3 @@
-import axios from "axios";
-import toast from "react-hot-toast";
 import Box from '@mui/material/Box';
 import IconButton from  '@mui/material/IconButton';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -10,8 +8,10 @@ import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import AnnouncementModal from "../../modal/AnnouncementModal"
 import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
+import { useCurrentUser } from "../../../hooks/use-current-user";
 import type { Announcement as AnnouncementType } from "../../../types/announcement.ts";
+import { getAnnouncements } from '../../../api/announcementApi.ts';
 
 function Announcement ({
     fileId,
@@ -22,9 +22,10 @@ function Announcement ({
     setSidePanel : React.Dispatch<React.SetStateAction<"NONE" | "COMMENT" | "ANNOUNCEMENT">>;
     permission : "VIEWER" | "COMMENTOR" | "EDITOR" |"MANAGER" | null;
 }) {
+    // 현재 로그인된 User 정보 
+    const { data: currentUser } = useCurrentUser();
 
     const [openModal, setOpenModal] = useState<boolean>(false); // 공지 추가 모달창 열림/닫힘 상태
-    const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
 
     // formatDate() : 날짜 가독성을 높여주는 함수
     const formatDate = (dateString: string) => {
@@ -37,28 +38,8 @@ function Announcement ({
             hour12: false,
         });
     };
-
-    // 공지 목록 불러오는 메서드
-    const getAnnouncements = async () => {
-        try {
-            const response = await axios.get(
-                `http://localhost:8080/api/announcement/${fileId}`,
-                {   
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`
-                    }
-                }
-            )
-            return response.data;
-        } catch (error: unknown) {
-            if (axios.isAxiosError(error)) {
-                const message = error.response?.data?.message ?? "공지 목록 불러오기에 실패했습니다.";
-                toast.error(message) 
-            }
-            throw error;
-        }
-    };
     
+    // 공지 목록을 불러오는 API 호출 (useQuery)
     const { 
         data : announcements = [],
         isFetching : isAnnouncementFetching, // 현재 요청 중인지 여부 (retry 포함)
@@ -66,7 +47,7 @@ function Announcement ({
         error : AnnouncementError          // 실패했을 때 오류 정보
     } = useQuery<AnnouncementType[]>({
         queryKey : ["announcements", fileId],
-        queryFn : getAnnouncements
+        queryFn : () => getAnnouncements(fileId)
     })
 
 
@@ -91,7 +72,7 @@ function Announcement ({
         {/* 공지사항 목록 영역 */}
         <Box sx={{
             width : "100%",
-            height : "70%",
+            height : "80%",
             display : 'flex',
             flexDirection: 'column',
             overflowY : 'auto',
@@ -148,14 +129,16 @@ function Announcement ({
                                                 
 
                         {/* 더보기 버튼 */}
-                        <Box sx={{ml : 'auto'}}>                    
-                            <IconButton 
-                                size="small"    
-                                sx={{color : '#8A94A6'}}
-                            >
-                                <MoreVertIcon />
-                            </IconButton>
-                        </Box>
+                        {announcement.userId === currentUser?.publicId && (
+                            <Box sx={{ml : 'auto'}}>                    
+                                <IconButton 
+                                    size="small"    
+                                    sx={{color : '#8A94A6'}}
+                                >
+                                    <MoreVertIcon />
+                                </IconButton>
+                            </Box>
+                        )}
                     </Box>
                     
                     <Divider sx={{my : 1}}/>

@@ -1,9 +1,8 @@
-import axios from "axios";
 import toast from "react-hot-toast";
 import type {DriveItem} from "../../types/driveitem";
-import type {User} from "../../types/user";
 import type {permission} from "../../types/permission";
 import { useState, useEffect } from "react";
+import { useMutation, useQuery, skipToken, keepPreviousData } from "@tanstack/react-query";
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
@@ -19,6 +18,8 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import ClickAwayListener from '@mui/material/ClickAwayListener';
+import { shareDriveItem } from '../../api/permissionApi.ts';
+import { searchUsers } from '../../api/userApi.ts';
 function  ShareModal ({
     driveItem,
     onClose
@@ -27,94 +28,50 @@ function  ShareModal ({
     onClose : () => void;
 }) { 
     const [text, setText] = useState<string>(""); // 입력값
-    const [users, setUsers] = useState<User[]>([]); // 검색 결과 유저들
+    const [keyword, setKeyword] = useState<string>(""); // 디바운스된 검색어
     const [sharedUsers, setSharedUsers] = useState<permission[]>([]); // 공유 대상에 추가한 유저들
     const [isUserListOpen, setIsUserListOpen] = useState(false); // 자동완성 열림/닫힘
-    const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
 
+    // 입력값을 0.3초 디바운스해서 검색어(keyword)로 반영
     useEffect(() => {
-        const keyword = text.trim();
-
-        if (keyword.length === 0) {
-            setUsers([]);
-            return;
-        }
-
-        // setTimeout() : window 객체 메서드 (0.3초 뒤에 1회 실행)
-        const timer = setTimeout(async () => {
-            try {
-                const response = await axios.get<User[]>(
-                    `http://localhost:8080/api/user/search`,
-                    {
-                        params: {
-                            keyword: keyword,
-                            publicId : driveItem.publicId
-                        },
-                        headers: {
-                            Authorization: `Bearer ${accessToken}`,
-                        },
-                    }
-                );
-
-                setUsers(response.data);
-            } catch (error) {
-                console.error("사용자 검색 실패:", error);
-                setUsers([]);
-            }
-        }, 300);
-
-        // cleanup 함수
-        return () => clearTimeout(timer);
+        const timer = setTimeout(() => setKeyword(text.trim()), 300);
+        return () => clearTimeout(timer); // cleanup 함수
     }, [text]);
 
+    // 공유할 사용자 검색 (useQuery) — 검색어가 비어있으면 요청하지 않음
+    const { data: searchedUsers = [] } = useQuery({
+        queryKey: ["userSearch", driveItem.publicId, keyword],
+        queryFn: keyword ? () => searchUsers(keyword, driveItem.publicId) : skipToken,
+        placeholderData: keepPreviousData, // 새 검색 결과가 오기 전까지 이전 결과 유지
+        retry: false,
+    });
+    const users = text.trim() ? searchedUsers : []; // 입력값이 비어있으면 검색 결과 없음
 
-    // 공유 추가 메서드
-    const shareDriveItem = async () => {
-        try {
-            if (sharedUsers.length === 0) {
-                toast.error("공유할 사용자를 먼저 추가해주세요.");
-                return;
-            }
-
-            const response = await axios.post(
-                "http://localhost:8080/api/permission/create",
-                {
-                    driveItemId: driveItem.publicId,
-                    userList: sharedUsers.map((user) => ({
-                        userId: user.userId,
-                        type: user.type,
-                    })),
-                },
-                {
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`,
-                    },
-                }
-            );
-            
-            console.log(`알림 : ${response.data}명 공유 성공!`);
-            toast.success("공유 성공하였습니다!");
+    // 공유 추가 (useMutation)
+    const shareMutation = useMutation({
+        mutationFn : () => shareDriveItem(driveItem.publicId, sharedUsers),
+        onSuccess : async () => {
+            console.log("알림 : 공유 성공!");
+            toast.success("공유 완료");
             onClose();
-        } catch (error: unknown) {
-            console.error("공유 실패... : ", error);
-
-            // axios에서 발생한 오류인 경우
-            if (axios.isAxiosError(error)) {
-                console.error("백엔드 응답:", error.response?.data);
-                toast.error(error.response?.data?.message ?? "공유 실패했습니다.");
-            } 
-            // 일반 오류인 경우
-            else if (error instanceof Error) {
-                console.error("일반 오류:", error.message);
-                toast.error(error.message);
-            } 
-            // 그 외의 오류인 경우
-            else {
-                console.error("알 수 없는 오류:", error);
-                toast.error("알 수 없는 오류가 발생했습니다.");
-            }
+        },
+        onError : (error) => {
+            toast.error(error.message);
         }
-    }
+    })
+            
+    // 공유 추가 버튼 클릭 시 실행
+    const shareSubmit = () => {
+        // [예외 처리] 공유할 사용자가 없을때 예외 처리
+        if (sharedUsers.length === 0) {
+            toast.error("공유할 사용자를 먼저 추가해주세요.");
+            return;
+        }
+    
+        shareMutation.mutate();   // 공유 추가 요청 실행
+    };
+
+
 
     return ( 
     <>  
@@ -205,7 +162,10 @@ function  ShareModal ({
                                         }
                                     }
                                 >
-                                    <Avatar src={user.profileUri ?? undefined} alt="프로필사진" sx={{ width: 32, height: 32}} />
+                                    {user.profileUri === null ? 
+                                    (<Avatar alt="기본프로필사진" sx={{ width: 32, height: 32}} />)
+                                    : (<Avatar src={user.profileUri} alt="프로필사진" sx={{ width: 32, height: 32}} />)
+                                    }
                                     
                                     <Box sx={{display : 'flex', flexDirection : "column", ml : 2 }}>
                                         <Typography variant="body2" sx={{ fontWeight : 500, flex : 1}}>{user.nickname}</Typography>
@@ -237,7 +197,10 @@ function  ShareModal ({
                                         my : 1
                                     }}
                                 >
-                                    <Avatar src={sharedUser.profileUri ?? undefined} alt="프로필사진" sx={{ width: 32, height: 32}} />
+                                    {sharedUser.profileUri === null ? 
+                                    (<Avatar alt="기본프로필사진" sx={{ width: 32, height: 32}} />)
+                                    : (<Avatar src={sharedUser.profileUri} alt="프로필사진" sx={{ width: 32, height: 32}} />)
+                                    }
                                     <Box sx={{ display : 'flex', flexDirection : "column", ml : 2 }}>
                                         <Typography variant="body2" sx={{ fontWeight : 500, flex : 1}}>{sharedUser.nickname}</Typography>
                                         <Typography variant="body2" sx={{ color : 'gray', flex : 1}}>{sharedUser.username}</Typography>
@@ -301,7 +264,7 @@ function  ShareModal ({
                         size="large"
                         variant="contained"                 
                         color='primary'
-                        onClick={shareDriveItem}
+                        onClick={shareSubmit}
                         sx={{ borderRadius: '8px', fontWeight: 500}}
                     >
                         완료
