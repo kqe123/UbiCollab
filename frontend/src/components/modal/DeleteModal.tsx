@@ -67,7 +67,6 @@ function DeleteModal ({
                 >
                     확인
                 </Button>
-
             </DialogActions>
         </Dialog>
     )

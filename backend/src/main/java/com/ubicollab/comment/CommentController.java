@@ -57,13 +57,13 @@ public class CommentController {
 	
 	// [댓글] 댓글  수정 API (PATCH 'api/comment/update/{id}')
 	@PatchMapping("/update/{id}")
-	public ResponseEntity<?> updateComment(Authentication authentication,
+	public ResponseEntity<String> updateComment(Authentication authentication,
 				@PathVariable("id") UUID commentId,
 				@Valid @RequestBody CommentUpdateDto request) {
 			String username = authentication.getName();
 			String content = request.content();
 			commentService.updateComment(username, commentId, content);
-			return ResponseEntity.status(HttpStatus.OK).build();
+			return ResponseEntity.status(HttpStatus.OK).body("댓글 수정 완료");
 	}
 	
 	// [댓글] 댓글 삭제  API (DELETE 'api/comment/delete/{id}')

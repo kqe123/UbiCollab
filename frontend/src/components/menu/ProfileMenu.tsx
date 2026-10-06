@@ -28,6 +28,7 @@ function ProfileMenu({
         navigate('/login');
         console.log("로그아웃 완료");
     }
+    
     return (
         <>
         <Menu                 

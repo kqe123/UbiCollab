@@ -1,8 +1,7 @@
 import type {DriveItem} from "../../types/driveitem";
-import axios from "axios";
 import toast from "react-hot-toast";
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import ChangeNameModal from "../modal/ChangeNameModal"
 import ShareModal from "../modal/ShareModal"
 import PermissionModal from "../modal/PermissionModal"
@@ -17,7 +16,7 @@ import StarIcon from '@mui/icons-material/StarBorder';
 import ShareIcon from '@mui/icons-material/Share';
 import PermissionIcon from '@mui/icons-material/CoPresent';
 import DeleteIcon from '@mui/icons-material/Delete';
-
+import { createFavorite, deleteFavorite, throwTrash } from '../../api/driveitemApi.ts';
 
 function DriveItemMenu({
     open, x, y, driveItem, onClose
@@ -33,114 +32,59 @@ function DriveItemMenu({
     // 메뉴 모드를 CONTEXT/RENAME으로 나눠서 CONTEXT일때는 CONTEXT 메뉴를,
     // RENAME일때는 CONTEXT 메뉴 대신 RENAME 메뉴를 출력한다.
     const [menuMode, setMenuMode] = useState<"CONTEXT" | "RENAME" | "SHARE" | "PERMISSION">("CONTEXT");
-    const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
 
     // 메뉴 닫는 함수
     const closeMenu = () => {
         onClose();
     }
 
-    // "즐겨찾기 추가" 함수
-    const addFavorite = async () => {
-        try {
-            // Backend API 호출
-            await axios.post(`http://localhost:8080/api/favorite/create/${driveItem.publicId}`,
-            null,
-            {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`
-                }
-            }
-            );
-        
+    // 즐겨찾기 추가 (useMutation)
+    const { mutate : addFavorite } = useMutation({
+        mutationFn : () => createFavorite(driveItem.publicId),
+        onSuccess : async () => {
             console.log("알림 : 즐겨찾기 추가 성공");
             await queryClient.invalidateQueries({
                 queryKey: ["driveItems"]
             });
-            toast.success("해당 폴더/파일이 즐겨찾기로 등록되었습니다.");
+            toast.success("즐겨찾기 등록 완료");
             onClose();
-        } catch (error: unknown) {
-            console.error("즐겨찾기 추가 실패.. : ", error);
-            // axios에서 발생한 오류인 경우
-            if (axios.isAxiosError(error)) {
-                console.error("백엔드 응답:", error.response?.data);
-                toast.error(error.response?.data?.message ?? "폴더/파일을 즐겨찾기에 등록하는데 실패했습니다.");
-            } 
-            // 그 외의 오류인 경우
-            else {
-                console.error("알 수 없는 오류:", error);
-                toast.error("알 수 없는 오류가 발생했습니다.");
-            }
-        } 
-    }
+        },
+        onError : (error) => {
+            toast.error(error.message);
+        }
+    })
 
-    // "즐겨찾기 해제" 함수
-    const deleteFavorite = async () => {
-        try {
-            // Backend API 호출
-            await axios.delete(`http://localhost:8080/api/favorite/delete/${driveItem.publicId}`,
-            {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`
-                }
-            }
-            );
-        
+    // 즐겨찾기 해제 (useMutation)
+    const { mutate : removeFavorite } = useMutation({
+        mutationFn : () => deleteFavorite(driveItem.publicId),
+        onSuccess : async () => {
             console.log("알림 : 즐겨찾기 해제 성공");
             await queryClient.invalidateQueries({
                 queryKey: ["driveItems"]
             });
-            toast.success("해당 폴더/파일을 즐겨찾기 해제했습니다.");
+            toast.success("즐겨찾기 해제 완료");
             onClose();
-        } catch (error: unknown) {
-            console.error("즐겨찾기 해제 실패.. : ", error);
-            // axios에서 발생한 오류인 경우
-            if (axios.isAxiosError(error)) {
-                console.error("백엔드 응답:", error.response?.data);
-                toast.error(error.response?.data?.message ?? "폴더/파일을 즐겨찾기를 해제하는데 실패했습니다.");
-            } 
-            // 그 외의 오류인 경우
-            else {
-                console.error("알 수 없는 오류:", error);
-                toast.error("알 수 없는 오류가 발생했습니다.");
-            }
-        } 
-    }
+        },
+        onError : (error) => {
+            toast.error(error.message);
+        }
+    })
 
-    // "휴지통으로 보내기" 함수
-    const throwTrash = async () => {
-        try {
-            // Backend API 호출
-            const response = await axios.patch(`http://localhost:8080/api/driveitem/trash/${driveItem.publicId}`,
-            null,
-            {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`
-                }
-            }
-            );
-        
-            console.log(response.data);
+    // 휴지통 보내기 (useMutation)
+    const { mutate : moveToTrash } = useMutation({
+        mutationFn : () => throwTrash(driveItem.publicId),
+        onSuccess : async () => {
+            console.log("알림 : 휴지통 보내기 완료");
             await queryClient.invalidateQueries({
                 queryKey: ["driveItems"]
             });
-            toast.success("알림 : 파일/폴더가 휴지통으로 이동되었습니다.");
+            toast.success("휴지통 보내기 완료");
             onClose();
-        } catch (error: unknown) {
-            console.error("파일/폴더를 휴지통으로 보내기 실패.. : ", error);
-
-            // axios에서 발생한 오류인 경우
-            if (axios.isAxiosError(error)) {
-                console.error("백엔드 응답:", error.response?.data);
-                toast.error(error.response?.data?.message ?? "파일/폴더를 휴지통으로 보내기에 실패했습니다.");
-            } 
-            // 그 외의 오류인 경우
-            else {
-                console.error("알 수 없는 오류:", error);
-                toast.error("알 수 없는 오류가 발생했습니다.");
-            }
-        } 
-    }
+        },
+        onError : (error) => {
+            toast.error(error.message);
+        }
+    })
 
     return (
         <>
@@ -175,7 +119,7 @@ function DriveItemMenu({
 
                     {driveItem.isFavorite === true ? (
                         <MenuItem
-                            onClick={deleteFavorite}
+                            onClick={() => removeFavorite()}
                             disabled={driveItem.permissionType === null}
                         >
                             <ListItemIcon> <StarIcon fontSize="small" /> </ListItemIcon>
@@ -185,7 +129,7 @@ function DriveItemMenu({
                         </MenuItem>
                     ) : 
                         <MenuItem
-                            onClick={addFavorite}
+                            onClick={() => addFavorite()}
                             disabled={driveItem.permissionType === null}
                         >   
                             <ListItemIcon> <StarIcon fontSize="small" /> </ListItemIcon>
@@ -218,7 +162,7 @@ function DriveItemMenu({
                     <Divider sx={{my : 0.5}}/>
 
                     <MenuItem
-                        onClick={throwTrash}
+                        onClick={() => moveToTrash()}
                         sx={{
                             color : 'red',
                             '&:hover': {

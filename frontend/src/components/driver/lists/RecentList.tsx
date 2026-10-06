@@ -1,4 +1,3 @@
-import axios from "axios";
 import fileIcon from "../../../assets/file.png";
 import noFilesImg from "../../../assets/empty-files.png";
 import DriveItemMenu from "../../menu/DriveItemMenu"
@@ -13,6 +12,7 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
+import { getFiles } from '../../../api/driveitemApi.ts';
 
 function RecentList() {
     // 상태(state)들
@@ -24,25 +24,10 @@ function RecentList() {
         closeDriveItemMenu,
         formatDate
     } = useOutletContext<DirectoryOutletContext>();
-    
-    const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
+
     const navigate = useNavigate();
 
-    // 백엔드 api를 호출하는 함수
-    const getFiles = async () => {
-        // axios로 백엔드 api 호출
-        const response = await axios.get(
-            "http://localhost:8080/api/driveitem/files",
-            {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`
-                }
-            }
-        );
-        return response.data;
-    };
-
-    // useQuery 실행
+    // 내 파일 목록을 불러오는 API 호출 (useQuery)
     const {
         data: files = [], // 백엔드에서 받아온 데이터
         isLoading,            // 현재 요청 중인지 여부
@@ -50,10 +35,8 @@ function RecentList() {
         error,                // 실패했을 때 오류 정보
     } = useQuery({
         queryKey: ["driveItems", "recent"], // 서버 데이터를 해당 이름으로 관리
-        queryFn: getFiles,   // getDocuments() 실행
+        queryFn: getFiles,   // getFiles() 실행
     });
-
-
 
     // 로딩 처리
     if (isLoading) {

@@ -1,6 +1,5 @@
-import axios from "axios";
 import toast from "react-hot-toast";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Stack from '@mui/material/Stack';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -12,10 +11,9 @@ import IconButton from  '@mui/material/IconButton';
 import EditIcon from '@mui/icons-material/Edit';
 import { useState, useRef, useEffect } from "react";
 import { useCurrentUser } from "../../../hooks/use-current-user";
+import { changeNickname, uploadProfileImage } from '../../../api/userApi.ts';
 
 function ProfileEdit() {
-    const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
-    
     // 현재 로그인중인 유저 정보 
     const {
         data: currentUser, // 백엔드에서 받아온 데이터
@@ -49,22 +47,30 @@ function ProfileEdit() {
         setNickname(event.target.value)
     }
 
-    // 백엔드에 File 객체를 Multipart로 보내어, S3 버킷에 프로필 사진 업데이트를 수행하는 함수
-    // 인증 필요 — 대상 유저는 accessToken(JWT)에서 백엔드가 직접 알아내므로 userId를 따로 안 보낸다.
-    const uploadProfileFile = async (file: File) => {
-        const formData = new FormData();
-        formData.append("file", file);
-        const response = await axios.post("http://localhost:8080/api/user/profile-upload",
-            formData,
-            {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                    Authorization: `Bearer ${accessToken}`
-                }
-            }
-        );
-        return response.data;
-    };
+    // 닉네임 변경 (useMutation)
+    const changeNicknameMutation = useMutation({
+        mutationFn : () => changeNickname(nickname),
+        onSuccess : () => {
+            console.log("닉네임 변경 성공");
+        },
+        onError : (error) => {
+            console.error("닉네임 변경 실패:", error);
+            toast.error(error.message);
+        }
+    })
+
+    // 프로필 사진 업데이트 (useMutation) — S3 버킷에 프로필 사진을 업로드
+    const uploadProfileMutation = useMutation({
+        mutationFn : (file : File) => uploadProfileImage(file),
+        onSuccess : () => {
+            setAvatarFile(null);
+            console.log("프로필 사진 업데이트 성공");
+        },
+        onError : (error) => {
+            console.error("프로필 사진 업데이트 실패:", error);
+            toast.error(error.message);
+        }
+    })
 
 
     // 프로필 수정 메서드
@@ -89,44 +95,14 @@ function ProfileEdit() {
             return;
         } 
 
-        // 4. (선택사항) 현재 닉네임과 다르다면, 닉네임 변경 
+        // 4. (선택사항) 현재 닉네임과 다르다면, 닉네임 변경 (실패 토스트는 onError에서 처리)
         if (nickname !== currentUser.nickname) {
-            try {
-                // Backend API 호출
-                await axios.patch(
-                    `http://localhost:8080/api/user/change-nickname`,
-                    { nickname : nickname },
-                    {
-                        headers: {
-                            Authorization: `Bearer ${accessToken}`
-                        }
-                    }
-                );
-                console.log("닉네임 변경 성공");
-            } catch (error: unknown) {
-                console.error("닉네임 변경 실패:", error);
-                if (axios.isAxiosError(error)) {
-                    toast.error(error.response?.data?.message ?? "닉네임 변경에 실패했습니다.");
-                } else {
-                    toast.error("닉네임 변경 실패");
-                }
-            }
+            await changeNicknameMutation.mutateAsync().catch(() => {});
         }
 
         // 5. (선택사항) 업데이트될 프로필 사진이 있다면, 백엔드에게 해당 프로필 사진을 보낸다.
         if (avatarFile) {
-            try {
-                await uploadProfileFile(avatarFile);
-                setAvatarFile(null);
-                console.log("프로필 사진 업데이트 성공");
-            } catch (error: unknown) {
-                console.error("프로필 사진 업데이트 실패:", error);
-                if (axios.isAxiosError(error)) {
-                    toast.error(error.response?.data?.message ?? "프로필 사진 업데이트 실패");
-                } else {
-                    toast.error("프로필 사진 업데이트 실패");
-                }
-            }
+            await uploadProfileMutation.mutateAsync(avatarFile).catch(() => {});
         }
         await queryClient.invalidateQueries({queryKey: ["currentUser"]});
         toast.success("프로필 수정 완료");

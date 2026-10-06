@@ -1,4 +1,3 @@
-import axios from "axios";
 import fileIcon from "../../../assets/file.png";
 import folderIcon from "../../../assets/folder.png";
 import noTrashImg from "../../../assets/empty-trash.png";
@@ -14,6 +13,7 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
+import { getTrashs } from '../../../api/driveitemApi.ts';
 
 function TrashList() {
   // 상태(state)들
@@ -27,29 +27,7 @@ function TrashList() {
         formatDate
     } = useOutletContext<DirectoryOutletContext>();
 
-    const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
-
-    // 백엔드 api(휴지통 조회)를 호출하는 비동기 함수
-    const getDriveItems = async () => {
-        // 백엔드에 보낼 폴더 ID
-        const DriveItemData = {
-            parentPublicId: currentFolderId
-        }
-
-        // axios로 백엔드 api 호출
-        const response = await axios.get(
-            "http://localhost:8080/api/driveitem/trash",
-            {   
-                params: DriveItemData,
-                headers: {
-                    Authorization: `Bearer ${accessToken}`
-                }
-            }
-        );
-        return response.data;
-    };
-
-    // useQuery 실행 (첫 렌더링 시, queryKey가 변경될 시에 실행한다.)
+    // 휴지통 목록을 불러오는 API 호출 (useQuery)
     const {
         data: driveItems = [], // 백엔드에서 받아온 데이터
         isLoading : isDriveItemsLoading,    // 현재 요청 중인지 여부
@@ -57,7 +35,7 @@ function TrashList() {
         error : driveItemsError,            // 실패했을 때 오류 정보
     } = useQuery({
         queryKey: ["driveItems","trash" ,currentFolderId], // 서버 데이터를 해당 이름으로 관리
-        queryFn: getDriveItems,   // getDriveItems() 실행
+        queryFn: getTrashs  // getTrashs() 실행
     });
 
     // 로딩 처리

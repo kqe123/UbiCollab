@@ -77,16 +77,16 @@ import "@/components/tiptap-templates/simple/simple-editor.scss"
 import SaveButton from "@/components/editor/toolbar/SaveButton"
 import LoadButton from "@/components/editor/toolbar/LoadButton"
 import Comment from "@/components/editor/panel/Comment"
-import Notice from "@/components/editor/panel/Notice"
+import Announcement from "@/components/editor/panel/Announcement"
 import MyBubbleMenu from "@/components/editor/menu/BubbleMenu"
-import axios from "axios";
 import toast from "react-hot-toast";
 import LoadDocumentModal from "@/components/modal/LoadDocumentModal";
 import Text from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Slide from '@mui/material/Slide'
 import DOMPurify from "dompurify";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { saveFile } from "@/api/driveitemApi";
 
 const MainToolbarContent = ({
   onHighlighterClick,
@@ -226,15 +226,14 @@ export function SimpleEditor({
     fileId : string;
     initialContent: string;
     permission : "VIEWER" | "COMMENTOR" | "EDITOR" |"MANAGER" | null;
-    sidePanel : "NONE" | "COMMENT" | "NOTICE";
-    setSidePanel : React.Dispatch<React.SetStateAction<"NONE" | "COMMENT" | "NOTICE">>;
+    sidePanel : "NONE" | "COMMENT" | "ANNOUNCEMENT";
+    setSidePanel : React.Dispatch<React.SetStateAction<"NONE" | "COMMENT" | "ANNOUNCEMENT">>;
   }) {
   const isMobile = useIsBreakpoint()
   const { height } = useWindowSize()
   const [mobileView, setMobileView] = useState<"main" | "highlighter" | "link">(
     "main"
   )
-  const [isSaving, setIsSaving] = useState<boolean>(false); // 저장 상태를 나타내는 isSaving 추가
   const [isHaveUpdate, setIsHaveUpdate] = useState<boolean>(false); // 업데이트 유무를 나타내는 true/false
   const toolbarRef = useRef<HTMLDivElement>(null)
 
@@ -247,7 +246,6 @@ export function SimpleEditor({
   }); 
   const canEdit = permission === "MANAGER" || permission === "EDITOR";
   const canSave = canEdit && isHaveUpdate
-  const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
   const queryClient = useQueryClient(); // QueryClient 가져옴
 
   const editor = useEditor({
@@ -301,6 +299,27 @@ export function SimpleEditor({
     content : DOMPurify.sanitize(initialContent), // 에디터 내용 업데이트
   })
 
+  // 문서 저장 (useMutation)
+  const { mutate: saveDocument, isPending: isSaving } = useMutation({
+    mutationFn: ({ fileData }: { fileData: { itemName?: string; content?: string }; snapshot: { itemName: string; content: string } }) =>
+      saveFile(fileId, fileData),
+    onSuccess: async (_, { snapshot }) => {
+      console.log("알림 : 문서 저장 성공");
+      toast.success("성공적으로 저장되었습니다.");
+      savedSnapshot.current = snapshot; // 스냅샷 교체
+      setIsHaveUpdate(false); // 업데이트 유무를 false로 전환
+
+      // 변경된 DriveItem 내용을 실시간으로 최신화
+      await queryClient.invalidateQueries({
+        queryKey: ["driveItems"]
+      });
+    },
+    onError: (error) => {
+      console.error("문서 저장 실패:", error);
+      toast.error(error.message);
+    },
+  });
+
   // handleSave() : fileName, content, extension을 보내서 DB에 Document를 저장하도록
   //                API를 호출하는 함수
   const handleSave = async () => {
@@ -323,45 +342,11 @@ export function SimpleEditor({
       })
     };
   
-    try {
-      setIsSaving(true);
-        
-      // 파일 저장 Backend API 호출
-      await axios.patch(
-        `http://localhost:8080/api/driveitem/save/${fileId}`,
-        fileData,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`
-          }
-        }
-      );
-        
-      console.log("알림 : 문서 저장 성공");
-      toast.success("성공적으로 저장되었습니다.");
-      savedSnapshot.current = { itemName: trimFileName, content: sanitizedContent }; // 스냅샷 교체
-      setIsHaveUpdate(false); // 업데이트 유무를 false로 전환
-      
-      // 변경된 DriveItem 내용을 실시간으로 최신화
-      await queryClient.invalidateQueries({
-        queryKey: ["driveItems"]
-      });
-    } catch (error: unknown) {
-      console.error("문서 저장 실패:", error);
-      
-      // axios에서 발생한 오류인 경우
-      if (axios.isAxiosError(error)) {
-        console.error("백엔드 응답:", error.response?.data);
-        toast.error(error.response?.data?.message ?? "문서 저장에 실패했습니다.");
-      } 
-      // 그 외의 오류인 경우
-      else {
-        console.error("알 수 없는 오류:", error);
-        toast.error("알 수 없는 오류가 발생했습니다.");
-      }
-    } finally {
-      setIsSaving(false);
-    }
+    // 파일 저장 (useMutation)
+    saveDocument({
+      fileData,
+      snapshot: { itemName: trimFileName, content: sanitizedContent },
+    });
   };
 
   // checkUpdates() : 현재 fileName, content와 savedSnapshot(마지막 저장 시점 스냅샷)
@@ -436,16 +421,15 @@ export function SimpleEditor({
               height : '100%',
               background: '#f1f6ff',
               zIndex: 50,
-              
               p : 2,
               gap : 2,
               display : 'flex',
               flexDirection : 'column'
             }}
           >
-            {sidePanel === "NOTICE" && (
-              <Notice 
-                sidePanel={sidePanel}
+            {sidePanel === "ANNOUNCEMENT" && (
+              <Announcement 
+                fileId={fileId}
                 setSidePanel={setSidePanel}
                 permission={permission}
               />

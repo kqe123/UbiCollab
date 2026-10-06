@@ -2,11 +2,11 @@ import EditorHeader from "../components/editor/header/EditorHeader.tsx";
 import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor";
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
+import { useQuery, skipToken } from "@tanstack/react-query";
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import type {DriveItem} from "../types/driveitem";
+import { getFile } from '..//api/driveitemApi.ts';
 
 function EditorPage() {
     // URL이 /editor/zhamslwl.....이라면 documentId에는 "zhamslwl....."이 들어옴 -> string | undefined
@@ -15,46 +15,21 @@ function EditorPage() {
     // content은 Tiptap에서 자동으로 관리되므로 State 필요 X
     // fileName은 EditorHeader에서 관리해야되므로 여기서 State 초기화
     const [fileName, setFileName] = useState<string>("");
-    const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
     document.title = `${fileName} - Ubicollab`;
 
     // 사이드 바 열림/닫힘 상태
-    // 공지 버튼을 클릭했을때 NOTICE, 댓글 버튼을 클릭했을때 COMMENT, 열린 사이드 바가 없을때는 NONE
-    const [sidePanel, setSidePanel] = useState<"NONE" | "NOTICE" | "COMMENT" >("NONE");
+    // 공지 버튼을 클릭했을때 ANNOUNCEMENT, 댓글 버튼을 클릭했을때 COMMENT, 열린 사이드 바가 없을때는 NONE
+    const [sidePanel, setSidePanel] = useState<"NONE" | "ANNOUNCEMENT" | "COMMENT" >("NONE");
 
-    // 백엔드 api(파일 하나 가져오기)를 호출하는 비동기 함수
-    const getFile = async () => {
-        try {
-            // axios로 백엔드 api 호출
-            const response = await axios.get(
-                `http://localhost:8080/api/driveitem/files/${fileId}`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`
-                    }
-                }
-            );
-
-            console.log("문서 불러오기 성공");
-            return response.data;
-        } catch (error: unknown) {
-            if (axios.isAxiosError(error)) {
-                const message = error.response?.data?.message ?? "디렉토리 조회에 실패했습니다.";
-                throw new Error(message); // 여기서 백엔드 메시지를 담은 새 Error로 교체
-            }
-            throw error;
-        }
-    };
-
-    // useQuery 실행 (첫 렌더링 시, queryKey가 변경될 시에 실행한다.)
+    // useQuery 실행
     const {
-        data: file, // 백엔드에서 받은 데이터
+        data: file,   //  데이터
         isLoading,    // 현재 요청 중인지 여부
         isError,      // 요청이 실패했는지 여부
         error,        // 실패했을 때 오류 정보
     } = useQuery<DriveItem>({
         queryKey: ["driveItems", "editor" , fileId], // 서버 데이터를 해당 이름으로 관리
-        queryFn: getFile,   // getFile() 실행
+        queryFn: fileId ? () => getFile(fileId) : skipToken,   // getFile() 실행
     });
 
     // useEffect가 아니라 컴포넌트 함수 몸통(return 이전)에 그냥 이렇게 씀

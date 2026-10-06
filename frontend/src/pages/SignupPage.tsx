@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import { useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import Box from '@mui/material/Box';
@@ -11,6 +11,7 @@ import Avatar from '@mui/material/Avatar';
 import Badge from '@mui/material/Badge';
 import IconButton from  '@mui/material/IconButton';
 import AddIcon from '@mui/icons-material/Add';
+import { checkUsername, signup, uploadProfileImage } from '../api/userApi.ts';
 
 function SignupPage () {
     const [user, setUser] = useState({
@@ -80,116 +81,73 @@ function SignupPage () {
     };
 
 
-    // 아이디 중복 체크하는 함수
-    const checkDuplicateUsername = async (username : string) : Promise<boolean> => {
-        try {
-            const response = await axios.get<boolean>(
-                "http://localhost:8080/api/user/check-username",
-                {
-                    params: {
-                        username
-                    }
-                }
-            );
+    // 아이디 중복 확인 (useMutation)
+    const checkUsernameMutation = useMutation({
+        mutationFn : () => checkUsername(user.username),
+    })
 
-            return response.data;
+    // 프로필 사진 업로드 (useMutation)
+    // 가입 직후 발급받은 임시 JWT로 업로드한다. (이 JWT는 LocalStorage에 저장되지 않음!)
+    const uploadProfileMutation = useMutation({
+        mutationFn : ({ file, accessToken } : { file : File; accessToken : string }) =>
+            uploadProfileImage(file, accessToken),
+        onSuccess : () => {
+            toast.success("프로필 사진 업데이트에 성공하였습니다!");
+        },
+        onError : (error) => {
+            console.error("아바타 업로드 실패:", error);
+            toast.error(error.message);
+        },
+        onSettled : () => {
+            navigate('/login'); // 업로드 성공/실패와 관계없이 로그인 페이지로 이동
+        }
+    })
 
-            } catch (error) {
-                console.error("아이디 중복 확인 실패:", error);
-                toast.error("아이디 중복 확인에 실패했습니다.");
-                return false;
+    // 회원가입 (useMutation)
+    const signupMutation = useMutation({
+        mutationFn : () => signup(user.username, user.password, user.nickname),
+        onSuccess : (accessToken) => {
+            console.log("회원가입 성공");
+            toast.success("회원가입에 성공하였습니다!");
+
+            // (선택사항) 프로필 사진이 있다면, 백엔드에게 해당 프로필 사진을
+            // 보내고, S3 버킷에 업로드한 뒤, 해당 유저의 ProfileImageKey를 수정한다.
+            if (avatarFile && accessToken) {
+                uploadProfileMutation.mutate({ file : avatarFile, accessToken });
+                return;
             }
-    }
+            navigate('/login');
+        },
+        onError : (error) => {
+            console.error("회원가입 실패 :", error);
+            toast.error(error.message);
+        }
+    })
 
-    // 백엔드에 File 객체를 Multipart로 보내어,
-    // S3 버킷에 업로드를 수행하는 함수
-    // 인증 필요 — 대상 유저는 accessToken(JWT)에서 백엔드가 직접 알아내므로 userId를 따로 안 보낸다.
-    const uploadProfileImage = async (file: File, accessToken : string) => {
-        const formData = new FormData();
-        formData.append("file", file);
-        const response = await axios.post("http://localhost:8080/api/user/profile-upload",
-            formData,
-            {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                    Authorization: `Bearer ${accessToken}`
-                }
-            }
-        );
-        return response.data;
-    };
-
-
-    // 회원가입 함수 
-    const signup = async (e : React.FormEvent<HTMLFormElement>) => {
+    // 회원가입 버튼 클릭 시 실행
+    const handleSignup = async (e : React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        
+
         // 1. 유효성 검사
         if (!validCheck(user.username, user.password, user.confirmPassword ,user.nickname)) {
             return;
         }
 
-        // 2. 같은 username이 DB에 있는지 검사
-        const isDuplicate = await checkDuplicateUsername(user.username);
+        // 2. 같은 username이 DB에 있는지 검사 (확인에 실패하면 중복이 아닌 것으로 보고 진행)
+        const isDuplicate = await checkUsernameMutation.mutateAsync().catch((error) => {
+            console.error("아이디 중복 확인 실패:", error);
+            toast.error("아이디 중복 확인에 실패했습니다.");
+            return false;
+        });
 
         if (isDuplicate) {
             toast.error("이미 사용 중인 아이디입니다.");
             return;
         }
-        
+
         // 3. 회원가입 진행
-        // backend api에 보낼 body
-        const credentials = {
-            username : user.username,
-            password : user.password,
-            nickname : user.nickname,
-        };
-
-        try {
-            // Backend Login API 호출
-            const response = await axios.post(
-                `http://localhost:8080/api/user`,
-                credentials
-            );
-            
-            console.log("회원가입 성공");
-            toast.success("회원가입에 성공하였습니다!")
-
-            // 4. 가입 직후 JWT를 발급 (프로필 사진 업로드에 필요)
-            // 이 JWT는 프로필 사진 업로드에 임시로 쓰이는 토큰으로, LocalStorage에 저장이 되지 않는다!
-            const authorization = response.headers.authorization;
-            const accessToken = authorization ? authorization.replace("Bearer ", "") : null;
-
-            // 5. (선택사항) 프로필 사진이 있다면, 백엔드에게 해당 프로필 사진을
-            //    보내고, S3 버킷에 업로드한 뒤, 해당 유저의 ProfileImageKey를 수정한다.
-            if (avatarFile && accessToken) {
-                try {
-                    await uploadProfileImage(avatarFile, accessToken);
-                    toast.success("프로필 사진 업데이트에 성공하였습니다!" )
-                } catch (error: unknown) {
-                    console.error("아바타 업로드 실패:", error);
-                    if (axios.isAxiosError(error)) {
-                        toast.error(error.response?.data?.message ?? "프로필 사진 업로드에 실패했습니다.");
-                    } else {
-                        toast.error("프로필 사진 업로드에 실패했습니다.");
-                    }
-                }
-            }
-            navigate('/login');
-        } catch (error: unknown) {
-            console.error("회원가입 실패 :", error);
-            // axios에서 발생한 오류인 경우
-            if (axios.isAxiosError(error)) {
-                console.error("백엔드 응답:", error.response?.data);
-                toast.error(error.response?.data?.message ?? "회원가입에 실패했습니다.");
-            } 
-            // 그 외의 오류인 경우
-            else {
-                console.error("알 수 없는 오류:", error);
-                toast.error("알 수 없는 오류가 발생했습니다.");
-            }
-        }
-    } 
+        signupMutation.mutate();
+    }
     
 
     return (
@@ -208,7 +166,7 @@ function SignupPage () {
                 {/* Signup Panel */}
                 <Box 
                     component="form"
-                    onSubmit={signup}
+                    onSubmit={handleSignup}
                     sx={{ width : '60%', mx: 'auto', display: 'flex', flexDirection: 'column',
                         gap: 1.5, mt : 1}}
                 >

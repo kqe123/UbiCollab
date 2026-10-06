@@ -1,8 +1,7 @@
 import { useState } from "react";
-import axios from "axios";
 import toast from "react-hot-toast";
 import type {DriveItem} from "../../types/driveitem";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import EditIcon from '@mui/icons-material/Edit';
@@ -10,7 +9,7 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
-
+import { changeName } from '../../api/driveitemApi.ts';
 
 function ChangeNameModal ({
     onClose,
@@ -20,51 +19,41 @@ function ChangeNameModal ({
     driveItem : DriveItem;
 }) {
     const [driveItemName, setDriveItemName] = useState(driveItem.itemName); // 현재 DriveItem 이름
-    const accessToken = localStorage.getItem("accessToken"); // accessToken (JWT) 불러오기
     const queryClient = useQueryClient(); // QueryClient 가져옴
-    const changeName = async () => {
 
-        // 문서명 앞뒤 공백 제거
-        const trimmedFileName = driveItemName.trim();
 
-        // backend api에 보낼 body
-        const driveItemData = {
-            itemName:
-                trimmedFileName === ""
-                ? "제목 없는 문서"
-                : trimmedFileName,
-            };
-
-        try {
-            // 문서 변경 Backend API 호출  
-            await axios.patch(
-                `http://localhost:8080/api/driveitem/name-change/${driveItem.publicId}`,
-                driveItemData,
-                {
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`
-                    }
-                }
-            );
-        
-            console.log("알림 : 파일명 변경 성공");
+    // 폴더/파일명 변경 (useMutation)
+    const { mutate } = useMutation({
+        // 실제로 수행할 함수
+        mutationFn : ({ trimmedItemName, driveItemId } : { trimmedItemName : string; driveItemId : string; }) =>
+            changeName(trimmedItemName, driveItemId),
+        // 성공 시 수행할 명령들
+        onSuccess : async () => {
+            console.log("알림 : 폴더/파일명 변경 성공");
             await queryClient.invalidateQueries({
                 queryKey: ["driveItems"]
             });
-            toast.success("파일명 변경이 완료되었습니다.");     
+            toast.success("폴더/파일명 변경 완료");     
             onClose();       
-        } catch (error : unknown) {
-            // axios에서 발생한 오류인 경우
-            if (axios.isAxiosError(error)) {
-                console.error("백엔드 응답:", error.response?.data);
-                toast.error(error.response?.data?.message ?? "문서 저장에 실패했습니다.");
-            } 
-            // 그 외의 오류인 경우
-            else {
-                console.error("알 수 없는 오류:", error);
-                toast.error("알 수 없는 오류가 발생했습니다.");
-            }
+        },
+        // 오류 시 수행할 명령들
+        onError : (error) => {
+            toast.error(error.message);
         }
+    })
+        
+    // 폴더/파일명 변경 버튼 클릭 시 실행
+    const handleSubmit = () => {
+        const trimmedItemName = driveItemName.trim(); // 변경할 폴더/파일명
+        const driveItemId = driveItem.publicId; // 선택된 폴더/파일 publicId
+
+        // [예외 처리] itenName이 비어있을 때
+        if (driveItemName.trim().length === 0) {
+            toast.error("폴더/파일명을 입력해주세요.");
+            return;
+        }
+
+        mutate({trimmedItemName, driveItemId});   // 폴더/파일명 변경 요청 실행
     };
 
     return ( 
@@ -74,7 +63,7 @@ function ChangeNameModal ({
             fullWidth
             maxWidth="xs"
         >
-            {/* 메뉴명 */}
+            {/* 명 */}
             <DialogTitle sx={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap : 1 }}>
                 <EditIcon /> 이름 변경
             </DialogTitle>
@@ -87,8 +76,8 @@ function ChangeNameModal ({
                     onChange={(e) => setDriveItemName(e.target.value)}
                     onKeyDown={(e) => {
                     if (e.key === "Enter") {
-                        changeName();
-                        }
+                        handleSubmit();
+                    }
                     }}
                     sx={{ mt : 2, width : '100%'}}
                 />
@@ -115,7 +104,7 @@ function ChangeNameModal ({
                     type="button"
                     size="large"
                     variant="contained"
-                    onClick={changeName}
+                    onClick={handleSubmit}
                     color='primary'
                     sx={{ borderRadius: '8px', fontWeight: 500,}}
                 >
