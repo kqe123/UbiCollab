@@ -124,7 +124,7 @@ export const deleteTrash = async (driveItemId : string) => {
 }
 
 // [편집기] 문서 저장 API 호출 (변경된 항목만 body에 담아서 보냄)
-export const saveFile = async (fileId : string, fileData : { itemName? : string; content? : string }) => {
-    const response = await client.patch(`/driveitem/save/${fileId}`, fileData);
+export const saveFile = async (fileId : string, contentData : { content : string }) => {
+    const response = await client.patch(`/driveitem/save/${fileId}`, contentData);
     return response.data;
 }

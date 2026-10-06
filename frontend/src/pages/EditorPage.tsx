@@ -83,13 +83,13 @@ function EditorPage() {
 		{/* Header에 SimpleEditor에게 fileName 전달 */}
         <Box sx={{display: 'flex', flexDirection: 'column'}}>
             <EditorHeader 
+                fileId={fileId}
                 fileName={fileName}
                 setFileName={setFileName}
                 permission={file?.permissionType ?? null}
                 setSidePanel={setSidePanel}/>
             <SimpleEditor 
                 fileId={fileId}
-                fileName={fileName}
                 initialContent={file?.content ?? ""}
                 permission={file?.permissionType ?? null}
                 sidePanel={sidePanel}

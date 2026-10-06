@@ -10,11 +10,13 @@ import { useCurrentUser } from "../../../hooks/use-current-user";
 import { useState, useRef } from "react";
 import ProfileMenu from '../../menu/ProfileMenu';
 function EditorHeader({
+    fileId,
     fileName,
     setFileName,
     permission,
     setSidePanel
 } : {
+    fileId : string;
     fileName : string;
     setFileName : React.Dispatch<React.SetStateAction<string>>;
     permission : "VIEWER" | "COMMENTOR" | "EDITOR" | "MANAGER" | null;
@@ -52,9 +54,11 @@ function EditorHeader({
                 />
                 {/* FileName */}
                 <DocumentName 
+                    fileId={fileId}
                     fileName={fileName}
                     setFileName={setFileName}
-                    permission={permission}/>
+                    permission={permission}
+                />
             </Box>
 
 
