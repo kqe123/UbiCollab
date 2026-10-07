@@ -20,8 +20,6 @@ import com.ubicollab.favorite.FavoriteRepository;
 import com.ubicollab.permission.Permission;
 import com.ubicollab.permission.PermissionRepository;
 import com.ubicollab.permission.PermissionService;
-import com.ubicollab.permission.dto.PermissionCreateDto;
-import com.ubicollab.permission.dto.PermissionCreateDto.UserDto;
 import com.ubicollab.permission.enums.PermissionType;
 import com.ubicollab.user.User;
 import com.ubicollab.user.UserRepository;
@@ -285,6 +283,7 @@ public class DriveItemService {
 	}
 	
 	// 폴더/파일 이름 변경 메서드 (MANAGER만)
+	@Transactional
 	public void updateItemName(UUID publicId, ItemNameChangeDto request, String username) {
 		// 현재 로그인 사용자
 		User user = getUserOrThrow(username);
@@ -306,6 +305,7 @@ public class DriveItemService {
 	
 	
 	// 파일 저장 메서드 (EDITOR 이상)
+	@Transactional
 	public void saveFile(UUID publicId, FileSaveDto request, String username) {
 	    // 현재 로그인 사용자
 	    User user = getUserOrThrow(username);
@@ -316,18 +316,13 @@ public class DriveItemService {
 		// 현재 갖고있는 권한(MANAGER 등...)
 		PermissionType permissionType = permissionService.getPermission(driveItem, user);
 		boolean canEdit = permissionService.canEdit(permissionType); // 파일 내용 수정 : MANAGER | EDITOR
-		boolean canManage = permissionService.isManager(permissionType); // 이름 변경 : MANAGER만
 		
-		
-		// (예외처리) itemName, Content 모두 null일때 예외처리
-		if (request.itemName() == null && request.content() == null)
+		// (예외처리) content가 null일때 예외처리
+		if (request.content() == null)
 			throw new IllegalArgumentException("잘못된 요청입니다.");
 		
-		// 각 변경사항이 있을 시에 각각 업데이트를 진행함.(itemName || content)
-		// 각 필드가 null이면 뒤의 조건 검사를 안하고 패스 (Short Circuit)
-		if (request.itemName() != null && !(request.itemName().equals(driveItem.getItemName()))) 
-			updateItemName(driveItem, request.itemName(), canManage);
-		
+		// 변경사항이 있을 시에 업데이트를 진행함.(content)
+		// 필드가 null이면 뒤의 조건 검사를 안하고 패스 (Short Circuit)
 		if (request.content() != null && !(request.content().equals(driveItem.getContent()))) 
 			updateContent(driveItem, request.content(), canEdit);
 
@@ -361,6 +356,7 @@ public class DriveItemService {
 	}
 
 	// content가 요청에 포함된 경우 유효성 검사후 변경 (파일만 가능)
+	
 	private void updateContent(DriveItem driveItem, String content, boolean canEdit) {
 		if (content == null) {
 			return;

@@ -1,4 +1,3 @@
-import toast from "react-hot-toast";
 import { useRef, useState } from "react";
 import InputBase from '@mui/material/InputBase';
 import Typography from '@mui/material/Typography';
@@ -9,12 +8,16 @@ function DocumentName({
     fileId,
     fileName,
     setFileName,
-    permission
+    permission,
+    setSaveStatus,
+    setSavedAt
 } : {
     fileId : string;
     fileName : string;
     setFileName : React.Dispatch<React.SetStateAction<string>>;
     permission : "VIEWER" | "COMMENTOR" | "EDITOR" |"MANAGER" | null;
+    setSaveStatus : React.Dispatch<React.SetStateAction<"저장 중" | "저장 완료" | "저장 실패" | null>>;
+    setSavedAt : (date : Date) => void;
 }) {
 
     const originalNameRef = useRef(fileName);  // 초기 fileName 스냅샷 (= 마지막 저장된 이름)
@@ -37,7 +40,9 @@ function DocumentName({
 
         // ✅ 변경 없으면 저장 안 함
         if (trimmedName === originalNameRef.current) 
-            return;  
+            return;
+
+        setSaveStatus("저장 중");
         saveFileName({ trimmedName });
     };
 
@@ -58,11 +63,20 @@ function DocumentName({
         mutationFn : ({ trimmedName } : { trimmedName : string; }) =>
             changeName(trimmedName,fileId),
         onSuccess : async () => {
-            toast.success("파일명 저장 완료");
+            console.log("알림 : 문서 저장 성공");
+            // "저장 중..."이 너무 빨리 지나가지 않도록 1초 뒤 완료 표시
+            setTimeout(() => {
+                setSaveStatus("저장 완료");
+                setSavedAt(new Date());
+            }, 1000);
             await queryClient.invalidateQueries({ queryKey: ["driveItems"] });
         },
         onError : () => {
-        
+            setFileName(originalNameRef.current); // 원래 이름으로 복구
+            // "저장 중..."이 너무 빨리 지나가지 않도록 1초 뒤 실패 표시
+            setTimeout(() => {
+                setSaveStatus("저장 실패");
+            }, 1000);
         }
     })
 
@@ -78,7 +92,7 @@ function DocumentName({
                     autoFocus
                     sx={{
                         width: `${Math.min(
-                            Math.max(fileName.length + 4, 18),
+                            Math.max(fileName.length + 4, 14),
                             maxNameLength
                         )}ch`,
                         maxWidth: '500px',
@@ -98,7 +112,6 @@ function DocumentName({
                     title={fileName}
                     sx={{
                         display: 'inline-block',
-                        minWidth: '220px',
                         maxWidth: '500px',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
