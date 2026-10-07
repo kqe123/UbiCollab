@@ -74,12 +74,10 @@ import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils"
 import "@/components/tiptap-templates/simple/simple-editor.scss"
 
 // 사용자 정의 components
-import SaveButton from "@/components/editor/toolbar/SaveButton"
 import LoadButton from "@/components/editor/toolbar/LoadButton"
 import Comment from "@/components/editor/panel/Comment"
 import Announcement from "@/components/editor/panel/Announcement"
 import MyBubbleMenu from "@/components/editor/menu/BubbleMenu"
-import toast from "react-hot-toast";
 import LoadDocumentModal from "@/components/modal/LoadDocumentModal";
 import Text from '@mui/material/Typography';
 import Box from '@mui/material/Box';
@@ -91,18 +89,12 @@ import { saveFile } from "@/api/driveitemApi";
 const MainToolbarContent = ({
   onHighlighterClick,
   onLinkClick,
-  onSave,
-  isSaving,
   isMobile,
-  canSave,
   canEdit
 }: {
   onHighlighterClick: () => void
   onLinkClick: () => void
-  onSave : () => Promise<void>
-  isSaving : boolean
   isMobile: boolean
-  canSave : boolean
   canEdit : boolean
 }) => {
   const [isLoadModalOpen, setIsLoadModalOpen] = useState<boolean>(false);
@@ -117,13 +109,8 @@ const MainToolbarContent = ({
   return (
     <>
       <Spacer size="6px"/>
-       {/* 저장 버튼 추가 */}
       <ToolbarGroup>
         <LoadButton onClick={openLoadModal} />
-        <SaveButton 
-          onSave={onSave}
-          isSaving={isSaving}
-          canSave={canSave}/>
       </ToolbarGroup>
       <ToolbarSeparator />
       <ToolbarGroup>
@@ -215,45 +202,44 @@ const MobileToolbarContent = ({
 )
 
 export function SimpleEditor({
-  fileName,
   fileId,
   initialContent,
   permission,
   sidePanel,
   setSidePanel,
+  setSaveStatus,
+  setSavedAt,
   } : { 
-    fileName: string;
     fileId : string;
     initialContent: string;
     permission : "VIEWER" | "COMMENTOR" | "EDITOR" |"MANAGER" | null;
     sidePanel : "NONE" | "COMMENT" | "ANNOUNCEMENT";
     setSidePanel : React.Dispatch<React.SetStateAction<"NONE" | "COMMENT" | "ANNOUNCEMENT">>;
+    setSaveStatus : React.Dispatch<React.SetStateAction<"저장 중" | "저장 완료" | "저장 실패" | null>>;
+    setSavedAt : (date : Date) => void;
   }) {
   const isMobile = useIsBreakpoint()
   const { height } = useWindowSize()
   const [mobileView, setMobileView] = useState<"main" | "highlighter" | "link">(
     "main"
   )
-  const [isHaveUpdate, setIsHaveUpdate] = useState<boolean>(false); // 업데이트 유무를 나타내는 true/false
   const toolbarRef = useRef<HTMLDivElement>(null)
 
-  // 마지막 저장 상태의 스냅샷
-  // EditorPage에서 file이 isLoading일때는 SimpleEditor 자체를 렌더링 하지 않으므로
-  // fileName, initialContent가 확정된 값이다. 그래서 그냥 초기값으로 채운다.
-  const savedSnapshot = useRef<{itemName : string, content: string}>({
-    itemName: fileName,
-    content: DOMPurify.sanitize(initialContent),
-  }); 
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const canEdit = permission === "MANAGER" || permission === "EDITOR";
-  const canSave = canEdit && isHaveUpdate
   const queryClient = useQueryClient(); // QueryClient 가져옴
 
   const editor = useEditor({
     immediatelyRender: false,
     editable : canEdit, // false이면 편집 불가
-    // 에디터 내용이 변경되면, 업데이트 유무를 체크하는 checkUpdates() 실행
-    onUpdate: ({ editor }) => {
-      checkUpdates(fileName, DOMPurify.sanitize(editor.getHTML()));
+    
+    // 에디터 내용이 변경될때 콜백하는 함수 
+    onUpdate: () => {
+      setSaveStatus("저장 중");
+      clearTimeout(timerRef.current); // 기존 타이머 초기화
+      timerRef.current = setTimeout(() => {
+        autoSave();
+      }, 2000); // 입력 멈추고 2초 후 저장
     },
 
     // 에디터 선택 영역이 변경될때 발생하는 콜백 함수
@@ -299,63 +285,41 @@ export function SimpleEditor({
     content : DOMPurify.sanitize(initialContent), // 에디터 내용 업데이트
   })
 
-  // 문서 저장 (useMutation)
-  const { mutate: saveDocument, isPending: isSaving } = useMutation({
-    mutationFn: ({ fileData }: { fileData: { itemName?: string; content?: string }; snapshot: { itemName: string; content: string } }) =>
-      saveFile(fileId, fileData),
-    onSuccess: async (_, { snapshot }) => {
+  // 파일 자동 저장 (useMutation)
+  const saveMutation = useMutation({
+    mutationKey: ["saveFile", fileId],
+    mutationFn: ({ contentData }: { contentData : { content : string }}) =>
+      saveFile(fileId, contentData),
+    onSuccess: async () => {
       console.log("알림 : 문서 저장 성공");
-      toast.success("성공적으로 저장되었습니다.");
-      savedSnapshot.current = snapshot; // 스냅샷 교체
-      setIsHaveUpdate(false); // 업데이트 유무를 false로 전환
-
-      // 변경된 DriveItem 내용을 실시간으로 최신화
-      await queryClient.invalidateQueries({
-        queryKey: ["driveItems"]
-      });
+      if (!timerRef.current) { 
+        setSaveStatus("저장 완료");
+        setSavedAt(new Date());
+      }
+      
+      // invalidateQueries 삭제 : 편집기는 들어올 때마다 새로 조회함(gcTime: 0),
     },
-    onError: (error) => {
-      console.error("문서 저장 실패:", error);
-      toast.error(error.message);
+    onError: () => {
+      setSaveStatus("저장 실패");
+      timerRef.current = setTimeout(autoSave, 5000);  // 5초 뒤 재시도
     },
   });
 
-  // handleSave() : fileName, content, extension을 보내서 DB에 Document를 저장하도록
-  //                API를 호출하는 함수
-  const handleSave = async () => {
+  // content을 보내서 자동 저장
+  const autoSave = async () => {
+    timerRef.current = undefined;   // timerRef를 비움 (예약이)
+
     if (!editor) {
       console.error("에디터가 아직 준비되지 않았습니다.");
       return;
     }
-  
-    // 문서명 앞뒤 공백 제거
-    const trimFileName = fileName.trim();
-    const sanitizedContent = DOMPurify.sanitize(editor.getHTML());
     
-    // 변경사항이 있을시에만 body에 추가
-    const fileData = {
-      ...((fileName !== savedSnapshot.current.itemName) && {
-        itemName: trimFileName === "" ? "제목 없는 문서" : trimFileName,
-      }),
-      ...((sanitizedContent !== savedSnapshot.current.content) && {
-        content: sanitizedContent,
-      })
+    const contentData = { 
+      content : DOMPurify.sanitize(editor.getHTML())
     };
   
-    // 파일 저장 (useMutation)
-    saveDocument({
-      fileData,
-      snapshot: { itemName: trimFileName, content: sanitizedContent },
-    });
-  };
-
-  // checkUpdates() : 현재 fileName, content와 savedSnapshot(마지막 저장 시점 스냅샷)
-  //                  을 비교해 변경되었다면 isHaveUpdate를 true로 변환
-  const checkUpdates = (currentFileName: string, currentContent: string) => {
-    if( currentFileName !== savedSnapshot.current.itemName ||
-      currentContent !== savedSnapshot.current.content) {
-      setIsHaveUpdate(true);
-    }
+    // 파일 자동 저장
+    saveMutation.mutate({ contentData });
   };
 
   const rect = useCursorVisibility({
@@ -369,10 +333,15 @@ export function SimpleEditor({
     }
   }, [isMobile, mobileView])
 
-  // fileName이 변경됬다면, 업데이트 유무를 체크하는 checkUpdates() 실행
+  // SimpleEditor가 언마운트(Unmount)될 때 timerRef 정리
   useEffect(() => {
-    checkUpdates(fileName, editor?.getHTML() ?? savedSnapshot.current.content)
-  }, [fileName]);
+    return () => {
+      if (timerRef.current) {       // 저장 대기 중인 변경이 있으면
+        clearTimeout(timerRef.current);
+        autoSave();                 // 떠나기 전에 바로 저장
+      }
+    };
+  }, [editor]);
 
   return (
     <div className="simple-editor-wrapper">
@@ -391,10 +360,7 @@ export function SimpleEditor({
             <MainToolbarContent
               onHighlighterClick={() => setMobileView("highlighter")}
               onLinkClick={() => setMobileView("link")}
-              onSave={handleSave}   // MainToolbarContent에 onSave 이름으로 저장 로직 전달
-              isSaving={isSaving}   // MainToolbarContent에 isSaving도 전달
               isMobile={isMobile}
-              canSave={canSave}
               canEdit={canEdit}
             />
           ) : (

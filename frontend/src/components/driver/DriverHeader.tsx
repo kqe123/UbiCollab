@@ -6,14 +6,13 @@ import TextField from '@mui/material/TextField';
 import { useCurrentUser } from "../../hooks/use-current-user";
 import { useState, useRef } from "react";
 import ProfileMenu from '../menu/ProfileMenu';
+import CloudOffIcon from '@mui/icons-material/CloudOff';
 
 function DriverHeader() {
     // 현재 로그인 유저 정보 (같은 queryKey["currentUser"]를 쓰는 다른 컴포넌트와 캐시 공유됨)
     const {
         data: currentUser, // 백엔드에서 받아온 데이터
-        isLoading,    // 현재 요청 중인지 여부
         isError,        // 요청이 실패했는지 여부
-        error,            // 실패했을 때 오류 정보
     } = useCurrentUser();
 
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState<boolean>(false); // 프로필 메뉴 열림/닫힘
@@ -49,16 +48,14 @@ function DriverHeader() {
 
             {/* Buttons */}
             <Box sx={{ width : '20%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap : 2}}>
-                {isLoading && (
-                    <Box sx={{ alignItems: 'center', justifyContent: 'center'}}>
-                        <Typography>로그인 사용자를 불러오는 중입니다...</Typography>
-                    </Box>
-                )}
                 {isError && (
                     <Box sx={{ alignItems: 'center', justifyContent: 'center'}}>
-                        <Typography variant="body2" sx={{ color: 'error.main' ,textAlign: 'center',}}>{error.message}</Typography>
+                        <Typography sx={{ fontSize : "12px", color: '#ece2ff', textAlign: 'center'}}>
+                            <CloudOffIcon />{" "}오프라인 상태
+                        </Typography>
                     </Box>
                 )}
+                
                 <Avatar
                     src={currentUser?.profileUri ?? undefined}
                     alt="프로필사진" sx={{ width: 50, height: 50, cursor : 'pointer'}}

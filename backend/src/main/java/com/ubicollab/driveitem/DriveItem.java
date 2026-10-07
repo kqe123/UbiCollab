@@ -12,6 +12,7 @@ import jakarta.persistence.Column;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.hibernate.annotations.UuidGenerator;
@@ -21,6 +22,7 @@ import com.ubicollab.driveitem.enums.DriveItemType;
 import com.ubicollab.user.User;
 
 @Entity
+@DynamicUpdate   // 변경된 컬럼만 UPDATE
 public class DriveItem {
 	// 기본키
 	@Id

@@ -9,27 +9,39 @@ import Tooltip from '@mui/material/Tooltip';
 import { useCurrentUser } from "../../../hooks/use-current-user";
 import { useState, useRef } from "react";
 import ProfileMenu from '../../menu/ProfileMenu';
+import Typography from '@mui/material/Typography';
+import CloudDoneIcon from '@mui/icons-material/CloudDone';
+import CloudOffIcon from '@mui/icons-material/CloudOff';
+
 function EditorHeader({
+    fileId,
     fileName,
     setFileName,
     permission,
-    setSidePanel
+    setSidePanel,
+    saveStatus,
+    setSaveStatus,
+    savedAt,
+    setSavedAt
 } : {
+    fileId : string;
     fileName : string;
     setFileName : React.Dispatch<React.SetStateAction<string>>;
     permission : "VIEWER" | "COMMENTOR" | "EDITOR" | "MANAGER" | null;
     setSidePanel : React.Dispatch<React.SetStateAction<"NONE" | "COMMENT" | "ANNOUNCEMENT">>;
+    saveStatus : "저장 중" | "저장 완료" | "저장 실패" | null;
+    setSaveStatus : React.Dispatch<React.SetStateAction<"저장 중" | "저장 완료" | "저장 실패" | null>>;    
+    savedAt : Date | null;
+    setSavedAt : (date : Date) => void;
 }) {
     // 현재 로그인된 User 정보 
     const {
-        data: currentUser, // 백엔드에서 받아온 데이터
-        isLoading,    // 현재 요청 중인지 여부
-        isError,        // 요청이 실패했는지 여부
-        error,            // 실패했을 때 오류 정보
+        data: currentUser,      // 백엔드에서 받아온 데이터
     } = useCurrentUser();
 
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState<boolean>(false); // 프로필 메뉴 열림/닫힘
     const anchorRef = useRef(null); // 프로필 버튼 참조
+
 
     return (
         <>
@@ -52,13 +64,33 @@ function EditorHeader({
                 />
                 {/* FileName */}
                 <DocumentName 
+                    fileId={fileId}
                     fileName={fileName}
                     setFileName={setFileName}
-                    permission={permission}/>
+                    permission={permission}
+                    setSaveStatus={setSaveStatus}
+                    setSavedAt={setSavedAt}
+                />
+
+                {saveStatus === "저장 완료" && savedAt && (
+                    <Typography sx={{ml : 1, color : 'gray', fontSize : '12px'}}>
+                        <CloudDoneIcon />{" "}
+                        {savedAt.toLocaleTimeString("ko-KR", { hour: "numeric", minute: "2-digit" })}에 저장됨
+                    </Typography>
+                )}
+                {saveStatus === "저장 중" && (
+                    <Typography sx={{ml : 1, color : 'gray', fontSize : '12px'}}>
+                        저장 중...
+                    </Typography>
+                )}
+                {saveStatus === "저장 실패" && (
+                    <Typography sx={{ml : 1, color : 'gray', fontSize : '12px'}}>
+                        <CloudOffIcon />{" "}저장 실패
+                    </Typography>
+                )}
+
             </Box>
-
-
-            
+        
             {/* Buttons */}
             <Box sx={{ width : '20%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap : 1}}>
                 {/* 공지사항 버튼 */}
