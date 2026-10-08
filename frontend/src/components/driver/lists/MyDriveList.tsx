@@ -109,7 +109,7 @@ function MyDriveList() {
 
     // 현재 내 드라이브 경로를 불러오는 API 호출 (useQuery)
     const { data: paths = []} = useQuery({
-        queryKey: ["driveItems","path", currentFolderId], // 서버 데이터를 해당 이름으로 관리
+        queryKey: ["driveItems","path", "myDrive", currentFolderId], // 서버 데이터를 해당 이름으로 관리
         queryFn: currentFolderId ? () => getDrivePath(currentFolderId) : skipToken   // getDrivePath() 실행
     })
     

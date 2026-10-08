@@ -98,19 +98,12 @@ const MainToolbarContent = ({
   canEdit : boolean
 }) => {
   const [isLoadModalOpen, setIsLoadModalOpen] = useState<boolean>(false);
-
-  const openLoadModal = () => {
-        setIsLoadModalOpen(true);
-  };
-
-  const closeLoadModal = () => {
-        setIsLoadModalOpen(false);
-  };
+  
   return (
     <>
       <Spacer size="6px"/>
       <ToolbarGroup>
-        <LoadButton onClick={openLoadModal} />
+        <LoadButton onClick={() => setIsLoadModalOpen(true)} />
       </ToolbarGroup>
       <ToolbarSeparator />
       <ToolbarGroup>
@@ -166,7 +159,7 @@ const MainToolbarContent = ({
       {isMobile && <ToolbarSeparator />}
       {/* isLoadModalOpen이 true일때 LoadDocumentModal 컴포넌트 반환 */}
           {isLoadModalOpen && (
-             <LoadDocumentModal onClose={closeLoadModal} />
+             <LoadDocumentModal onClose={() => setIsLoadModalOpen(false)} />
           )}
     </>
   )
