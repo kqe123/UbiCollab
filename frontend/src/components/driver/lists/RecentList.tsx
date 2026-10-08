@@ -1,5 +1,6 @@
 import fileIcon from "../../../assets/file.png";
 import noFilesImg from "../../../assets/empty-files.png";
+import noAuthorizedIcon from "../../../assets/noAuthorized.png";
 import DriveItemMenu from "../../menu/DriveItemMenu"
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useOutletContext } from "react-router-dom";
@@ -13,6 +14,7 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import { getFiles } from '../../../api/driveitemApi.ts';
+import CircularProgress from '@mui/material/CircularProgress';
 
 function RecentList() {
     // 상태(state)들
@@ -29,8 +31,8 @@ function RecentList() {
 
     // 내 파일 목록을 불러오는 API 호출 (useQuery)
     const {
-        data: files = [], // 백엔드에서 받아온 데이터
-        isLoading,            // 현재 요청 중인지 여부
+        data: files = [],     // 데이터
+        isPending,            // 성공한 데이터가 없는지 여부 (retry 포함)
         isError,              // 요청이 실패했는지 여부
         error,                // 실패했을 때 오류 정보
     } = useQuery({
@@ -39,10 +41,20 @@ function RecentList() {
     });
 
     // 로딩 처리
-    if (isLoading) {
+    if (isPending) {
         return (
-            <Box sx={{ minHeight: '100vh', alignItems: 'center', justifyContent: 'center'}}>
-                <Typography>문서를 불러오는 중입니다...</Typography>
+            <Box 
+                sx={{ 
+                    display: 'flex',  
+                    flexDirection: 'column', 
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap : 1,
+                    height : '100%',
+                }}
+            >
+                <CircularProgress size={50} thickness={5} color="primary" ></CircularProgress>
+                <Typography variant="h6">문서를 불러오는 중입니다...</Typography>
             </Box>
         )
     }
@@ -50,8 +62,18 @@ function RecentList() {
     // 오류 처리
     if (isError) {
         return (
-            <Box sx={{ minHeight: '100vh', alignItems: 'center', justifyContent: 'center'}}>
-                <Typography sx={{ color: 'error.main' }}>문서를 불러오지 못했습니다 : {error.message}</Typography>
+            <Box 
+                sx={{ 
+                    display: 'flex',  
+                    flexDirection: 'column', 
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap : 1,
+                    height : '100%',
+                }}
+            >
+                <Box component="img" src={noAuthorizedIcon} sx={{ width: '40%', height: '35%', mx: 'auto'}}/>
+                <Typography variant="h5" sx={{ color: 'error.main' }}>{error.message}</Typography>
             </Box>
         );
     }

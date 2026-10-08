@@ -1,7 +1,6 @@
 import toast from "react-hot-toast";
 import Box from '@mui/material/Box';
 import IconButton from  '@mui/material/IconButton';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
@@ -9,6 +8,7 @@ import Divider from '@mui/material/Divider';
 import CloseIcon from '@mui/icons-material/Close';
 import ForumIcon from '@mui/icons-material/Forum';
 import SendIcon from '@mui/icons-material/Send';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SubdirectoryArrowRightIcon from '@mui/icons-material/SubdirectoryArrowRight';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
@@ -19,6 +19,7 @@ import type { Comment as CommentType } from "../../../types/comment.ts";
 import CommentMenu from "../menu/CommentMenu";
 import Badge from '@mui/material/Badge';
 import { getComments, createComment, createReply, updateComment } from '../../../api/commentApi.ts';
+import CircularProgress from '@mui/material/CircularProgress';
 
 function Comment ({
     fileId,
@@ -32,9 +33,7 @@ function Comment ({
     // 현재 로그인된 User 정보 
     const {
         data: currentUser, // 백엔드에서 받아온 데이터
-        isLoading,    // 현재 요청 중인지 여부
-        isError,        // 요청이 실패했는지 여부
-        error,            // 실패했을 때 오류 정보
+        isError : isUserError,        // 요청이 실패했는지 여부
     } = useCurrentUser();
 
     const [commentMenuOpen, setCommentMenuOpen] = useState<boolean>(false); // 댓글 메뉴 열림/닫힘 상태
@@ -124,7 +123,7 @@ function Comment ({
     // 댓글 목록을 불러오는 API 호출 (useQuery)
     const {
         data : comments = [],       // 댓글 목록 데이터
-        isLoading : isCommentLoading,  // 현재 요청 중인지 여부
+        isPending : isCommentPending,  // 성공한 데이터가 아직 없는지 여부 (retry 포함)
         isError : isCommentError,      // 요청이 실패했는지 여부
         error : commentError          // 실패했을 때 오류 정보
     } = useQuery<CommentType[]>({
@@ -236,16 +235,12 @@ function Comment ({
     };
 
     // 로딩 처리
-    if (isCommentLoading) {
+    if (isCommentPending) {
         return (
             <>
             {/* 헤더 */}
             <Box sx={{display : 'flex', flexDirection: 'row'}}>
-                <Typography variant="h6">댓글 
-                    <Typography component="span" variant="h6" color="primary" >
-                        {" "}{comments.length}
-                    </Typography>
-                </Typography>
+                <Typography variant="h6">댓글</Typography>
                 <IconButton
                     size="small"    
                     sx={{ml : 'auto'}}
@@ -264,15 +259,17 @@ function Comment ({
                     flexDirection: 'column', 
                     flexShrink: 0,
                     gap : 2,
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     overflowY: 'auto'
                 }}
             >
-                <Typography>댓글을 불러오는 중입니다...</Typography>     
+                <CircularProgress size={40} thickness={5} color="primary" ></CircularProgress>
+                <Typography variant="h5">댓글을 불러오는 중입니다...</Typography>     
             </Box>
             </>
         )
     }
-
 
     // 오류 처리
     if (isCommentError) {
@@ -280,11 +277,7 @@ function Comment ({
             <>
             {/* 헤더 */}
             <Box sx={{display : 'flex', flexDirection: 'row'}}>
-                <Typography variant="h6">댓글 
-                    <Typography component="span" variant="h6" color="primary" >
-                        {" "}{comments.length}
-                    </Typography>
-                </Typography>
+                <Typography variant="h6">댓글</Typography>
                 <IconButton
                     size="small"    
                     sx={{ml : 'auto'}}
@@ -303,6 +296,8 @@ function Comment ({
                     flexDirection: 'column', 
                     flexShrink: 0,
                     gap : 2,
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     overflowY: 'auto'
                 }}
             >
@@ -435,7 +430,7 @@ function Comment ({
                                     variant="contained"
                                     size="small"
                                     onClick={() => updateSubmit(currentComment)}
-                                    disabled={isUpdatePending}
+                                    disabled={isUpdatePending || isUserError}
                                 >
                                     수정
                                 </Button>
@@ -526,7 +521,7 @@ function Comment ({
                                                 variant="contained"
                                                 size="small"
                                                 onClick={() => updateSubmit(reply)}
-                                                disabled={isUpdatePending}
+                                                disabled={isUpdatePending || isUserError}
                                             >
                                                 수정
                                             </Button>
@@ -586,7 +581,7 @@ function Comment ({
                                                     edge="end"
                                                     size="small"
                                                     type="submit"
-                                                    disabled={!(newReplyContents[currentComment.commentId] ?? '').trim() || isAddReplyPending}
+                                                    disabled={!(newReplyContents[currentComment.commentId] ?? '').trim() || isAddReplyPending || isUserError}
                                                     sx={{color : (newReplyContents[currentComment.commentId] ?? '').trim() ? '#007FFF' : '#8A94A6' }}
                                                 >
                                                     <SendIcon />
@@ -630,11 +625,13 @@ function Comment ({
             >   
                 {/* 프로필사진, 닉네임 */}
                 <Box sx={{ display : 'flex', flexDirection: 'row',gap : 1 }}>
-                    <Avatar
-                        src={currentUser?.profileUri ?? undefined}
-                        alt="프로필사진"
-                        sx={{ width: 30, height: 30, border : '1px solid #D6E6FA' }}
-                    />
+                    <Box sx={{display : 'flex', flexDirection: 'column'}}>
+                        <Avatar
+                            src={currentUser?.profileUri ?? undefined}
+                            alt="프로필사진"
+                            sx={{ width: 30, height: 30, border : '1px solid #D6E6FA' }}
+                        />
+                    </Box>
                     {/* 댓글 내용 입력칸 */}
                     <TextField
                         required
@@ -654,7 +651,7 @@ function Comment ({
                                         <IconButton edge="end"
                                             size="small"
                                             type="submit"
-                                            disabled={!(newContent.trim()) || isAddCommentPending}
+                                            disabled={!(newContent.trim()) || isAddCommentPending || isUserError}
                                             sx={{color : (newContent.trim()) ? '#007FFF' : '#8A94A6' }}
                                         >
                                             <SendIcon />

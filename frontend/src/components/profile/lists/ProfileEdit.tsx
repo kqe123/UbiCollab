@@ -9,9 +9,11 @@ import Avatar from '@mui/material/Avatar';
 import Badge from '@mui/material/Badge';
 import IconButton from  '@mui/material/IconButton';
 import EditIcon from '@mui/icons-material/Edit';
+import noAuthorizedIcon from "../../../assets/noAuthorized.png";
 import { useState, useRef, useEffect } from "react";
 import { useCurrentUser } from "../../../hooks/use-current-user";
 import { changeNickname, uploadProfileImage } from '../../../api/userApi.ts';
+import CircularProgress from '@mui/material/CircularProgress';
 
 function ProfileEdit() {
     // 현재 로그인중인 유저 정보 
@@ -121,8 +123,18 @@ function ProfileEdit() {
     // 로딩 처리 ()
     if (isUserLoading) {
         return (
-            <Box sx={{ minHeight: '100vh', alignItems: 'center', justifyContent: 'center'}}>
-                <Typography>사용자 정보를 불러오는 중입니다...</Typography>
+            <Box 
+                sx={{ 
+                    display: 'flex',  
+                    flexDirection: 'column', 
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap : 1,
+                    height : '100%',
+                }}
+            >
+                <CircularProgress size={40} thickness={5} color="primary" ></CircularProgress>
+                <Typography variant="h6">사용자 정보를 불러오는 중입니다...</Typography>
             </Box>
         )
     }
@@ -130,7 +142,17 @@ function ProfileEdit() {
     // 오류 처리
     if (isUserError) {
         return (
-            <Box sx={{ minHeight: '100vh', alignItems: 'center', justifyContent: 'center'}}>
+            <Box 
+                sx={{ 
+                    display: 'flex',  
+                    flexDirection: 'column', 
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap : 1,
+                    height : '100%',
+                }}
+            >
+                <Box component="img" src={noAuthorizedIcon} sx={{ width: '60%', height: '35%', mx: 'auto'}}/>
                 <Typography variant="h5" sx={{ color: 'error.main' ,textAlign: 'center',}}>{userError.message}</Typography>
             </Box>
         )

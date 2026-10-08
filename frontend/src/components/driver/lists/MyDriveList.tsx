@@ -23,6 +23,7 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Breadcrumbs from '@mui/material/Breadcrumbs';
 import { getDriveItems, getDrivePath } from '../../../api/driveitemApi.ts';
+import CircularProgress from '@mui/material/CircularProgress';
 
 function MyDriveList() {
     // 상태(state)들
@@ -97,10 +98,10 @@ function MyDriveList() {
 
     // 내 드라이브 목록을 불러오는 API 호출 (useQuery)
     const {
-        data: driveItems = [], // 데이터
-        isLoading : isDriveItemsLoading,   // 현재 요청 중인지 여부
-        isError : isDriveItemsError,       // 요청 실패 여부
-        error : driveItemsError,           // 실패 오류 정보
+        data: driveItems = [],    // 데이터
+        isPending,                // 성공한 데이터가 없는지 여부 (retry 포함)
+        isError,                  // 요청 실패 여부
+        error : driveItemsError,  // 실패 오류 정보
     } = useQuery({
         queryKey: ["driveItems", currentFolderId], // 서버 데이터를 해당 이름으로 관리
         queryFn: () => getDriveItems(currentFolderId),   // getDriveItems() 실행
@@ -113,20 +114,39 @@ function MyDriveList() {
     })
     
     // 로딩 처리
-    if (isDriveItemsLoading) {
+    if (isPending) {
         return (
-            <Box sx={{ minHeight: '100vh', alignItems: 'center', justifyContent: 'center'}}>
-                <Typography>문서를 불러오는 중입니다...</Typography>
+            <Box 
+                sx={{ 
+                    display: 'flex',  
+                    flexDirection: 'column', 
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap : 1,
+                    height : '100%',
+                }}
+            >
+                <CircularProgress size={50} thickness={5} color="primary" ></CircularProgress>
+                <Typography variant="h6">문서를 불러오는 중입니다...</Typography>
             </Box>
         )
     }
 
 
     // 오류 처리
-    if (isDriveItemsError) {
+    if (isError) {
         return (
-            <Box sx={{ minHeight: '100vh', alignItems: 'center', justifyContent: 'center'}}>
-                <Box component="img" src={noAuthorizedIcon} sx={{ width: '40%', height: '35%', mx: 'auto', mt: 5}}/>
+            <Box 
+                sx={{ 
+                    display: 'flex',  
+                    flexDirection: 'column', 
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap : 1,
+                    height : '100%',
+                }}
+            >
+                <Box component="img" src={noAuthorizedIcon} sx={{ width: '40%', height: '35%', mx: 'auto'}}/>
                 <Typography variant="h5" sx={{ color: 'error.main' ,textAlign: 'center',}}>{driveItemsError.message}</Typography>
             </Box>
         )

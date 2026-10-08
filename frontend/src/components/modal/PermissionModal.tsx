@@ -8,6 +8,7 @@ import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import CloseIcon from '@mui/icons-material/Close';
 import PermissionIcon from '@mui/icons-material/CoPresent';
+import noAuthorizedIcon from "../../assets/noAuthorized.png";
 import Avatar from '@mui/material/Avatar';
 import Select, { type SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
@@ -19,6 +20,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import DeleteModal from './DeleteModal';
 import { getPermissions, updatePermission, deletePermission } from "../../api/permissionApi.ts";
+import CircularProgress from '@mui/material/CircularProgress';
 
 function  PermissionModal ({
     driveItem,
@@ -145,7 +147,17 @@ function  PermissionModal ({
     // 로딩 처리 (최초 로딩 + 스냅샷 찍기 전 캐시 재조회 중일 때 모두 대기)
     if (isLoading || (isFetching && !hasSnapshot.current)) {
         return (
-            <Box sx={{ minHeight: '100vh', alignItems: 'center', justifyContent: 'center'}}>
+            <Box 
+                sx={{ 
+                    display: 'flex',  
+                    flexDirection: 'column', 
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap : 1,
+                    height : '100%',
+                }}
+            >
+                <CircularProgress size={40} thickness={5} color="primary" ></CircularProgress>
                 <Typography>권한 정보를 불러오는 중입니다...</Typography>
             </Box>
         )
@@ -155,7 +167,17 @@ function  PermissionModal ({
     // 오류 처리
     if (isError) {
         return (
-            <Box sx={{ minHeight: '100vh', alignItems: 'center', justifyContent: 'center'}}>
+            <Box 
+                sx={{ 
+                    display: 'flex',  
+                    flexDirection: 'column', 
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap : 1,
+                    height : '100%',
+                }}
+            >
+                <Box component="img" src={noAuthorizedIcon} sx={{ width: '60%', height: '35%', mx: 'auto'}}/>
                 <Typography sx={{ color: 'error.main' }}>권한 정보를 불러오지 못했습니다 : {error.message}</Typography>
             </Box>
         )

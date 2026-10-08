@@ -34,8 +34,12 @@ client.interceptors.request.use((config) => {
 client.interceptors.response.use(
     (response) => response,
     (error) => {
-        const message = error.response?.data?.message ?? "요청 처리 중 오류가 발생했습니다.";
         const status = error.response?.status;
+        // error.response === undefined : 서버가 꺼짐, 인터넷 끊김, 타임아웃 등 -> 네트워크 오류
+        // 응답은 있는데 body에 messsage가 없음 : 모르는 오류
+        const message = !error.response
+            ? "네트워크 오류가 발생했습니다. 연결 상태를 확인해 주세요."
+            : error.response.data?.message ?? "요청 처리 중 오류가 발생했습니다.";
         return Promise.reject(new ApiError(message, status));
     }
 );
