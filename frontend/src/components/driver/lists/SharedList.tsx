@@ -109,7 +109,7 @@ function SharedList() {
 
     // 현재 공유 디렉토리 경로를 불러오는 API 호출 (useQuery)
     const { data: paths = [] } = useQuery({
-        queryKey: ["driveItems","path", currentFolderId], // 서버 데이터를 해당 이름으로 관리
+        queryKey: ["driveItems","path", "shared", currentFolderId], // 서버 데이터를 해당 이름으로 관리
         queryFn: currentFolderId ? () => getSharedPath(currentFolderId) : skipToken // getSharedPath() 실행
     });
 

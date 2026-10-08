@@ -131,7 +131,7 @@ function RecentList() {
                             {file.extension === "UC" || file.extension === null ? "" : `.${file.extension}`}
                             {file.isFavorite === true && " ★"}</TableCell>
                         <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666', borderBottom: '1px solid #DBDBDB' }}>{formatDate(file.createdDate)}</TableCell>
-                        <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666', borderBottom: '1px solid #DBDBDB' }}>{file.size} B</TableCell>
+                        <TableCell sx={{ py: 1.5, fontSize: '14px', color: '#666666', borderBottom: '1px solid #DBDBDB' }}>{file.size} Byte</TableCell>
                     </TableRow>
                     ))}
                 </TableBody>
