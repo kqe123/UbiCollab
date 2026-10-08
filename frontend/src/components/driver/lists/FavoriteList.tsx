@@ -2,6 +2,7 @@ import toast from "react-hot-toast";
 import fileIcon from "../../../assets/file.png";
 import folderIcon from "../../../assets/folder.png";
 import noFavoriteImg from "../../../assets/empty-favorite.png";
+import noAuthorizedIcon from "../../../assets/noAuthorized.png";
 import { useQuery, skipToken } from "@tanstack/react-query";
 import { useNavigate, useParams, useOutletContext, NavLink } from "react-router-dom";
 import DriveItemMenu from "../../menu/DriveItemMenu"
@@ -20,6 +21,7 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Breadcrumbs from '@mui/material/Breadcrumbs';
 import { getFavorites, getFavoritePath } from '../../../api/driveitemApi.ts';
+import CircularProgress from '@mui/material/CircularProgress';
 
 function FavoriteList() {
    // 상태(state)들
@@ -73,9 +75,9 @@ function FavoriteList() {
 
     // 즐겨찾기 목록을 불러오는 API 호출 (useQuery)
     const {
-        data: favorites = [], // 백엔드에서 받아온 데이터
-        isLoading : isFavoritesLoading,    // 현재 요청 중인지 여부
-        isError : isFavoritesError,        // 요청이 실패했는지 여부
+        data: favorites = [], // 데이터
+        isPending,    // 성공한 데이터가 없는지 여부 (retry 포함)
+        isError,       // 요청이 실패했는지 여부
         error : favoritesError,            // 실패했을 때 오류 정보
     } = useQuery({
         queryKey: ["driveItems", "favorite", currentFolderId], // 서버 데이터를 해당 이름으로 관리
@@ -90,20 +92,40 @@ function FavoriteList() {
     
 
     // 로딩 처리
-    if (isFavoritesLoading) {
+    if (isPending) {
         return (
-            <Box sx={{ minHeight: '100vh', alignItems: 'center', justifyContent: 'center'}}>
-                <Typography>문서를 불러오는 중입니다...</Typography>
+            <Box 
+                sx={{ 
+                    display: 'flex',  
+                    flexDirection: 'column', 
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap : 1,
+                    height : '100%',
+                }}
+            >
+                <CircularProgress size={50} thickness={5} color="primary" ></CircularProgress>
+                <Typography variant="h6" >문서를 불러오는 중입니다...</Typography>
             </Box>
         )
     }
 
 
     // 오류 처리
-    if (isFavoritesError) {
+    if (isError) {
         return (
-            <Box sx={{ minHeight: '100vh', alignItems: 'center', justifyContent: 'center'}}>
-                <Typography sx={{ color: 'error.main' }}>문서를 불러오지 못했습니다 : {favoritesError.message}</Typography>
+            <Box 
+                sx={{ 
+                    display: 'flex',  
+                    flexDirection: 'column', 
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap : 1,
+                    height : '100%',
+                }}
+            >
+                <Box component="img" src={noAuthorizedIcon} sx={{ width: '40%', height: '35%', mx: 'auto'}}/>
+                <Typography variant="h5" sx={{ color: 'error.main' }}>{favoritesError.message}</Typography>
             </Box>
         )
     }

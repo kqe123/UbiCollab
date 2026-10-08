@@ -23,6 +23,7 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Breadcrumbs from '@mui/material/Breadcrumbs';
 import { getSharedItems, getSharedPath } from '../../../api/driveitemApi.ts';
+import CircularProgress from '@mui/material/CircularProgress';
 
 function SharedList() {
     // 상태(state)들
@@ -97,10 +98,10 @@ function SharedList() {
 
     // 공유 디렉토리 목록을 불러오는 API 호출 (useQuery)
     const {
-        data: sharedItems = [], //  데이터
-        isLoading : isSharedItemsLoading,  // 현재 요청 중인지 여부
-        isError : isSharedItemsError,      // 요청이 실패했는지 여부
-        error : sharedItemsError,          // 실패했을 때 오류 정보
+        data: sharedItems = [],    //  데이터
+        isPending,                 // 성공한 데이터가 없는지 여부 (retry 포함)
+        isError,                   // 요청이 실패했는지 여부
+        error : sharedItemsError,  // 실패했을 때 오류 정보
     } = useQuery<DriveItem[]>({
         queryKey: ["driveItems", "shared" ,currentFolderId], // 서버 데이터를 해당 이름으로 관리
         queryFn: () => getSharedItems(currentFolderId),   // getSharedItems() 실행
@@ -117,20 +118,39 @@ function SharedList() {
     const currentPermission = paths.length > 0 ? paths[paths.length - 1].permissionType : null;
 
     // 로딩 처리
-    if (isSharedItemsLoading) {
+    if (isPending) {
         return (
-            <Box sx={{ minHeight: '100vh', alignItems: 'center', justifyContent: 'center'}}>
-                <Typography>문서를 불러오는 중입니다...</Typography>
+            <Box 
+                sx={{ 
+                    display: 'flex',  
+                    flexDirection: 'column', 
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap : 1,
+                    height : '100%',
+                }}
+            >
+                <CircularProgress size={50} thickness={5} color="primary" ></CircularProgress>
+                <Typography variant="h6">문서를 불러오는 중입니다...</Typography>
             </Box>
         )
     }
 
 
     // 오류 처리
-    if (isSharedItemsError) {
+    if (isError) {
         return (
-            <Box sx={{ minHeight: '100vh', alignItems: 'center', justifyContent: 'center'}}>
-                <Box component="img" src={noAuthorizedIcon} sx={{ width: '40%', height: '35%', mx: 'auto', mt: 5}}/>
+            <Box 
+                sx={{ 
+                    display: 'flex',  
+                    flexDirection: 'column', 
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap : 1,
+                    height : '100%',
+                }}
+            >
+                <Box component="img" src={noAuthorizedIcon} sx={{ width: '40%', height: '35%', mx: 'auto'}}/>
                 <Typography variant="h5" sx={{ color: 'error.main' ,textAlign: 'center',}}>{sharedItemsError.message}</Typography>
             </Box>
         )

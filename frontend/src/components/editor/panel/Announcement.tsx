@@ -1,17 +1,18 @@
 import Box from '@mui/material/Box';
-import IconButton from  '@mui/material/IconButton';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
 import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
-import CloseIcon from '@mui/icons-material/Close';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
+import IconButton from  '@mui/material/IconButton';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import CloseIcon from '@mui/icons-material/Close';
 import AnnouncementModal from "../../modal/AnnouncementModal"
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useCurrentUser } from "../../../hooks/use-current-user";
 import type { Announcement as AnnouncementType } from "../../../types/announcement.ts";
 import { getAnnouncements } from '../../../api/announcementApi.ts';
+import CircularProgress from '@mui/material/CircularProgress';
 
 function Announcement ({
     fileId,
@@ -42,7 +43,7 @@ function Announcement ({
     // 공지 목록을 불러오는 API 호출 (useQuery)
     const { 
         data : announcements = [],
-        isFetching : isAnnouncementFetching, // 현재 요청 중인지 여부 (retry 포함)
+        isPending : isAnnouncementPending, // 성공한 데이터가 아직 없는지 여부 (retry 포함)
         isError : isAnnouncementError,      // 요청이 실패했는지 여부
         error : AnnouncementError          // 실패했을 때 오류 정보
     } = useQuery<AnnouncementType[]>({
@@ -50,6 +51,78 @@ function Announcement ({
         queryFn : () => getAnnouncements(fileId)
     })
 
+    // 로딩 처리
+    if (isAnnouncementPending) {
+        return (
+            <>
+            {/* 헤더 */}
+            <Box sx={{display : 'flex', flexDirection: 'row'}}>
+                <Typography variant="h6">공지사항</Typography>
+                <IconButton
+                    size="small"    
+                    sx={{ml : 'auto'}}
+                    onClick={() => setSidePanel("NONE")}
+                >
+                    <CloseIcon />
+                </IconButton>
+            </Box>
+            
+            {/* 로딩창 */}
+            <Box 
+                sx={{
+                    width : "100%", 
+                    height : "65%",
+                    display : 'flex',
+                    flexDirection: 'column', 
+                    flexShrink: 0,
+                    gap : 2,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    overflowY: 'auto'
+                }}
+            >
+                <CircularProgress size={40} thickness={5} color="primary" ></CircularProgress>
+                <Typography variant="h5">공지사항을 불러오는 중입니다...</Typography>     
+            </Box>
+            </>
+        )
+    }
+
+    // 오류 처리
+    if (isAnnouncementError) {
+        return (
+            <>
+            {/* 헤더 */}
+            <Box sx={{display : 'flex', flexDirection: 'row'}}>
+                <Typography variant="h6">공지사항</Typography>
+                <IconButton
+                    size="small"    
+                    sx={{ml : 'auto'}}
+                    onClick={() => setSidePanel("NONE")}
+                >
+                    <CloseIcon />
+                </IconButton>
+            </Box>
+                
+            {/* */}
+            <Box 
+                sx={{
+                    width : "100%", 
+                    height : "65%",
+                    display : 'flex',
+                    flexDirection: 'column', 
+                    flexShrink: 0,
+                    gap : 2,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    overflowY: 'auto'
+                }}
+            >
+                <Typography variant="h5" sx={{ color: 'error.main' ,textAlign: 'center'}}>{AnnouncementError.message}</Typography>  
+            </Box>
+            </>
+        )
+    }
 
     return (
         <>

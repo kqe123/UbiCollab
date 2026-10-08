@@ -3,10 +3,12 @@ import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useIsMutating, skipToken } from "@tanstack/react-query";
+import noAuthorizedIcon from "../assets/noAuthorized.png";
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import type {DriveItem} from "../types/driveitem";
 import { getFile } from '..//api/driveitemApi.ts';
+import CircularProgress from '@mui/material/CircularProgress';
 
 function EditorPage() {
     // URL이 /editor/zhamslwl.....이라면 documentId에는 "zhamslwl....."이 들어옴 -> string | undefined
@@ -60,15 +62,18 @@ function EditorPage() {
     // 문서를 받아오기 전에 편집기를 렌더링하지 않음
     if (isPending) {
         return (
-            <Box
-                sx={{
-                    display: 'flex',
-                    minHeight: '100vh',
+            <Box 
+                sx={{ 
+                    display: 'flex',  
+                    flexDirection: 'column', 
                     alignItems: 'center',
                     justifyContent: 'center',
+                    gap : 1,
+                    height : '100%',
                 }}
             >
-                <Typography>문서를 불러오는 중입니다...</Typography>
+                <CircularProgress size={50} thickness={5} color="primary" ></CircularProgress>
+                <Typography variant="h5" >문서를 불러오는 중입니다...</Typography>
             </Box>
         );
     }
@@ -76,14 +81,17 @@ function EditorPage() {
     // 문서 조회에 실패했을 때
     if (isError) {
         return (
-            <Box
-                sx={{
-                    display: 'flex',
-                    minHeight: '100vh',
+            <Box 
+                sx={{ 
+                    display: 'flex',  
+                    flexDirection: 'column', 
                     alignItems: 'center',
                     justifyContent: 'center',
+                    gap : 1,
+                    height : '100%',
                 }}
             >
+                <Box component="img" src={noAuthorizedIcon} sx={{ width: '40%', height: '35%', mx: 'auto'}}/>
                 <Typography variant="h5" sx={{ color: 'error.main' ,textAlign: 'center',}}>{error.message}</Typography>
             </Box>
         );
