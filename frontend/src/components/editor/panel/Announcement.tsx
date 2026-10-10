@@ -7,7 +7,8 @@ import IconButton from  '@mui/material/IconButton';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import CloseIcon from '@mui/icons-material/Close';
 import AnnouncementModal from "../../modal/AnnouncementModal"
-import { useState } from "react";
+import AnnouncementMenu from "../menu/AnnouncementMenu";
+import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useCurrentUser } from "../../../hooks/use-current-user";
 import type { Announcement as AnnouncementType } from "../../../types/announcement.ts";
@@ -27,7 +28,10 @@ function Announcement ({
     const { data: currentUser } = useCurrentUser();
 
     const [openModal, setOpenModal] = useState<boolean>(false); // 공지 추가 모달창 열림/닫힘 상태
-
+    const [announcementMenuOpen, setAnnouncementMenuOpen] = useState<boolean>(false); // 공지 메뉴 열림/닫힘 상태
+    const [selectedAnnouncement, setSelectedAnnouncement] = useState<AnnouncementType | null>(null); // 선택된 공지
+    const anchorRef = useRef<HTMLButtonElement | null>(null); // 공지 메뉴(⋮) 버튼 Dom 요소 참조
+    
     // formatDate() : 날짜 가독성을 높여주는 함수
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleString("ko-KR", {
@@ -39,6 +43,19 @@ function Announcement ({
             hour12: false,
         });
     };
+
+    // 공지 메뉴(⋮) 표시
+    const openMenu = (event : React.MouseEvent<HTMLButtonElement>, announcement : AnnouncementType) => {
+        setAnnouncementMenuOpen(true); // 공지 메뉴 open
+        setSelectedAnnouncement(announcement); // 해당 공지 선택
+        anchorRef.current = event.currentTarget; // 해당 공지의 메뉴(⋮)를 anchorRef로 가리킴.
+    }
+
+    // 공지 메뉴(⋮) 숨김
+    const closeMenu = () => {
+        setAnnouncementMenuOpen(false); // 공지 메뉴 close
+        setSelectedAnnouncement(null); // 해당 공지 해제
+    }
     
     // 공지 목록을 불러오는 API 호출 (useQuery)
     const { 
@@ -207,6 +224,7 @@ function Announcement ({
                                 <IconButton 
                                     size="small"    
                                     sx={{color : '#8A94A6'}}
+                                    onClick={(e) => openMenu(e, announcement)}
                                 >
                                     <MoreVertIcon />
                                 </IconButton>
@@ -241,6 +259,17 @@ function Announcement ({
             fileId={fileId}
             permission={permission}
         />
+
+        {/* 댓글 메뉴 */}
+        {announcementMenuOpen && selectedAnnouncement && (
+            <AnnouncementMenu
+                open={announcementMenuOpen}
+                onClose={closeMenu}
+                anchor={anchorRef.current}
+                announcement={selectedAnnouncement}
+            />
+        )}
+
         </>
     );
     

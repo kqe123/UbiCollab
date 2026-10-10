@@ -87,8 +87,25 @@ public class AnnouncementService {
 		return result;
 	}
 	
+	// 공지 삭제  메서드
+	public void deleteAnnouncement(String username, UUID announcementId) {
+		Announcement announcement = getAnnouncementOrThrow(announcementId); // 삭제할 공지
+		User user = getUserOrThrow(username); // 현재 로그인 사용자
+			
+		// 1. (접근 제어) 현재 로그인 유저 ≠ 해당 댓글 작성자인 경우 접근 제한
+		if (!announcement.getUser().getId().equals(user.getId())) 
+			throw new PermissionDeniedException("공지를 삭제할 권한이 없습니다.");
+			
+		// 2. 공지 삭제
+		announcementRepository.delete(announcement);
+	}
 	
 	
+	// publicId로 Announcement을 조회하는 공통 헬퍼
+	private Announcement getAnnouncementOrThrow(UUID announcementId) {
+		return announcementRepository.findByPublicId(announcementId)
+			.orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 공지입니다."));
+	}
 	
 	
 	// 현재 로그인 사용자(username)를 조회하는 공통 헬퍼

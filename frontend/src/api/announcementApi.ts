@@ -20,3 +20,9 @@ export const createAnnouncement = async (fileId : string, title : string, conten
     const response = await client.post("/announcement/create",announcementData);
     return response.data;
 };
+
+// [공지] 공지 삭제 API 호출
+export const deleteAnnouncement = async (announcementId: string) => {
+    const response = await client.delete(`/announcement/delete/${announcementId}`)
+    return response.data;
+};

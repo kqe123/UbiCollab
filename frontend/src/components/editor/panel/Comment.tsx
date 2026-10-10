@@ -66,7 +66,7 @@ function Comment ({
     const openCommentMenu = (event : React.MouseEvent<HTMLButtonElement>, comment : CommentType) => {
         setCommentMenuOpen(true); // 댓글 메뉴 open
         setSelectedComment(comment); // 해당 댓글 선택
-        anchorRef.current = event.currentTarget; // 
+        anchorRef.current = event.currentTarget; // 해당 댓글의 메뉴(⋮)를 anchorRef로 가리킴.
     }
 
     // 댓글 메뉴(⋮) 숨김
