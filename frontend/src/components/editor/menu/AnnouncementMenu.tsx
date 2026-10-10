@@ -8,6 +8,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import Typography from '@mui/material/Typography';
 import DeleteModal from '../../modal/DeleteModal';
+import AnnounceUpdateModal from "../../modal/AnnounceUpdateModal.tsx"
 import type {Announcement} from "../../../types/announcement.ts";
 import { useCurrentUser } from "../../../hooks/use-current-user";
 import { deleteAnnouncement } from '../../../api/announcementApi.ts';
@@ -22,15 +23,14 @@ function AnnouncementMenu ({
 }) {
 
     const [deleteConfirm, setDeleteConfirm] = useState<boolean>(false); // delete 팝업창 열림/닫힘
+    const [updateModal, setUpdateModal] = useState<boolean>(false); // 공지 수정 모달창 열림/닫힘
     const queryClient = useQueryClient(); // QueryClient 가져옴
 
     // 현재 로그인된 User 정보 
-    const {
-        data: currentUser, // 백엔드에서 받아온 데이터
-    } = useCurrentUser();
+    const { data: currentUser } = useCurrentUser();
 
 
-    // 댓글/답글 삭제 (useMutation)
+    // 공지 삭제 (useMutation)
     const { mutate } = useMutation({
         mutationFn : () => deleteAnnouncement(announcement.announcementId),
         onSuccess : async () => {
@@ -75,6 +75,7 @@ function AnnouncementMenu ({
                         px : 2,
                         color: 'black'
                     }}
+                    onClick={() => setUpdateModal(true)}
                 >
                     <ListItemIcon> <EditIcon fontSize="small" /></ListItemIcon>
                     <Typography variant="body2" sx={{color: 'black' }}>수정</Typography>
@@ -101,6 +102,15 @@ function AnnouncementMenu ({
                 </MenuItem>
             )}
         </Menu>
+        
+        {/* 공지 수정 모달창 */}
+        <AnnounceUpdateModal
+            open={updateModal}
+            onClose={() => setUpdateModal(false)}
+            closeMenu={onClose}
+            announcement={announcement}
+        />
+
 
         <DeleteModal
             open={deleteConfirm}

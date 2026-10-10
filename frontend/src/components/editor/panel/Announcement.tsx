@@ -6,7 +6,7 @@ import Divider from '@mui/material/Divider';
 import IconButton from  '@mui/material/IconButton';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import CloseIcon from '@mui/icons-material/Close';
-import AnnouncementModal from "../../modal/AnnouncementModal"
+import AnnounceCreateModal from "../../modal/AnnounceCreateModal.tsx"
 import AnnouncementMenu from "../menu/AnnouncementMenu";
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -253,7 +253,7 @@ function Announcement ({
         </Box>
 
         {/* 공지 추가 모달창 */}
-        <AnnouncementModal 
+        <AnnounceCreateModal
             open={openModal}
             onClose={() => setOpenModal(false)}
             fileId={fileId}

@@ -87,12 +87,28 @@ public class AnnouncementService {
 		return result;
 	}
 	
+	// 공지 수정  메서드
+	public void updateAnnouncement(String username, UUID announcementId, String title, String content) {
+		Announcement announcement = getAnnouncementOrThrow(announcementId); // 수정할 공지
+		User user = getUserOrThrow(username); // 현재 로그인 사용자
+				
+		// 1. (접근 제어) 현재 로그인 유저 ≠ 해당 공지 작성자인 경우 접근 제한
+		if (!announcement.getUser().getId().equals(user.getId())) 
+			throw new PermissionDeniedException("공지를 수정할 권한이 없습니다.");
+				
+		// 2. 공지  수정
+		announcement.setTitle(title);
+		announcement.setContent(content);
+		announcement.setUpdatedDate(LocalDateTime.now());
+		announcementRepository.save(announcement);
+	}
+	
 	// 공지 삭제  메서드
 	public void deleteAnnouncement(String username, UUID announcementId) {
 		Announcement announcement = getAnnouncementOrThrow(announcementId); // 삭제할 공지
 		User user = getUserOrThrow(username); // 현재 로그인 사용자
 			
-		// 1. (접근 제어) 현재 로그인 유저 ≠ 해당 댓글 작성자인 경우 접근 제한
+		// 1. (접근 제어) 현재 로그인 유저 ≠ 해당 공지 작성자인 경우 접근 제한
 		if (!announcement.getUser().getId().equals(user.getId())) 
 			throw new PermissionDeniedException("공지를 삭제할 권한이 없습니다.");
 			

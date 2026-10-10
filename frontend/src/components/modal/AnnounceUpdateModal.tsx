@@ -7,42 +7,42 @@ import TextField from '@mui/material/TextField';
 import IconButton from  '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 import Button from '@mui/material/Button';
+import type { Announcement } from "../../types/announcement.ts";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createAnnouncement } from "../../api/announcementApi.ts";
+import { updateAnnouncement } from "../../api/announcementApi.ts";
+import { useCurrentUser } from "../../hooks/use-current-user";
 
-function AnnouncementModal ({
-    open, onClose, fileId, permission
+function AnnounceUpdateModal ({
+    open, onClose, closeMenu, announcement
 } : {
     open : boolean;
     onClose : () => void;
-    fileId : string;
-    permission : "VIEWER" | "COMMENTOR" | "EDITOR" |"MANAGER" | null;
+    closeMenu : () => void;
+    announcement: Announcement;
 }) {
 
-    const [title, setTitle] = useState<string>(""); // 공지 제목
-    const [content, setContent] = useState<string>(""); // 공지 내용
+    const { data: currentUser } = useCurrentUser(); // 현재 로그인 사용자
+    const [title, setTitle] = useState<string>(announcement.title); // 공지 제목
+    const [content, setContent] = useState<string>(announcement.content); // 공지 내용
     const queryClient = useQueryClient(); // QueryClient 가져옴
 
-    // 공지 생성 (useMutation)
-    const { mutate : addAnnouncement, isPending } = useMutation({
-        // 실제로 수행할 함수
-        mutationFn : () => createAnnouncement(fileId, title, content),
-        // 성공 시 수행할 명령들
+    // 공지 수정 (useMutation)
+    const { mutate : editAnnouncement, isPending } = useMutation({
+        mutationFn : () => updateAnnouncement(announcement.announcementId, title, content),
         onSuccess : async (message : string) => {
             toast.success(message);
-            await queryClient.invalidateQueries({ queryKey: ["announcements"] })
-            setTitle("");
-            setContent("");
-            onClose();
+            console.log(message);
+            await queryClient.invalidateQueries({ queryKey: ["announcements"] });
+            onClose(); // 모달창 닫힘
+            closeMenu(); // 공지 메뉴 닫힘
         },
-        // 오류 시 수행할 명령들
         onError : (error) => {
             toast.error(error.message);
-        }
+        },
     })
 
-    // 추가 버튼 클릭 시 실행
+    // 수정 버튼 클릭 시 실행
     const handleSubmit = () => {
         if (title.trim().length === 0) {
             toast.error("제목을 입력해주세요.");
@@ -52,17 +52,23 @@ function AnnouncementModal ({
             toast.error("내용을 입력해주세요.");
             return;
         }
-        if (permission !== "MANAGER") {
-            toast.error("공지를 추가할 권한이 없습니다.");
+        if (announcement.userId !== currentUser?.publicId) {
+            toast.error("공지를 수정할 권한이 없습니다.");
             return;
         }
-        addAnnouncement();   // 공지 생성 요청 실행
+        editAnnouncement();   // 공지 수정 요청 실행
+    };
+
+    // 모달 닫힐 때 동작
+    const closeModal = () => {
+        onClose(); // 모달창 닫힘
+        closeMenu(); // 공지 메뉴 닫힘
     };
 
     return (
         <Dialog
             open={open}   
-            onClose={onClose}   
+            onClose={closeModal}
             fullWidth
             maxWidth="sm"
             slotProps={{
@@ -72,8 +78,8 @@ function AnnouncementModal ({
         >   
             {/* 헤더 */}
             <DialogTitle sx={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap : 1, p : 2 }}>
-                공지 추가
-                <IconButton sx={{ml : 'auto'}} onClick={onClose}>
+                공지 수정
+                <IconButton sx={{ml : 'auto'}} onClick={closeModal}>
                     <CloseIcon />
                 </IconButton>
             </DialogTitle>
@@ -133,10 +139,10 @@ function AnnouncementModal ({
                     onClick={handleSubmit}
                     disabled={isPending}
                 >
-                    추가
+                    수정
                 </Button>
             </DialogActions>
         </Dialog>
     )
 }
-export default AnnouncementModal;
+export default AnnounceUpdateModal;
