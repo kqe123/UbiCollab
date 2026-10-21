@@ -3,6 +3,7 @@ import toast from "react-hot-toast";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import ChangeNameModal from "../modal/ChangeNameModal"
+import MoveModal from "../modal/MoveModal"
 import ShareModal from "../modal/ShareModal"
 import PermissionModal from "../modal/PermissionModal"
 import Menu from '@mui/material/Menu';
@@ -16,22 +17,24 @@ import StarIcon from '@mui/icons-material/StarBorder';
 import ShareIcon from '@mui/icons-material/Share';
 import PermissionIcon from '@mui/icons-material/CoPresent';
 import DeleteIcon from '@mui/icons-material/Delete';
+import DriveFileMoveIcon from '@mui/icons-material/DriveFileMove';
 import { createFavorite, deleteFavorite, throwTrash } from '../../api/driveitemApi.ts';
 
 function DriveItemMenu({
-    open, x, y, driveItem, onClose
+    open, x, y, driveItem, onClose, tab
 } : {
     open: boolean;
     x : number;
     y : number;
     driveItem : DriveItem;
     onClose : () => void;
+    tab : "MYDRIVE" | "MYFILE" | "FAVORITE" | "SHARE" ; 
 }) {
 
     const queryClient = useQueryClient(); // QueryClient 가져옴
     // 메뉴 모드를 CONTEXT/RENAME으로 나눠서 CONTEXT일때는 CONTEXT 메뉴를,
     // RENAME일때는 CONTEXT 메뉴 대신 RENAME 메뉴를 출력한다.
-    const [menuMode, setMenuMode] = useState<"CONTEXT" | "RENAME" | "SHARE" | "PERMISSION">("CONTEXT");
+    const [menuMode, setMenuMode] = useState<"CONTEXT" | "RENAME" | "MOVE" | "SHARE" | "PERMISSION">("CONTEXT");
 
     // 메뉴 닫는 함수
     const closeMenu = () => {
@@ -106,6 +109,11 @@ function DriveItemMenu({
             >
                 <MenuList>
                     <MenuItem
+                        sx={{
+                            '&:hover': {
+                                bgcolor: '#edf3f6'
+                            },
+                        }}
                         onClick={() => {setMenuMode("RENAME")}}
                         disabled={!(driveItem.permissionType === "MANAGER")}
                         >
@@ -116,9 +124,33 @@ function DriveItemMenu({
                                 이름 변경
                             </Typography>
                     </MenuItem>
+                    
+                    {(tab === "MYDRIVE" || tab === "SHARE") && (
+                        <MenuItem
+                            sx={{
+                                '&:hover': {
+                                    bgcolor: '#edf3f6'
+                                },
+                            }}
+                            onClick={() => {setMenuMode("MOVE")}}
+                            disabled={!(driveItem.permissionType === "MANAGER")}
+                        >
+                            <ListItemIcon>
+                                <DriveFileMoveIcon fontSize="small" />
+                            </ListItemIcon>
+                            <Typography variant="body2">
+                                이동
+                            </Typography>
+                        </MenuItem>
+                    )}
 
                     {driveItem.isFavorite === true ? (
                         <MenuItem
+                            sx={{
+                                '&:hover': {
+                                    bgcolor: '#edf3f6'
+                                },
+                            }}
                             onClick={() => removeFavorite()}
                             disabled={driveItem.permissionType === null}
                         >
@@ -129,6 +161,11 @@ function DriveItemMenu({
                         </MenuItem>
                     ) : 
                         <MenuItem
+                            sx={{
+                                '&:hover': {
+                                    bgcolor: '#edf3f6'
+                                },
+                            }}
                             onClick={() => addFavorite()}
                             disabled={driveItem.permissionType === null}
                         >   
@@ -140,6 +177,11 @@ function DriveItemMenu({
                     }
 
                     <MenuItem
+                        sx={{
+                            '&:hover': {
+                                bgcolor: '#edf3f6'
+                            },
+                        }}
                         onClick={() => {setMenuMode("SHARE")}}
                         disabled={!(driveItem.permissionType === "MANAGER")}
                     >
@@ -150,6 +192,11 @@ function DriveItemMenu({
                     </MenuItem>
 
                     <MenuItem
+                        sx={{
+                            '&:hover': {
+                                bgcolor: '#edf3f6'
+                            },
+                        }}
                         onClick={() => {setMenuMode("PERMISSION")}}
                         disabled={!(driveItem.permissionType === "MANAGER")}
                     >
@@ -184,6 +231,15 @@ function DriveItemMenu({
             <ChangeNameModal
                 driveItem={driveItem}
                 onClose={closeMenu}
+            />
+        )}
+
+        {/* menuMode = MOVE일때 */}
+        {menuMode === "MOVE" && (tab === "MYDRIVE" || tab === "SHARE") && (
+            <MoveModal
+                source={driveItem}
+                onClose={closeMenu}
+                tab={tab}
             />
         )}
 

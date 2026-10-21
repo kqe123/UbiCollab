@@ -10,8 +10,6 @@ import org.springframework.stereotype.Service;
 
 import com.ubicollab.announcement.dto.AnnouncementCreateDto;
 import com.ubicollab.announcement.dto.AnnouncementResponseDto;
-import com.ubicollab.comment.Comment;
-import com.ubicollab.comment.dto.CommentResponseDto;
 import com.ubicollab.common.exception.PermissionDeniedException;
 import com.ubicollab.common.exception.ResourceNotFoundException;
 import com.ubicollab.driveitem.DriveItem;

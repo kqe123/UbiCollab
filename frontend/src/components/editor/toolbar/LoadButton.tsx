@@ -38,7 +38,7 @@ function LoadButton({onClick} : {onClick : () => void}) {
                         },
                     }}
                 >
-                    <LoadIcon sx={{ color: '#007FFF'}} />
+                    <LoadIcon />
                 </IconButton>
             </Tooltip>
         </>

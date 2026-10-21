@@ -101,7 +101,14 @@ function NewDriveItemMenu({
                 <MenuItem
                     onClick={handleNewFolder}
                     disabled={disabled}
-                    sx={{width : '100%', justifyContent: 'flex-start', px : 2}}
+                    sx={{
+                        width : '100%',
+                        justifyContent: 'flex-start',
+                        px : 2,
+                        '&:hover': {
+                            bgcolor: '#edf3f6'
+                        },
+                    }}
                 >
                     <Box
                         component="img"
@@ -110,10 +117,18 @@ function NewDriveItemMenu({
                     />
                     <Typography variant="body2" sx={{color: disabled ? 'text.disabled' : 'black' }}>새 폴더 만들기</Typography>
                 </MenuItem>
+                
                 <MenuItem
                     onClick={handleNewFile}
                     disabled={disabled}
-                    sx={{width : '100%', justifyContent: 'flex-start', px : 2}}
+                    sx={{
+                        width : '100%',
+                        justifyContent: 'flex-start',
+                        px : 2,
+                        '&:hover': {
+                            bgcolor: '#edf3f6'
+                        },
+                    }}
                 >
                     <Box
                         component="img"
