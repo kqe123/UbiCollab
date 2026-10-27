@@ -6,11 +6,13 @@ import java.util.UUID;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -43,18 +45,16 @@ public class UserController {
 
 
 	// [회원가입] 회원가입 API (POST 'api/user')
-	// 가입 직후 프로필 사진 업로드 등 인증이 필요한 후속 요청을 바로 보낼 수 있도록,
-	// 로그인 때(LoginController)와 동일하게 JWT를 즉시 발급해 Authorization 헤더로 내려준다.
-	@PostMapping
-	public ResponseEntity<UUID> createUser(
-			@Valid @RequestBody SignupDto request) {
-	    UUID userId = userService.createUser(request);
-	    String jwt = jwtService.getToken(request.username());
+	// User 생성 + 프로필 사진 업로드를 한번에 수행
+	// consumes = MediaType.MULTIPART_FORM_DATA_VALUE는 "이 API는 multipart 요청만 받겠다"는 조건(필터)
+	// Multipart로 받는다면 @ModelAttribute로 받아야됨
+	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ResponseEntity<?> createUser(
+			@Valid @ModelAttribute SignupDto request) {
+	    userService.createUser(request);
 		return ResponseEntity
-	            .status(HttpStatus.CREATED)
-	            .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwt)
-	            .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, "Authorization")
-	            .body(userId);
+				.status(HttpStatus.CREATED)
+		        .build();
 	}
 
 	// [회원가입, 프로필] 프로필사진을 s3 버킷에 업로드하는 API (POST 'api/user/profile-upload')

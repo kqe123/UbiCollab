@@ -1,5 +1,7 @@
 package com.ubicollab.user.dto;
 
+import org.springframework.web.multipart.MultipartFile;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 
@@ -24,5 +26,7 @@ public record SignupDto(
 	    regexp = "^.{2,}$",
 	    message = "닉네임 : 2자 이상 입력해주세요."
 	)
-	String nickname
+	String nickname,
+	
+	MultipartFile file   // 파일이 없으면 null
 ) {}

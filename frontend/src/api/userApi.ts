@@ -28,17 +28,19 @@ export const checkUsername = async (username : string) : Promise<boolean> => {
 
 // [회원가입] 회원가입 API 호출
 // 가입 직후 발급되는 JWT(프로필 사진 업로드용 임시 토큰)를 반환 (없으면 null)
-export const signup = async (username : string, password : string, nickname : string) : Promise<string | null> => {
-    const credentials = {
-        username : username,
-        password : password,
-        nickname : nickname,
-    };
+export const signup = async (username : string, password : string,
+                             nickname : string, file?: File | null) : Promise<string | null> => {
+    
+    // 파일과 텍스트를 동시에 보내야 한다면, FormData가 필요!
+    const formData = new FormData();
+    formData.append("username", username);
+    formData.append("password", password);
+    formData.append("nickname", nickname);
+    if (file) formData.append("file", file);
 
-    const response = await client.post("/user", credentials);
-
-    const authorization = response.headers.authorization;
-    return authorization ? authorization.replace("Bearer ", "") : null;
+    // FormData로 보낸다면 Content-Type: multipart/form-data;를 알아서 붙여줌.
+    const response = await client.post("/user", formData);
+    return response.data;
 }
 
 // [회원가입/프로필 수정] 프로필 사진 업로드 API 호출 (S3 버킷 업로드)
