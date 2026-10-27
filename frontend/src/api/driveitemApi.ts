@@ -93,6 +93,15 @@ export const changeName = async (trimmedItemName : string, driveItemId : string)
     return response.data;
 };
 
+// [아이템 메뉴] 폴더/파일 이동 API 호출
+export const moveDriveItem = async ( parentId : string|null , driveItemId : string) => {
+    const driveItemData = {
+        parentId: parentId 
+    };
+    const response = await client.patch(`/driveitem/move/${driveItemId}`, driveItemData);
+    return response.data;
+};
+
 // [아이템 메뉴] 즐겨찾기 추가 API 호출
 export const createFavorite = async (driveItemId : string) => {
     const response = await client.post(`/favorite/create/${driveItemId}`,null);
@@ -128,3 +137,4 @@ export const saveFile = async (fileId : string, contentData : { content : string
     const response = await client.patch(`/driveitem/save/${fileId}`, contentData);
     return response.data;
 }
+

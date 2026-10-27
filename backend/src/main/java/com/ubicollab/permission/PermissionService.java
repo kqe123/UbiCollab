@@ -138,6 +138,14 @@ public class PermissionService {
 
 		// result에 권한 소유자 추가 (부모로 거슬러 올라가면서 가장 가까운 권한 리스트 반환)
 		while (driveItem != null) {
+			
+			// 소유자는 Permission 행이 없어도 MANAGER로 추가
+		    User owner = driveItem.getUser();
+		    if (userIds.add(owner.getId())) {
+		        result.add(new PermissionResponseDto(owner, getProfileUri(owner.getProfileImageKey()),
+		                driveItem, PermissionType.MANAGER));
+		    }
+			
 			// 해당 DriveItem의 권한들 추출
 			List<Permission> permissionList = permissionRepository.findByItem(driveItem);
 
@@ -202,7 +210,10 @@ public class PermissionService {
 	// 부모로 계속 거슬러 올라가며 권한을 체크하는 함수
 	public PermissionType getPermission(DriveItem driveItem, User user) {
 		while (driveItem != null) {
-			// 현재 사용자가 해당 아이템에 권한(Permission)이 있다면 해당 권한타입 반환
+			// 현재 사용자가 해당 아이템의 소유자라면 MANAGER 권한 반환
+			if (isOwner(driveItem, user)) return PermissionType.MANAGER;
+			
+			// 현재 사용자가 해당 아이템에 권한(Permission)이 있다면 해당 권한 반환
 			Optional<Permission> permission = permissionRepository.findByItemAndUser(driveItem, user);
 			if (permission.isPresent()) {
 				return permission.get().getType();
@@ -223,11 +234,8 @@ public class PermissionService {
 			return path;
 		}
 
-		// 부모 폴더(parent)
-		DriveItem parent = getDriveItemOrThrow(foldId);
-
-		// 현재 유저
-		User user = getUserOrThrow(username);
+		DriveItem parent = getDriveItemOrThrow(foldId); // 부모 폴더(parent)
+		User user = getUserOrThrow(username); // 현재 유저
 
 		// (접근 제어) Viewer이상의  권한 하나 필요
 		if (!hasAccess(parent, user)) {

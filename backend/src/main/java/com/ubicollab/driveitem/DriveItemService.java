@@ -14,6 +14,7 @@ import com.ubicollab.driveitem.dto.DriveItemCreateDto;
 import com.ubicollab.driveitem.dto.DriveItemResponseDto;
 import com.ubicollab.driveitem.dto.FileSaveDto;
 import com.ubicollab.driveitem.dto.ItemNameChangeDto;
+import com.ubicollab.driveitem.dto.MoveDriveItemDto;
 import com.ubicollab.driveitem.enums.DriveItemExtension;
 import com.ubicollab.driveitem.enums.DriveItemType;
 import com.ubicollab.favorite.FavoriteRepository;
@@ -82,13 +83,6 @@ public class DriveItemService {
 
 	    // DriveItem 저장
 	    driveRepository.save(newDriveItem);
-	    
-	    // 루트 DriveItem(parent X)이라면  MANAGER 권한 생성
-	    if (parent == null) {
-	    	Permission permission = new Permission (user, newDriveItem, PermissionType.MANAGER, LocalDateTime.now());
-	    	permissionRepository.save(permission);
-	    }
-	    
 		return newDriveItem.getPublicId();
 	}
 	
@@ -282,17 +276,13 @@ public class DriveItemService {
 		return result;
 	}
 	
-	// 폴더/파일 이름 변경 메서드 (MANAGER만)
+	// [아이템 메뉴, 편집기] 폴더/파일 이름 변경 메서드 (MANAGER만)
 	@Transactional
-	public void updateItemName(UUID publicId, ItemNameChangeDto request, String username) {
-		// 현재 로그인 사용자
-		User user = getUserOrThrow(username);
+	public void changeItemName(UUID publicId, ItemNameChangeDto request, String username) {
+		User user = getUserOrThrow(username); // 현재 로그인 사용자
+		DriveItem driveItem = getDriveItemOrThrow(publicId); // 수정 대상 driveItem
 
-		// 수정 대상 driveItem
-		DriveItem driveItem = getDriveItemOrThrow(publicId);
-
-		// 현재 갖고있는 권한(MANAGER 등...)
-		PermissionType permissionType = permissionService.getPermission(driveItem, user);
+		PermissionType permissionType = permissionService.getPermission(driveItem, user); // 현재 갖고있는 권한
 		boolean canManage = permissionService.isManager(permissionType); // 이름 변경 : MANAGER만
 			
 		// 변경사항이 있을 시에 업데이트를 진행함.(itemName)
@@ -303,8 +293,101 @@ public class DriveItemService {
 		driveRepository.save(driveItem);
 	}
 	
+	// 파일/폴더명 변경 헬퍼 함수
+	private void updateItemName(DriveItem driveItem, String itemName, boolean canManage) {
+		if (itemName == null) {
+			return;
+		}
+
+		String trimmedItemName = itemName.trim();
+
+		if (trimmedItemName.isEmpty()) {
+			throw new IllegalArgumentException("itemName은 비어 있을 수 없습니다.");
+		}
+			
+		if (trimmedItemName.length() > MAX_ITEM_NAME_LENGTH) {
+			throw new IllegalArgumentException("fileName은 " + MAX_ITEM_NAME_LENGTH + "자 이하여야 합니다.");
+		}
+			
+		// (접근 제어) 폴더/파일명  변경은  MANAGER 권한 필요 (EDITOR는 이름 변경 불가)
+		if (!canManage) {
+			throw new PermissionDeniedException("파일명을 변경할 권한이 없습니다.");
+		}
+
+		driveItem.setItemName(trimmedItemName);
+	}
 	
-	// 파일 저장 메서드 (EDITOR 이상)
+	// [아이템 메뉴] 폴더/파일 이동 메서드 (MANAGER만)
+	@Transactional
+	public void moveDriveItem(UUID publicId, MoveDriveItemDto request, String username) {
+		User user = getUserOrThrow(username); // 현재 로그인 사용자
+		DriveItem driveItem = getDriveItemOrThrow(publicId); // 이동 대상 driveItem
+		
+		// [예외 처리] 해당 아이템이 휴지통에 있을때
+		if (driveItem.getIsInTrash() == true)
+			throw new IllegalArgumentException("휴지통에 있는 항목은 이동할 수 없습니다.");
+		
+		// parentId가 null → 소유자의 내 드라이브 루트로 이동
+		if (request.parentId() == null) {
+			moveToRoot(driveItem, user);
+		}
+		// parentId가 null X → 권한 체크 후 해당 폴더로 이동
+		else {
+			DriveItem targetFolder = getDriveItemOrThrow(request.parentId()); // 이동할 목적지 폴더
+			boolean canMoveItem = permissionService.isManager(driveItem, user); // 해당 아이템에 대한 이동 권한
+			boolean canMoveIntoDestination = permissionService.isManager(targetFolder, user); // 해당 목적지 폴더에 대한 이동 권한
+			updateParent(driveItem, targetFolder, canMoveItem, canMoveIntoDestination); // 폴더/파일 이동 실행
+		}
+		driveRepository.save(driveItem); // 저장
+	}
+	
+	// 파일/폴더 루트 이동 헬퍼 함수 (소유자만 가능)
+	private void moveToRoot(DriveItem driveItem, User user) {
+		// [접근 제어] 루트(내 드라이브 최상단)로는 소유자만 이동 가능
+		// 공유받은 MANAGER가 남의 아이템을 루트로 뺄 수 없음
+		if (!permissionService.isOwner(driveItem, user)) 
+			throw new PermissionDeniedException("소유자만 최상위 위치로 이동할 수 있습니다.");
+		
+		// 이미 루트라면 아무것도 하지 않음
+		if (driveItem.getParent() == null) 
+			return;
+		
+		driveItem.setParent(null);
+	}
+	
+	// 파일/폴더 이동 헬퍼 함수 
+	private void updateParent(DriveItem driveItem, DriveItem targetFolder, boolean canMove,
+							boolean canMoveIntoDestination ) {
+		
+		// [예외 처리] 이동할 위치 = 현재 위치 일때
+		if (targetFolder.getPublicId().equals(driveItem.getParent().getPublicId()) )
+			throw new IllegalArgumentException("같은 위치입니다.");
+		
+		// [예외 처리] 목적지 폴더가 휴지통에 있을때
+		if (targetFolder.getIsInTrash() == true)
+			throw new IllegalArgumentException("휴지통에 있는 목적지 폴더에는 이동할 수 없습니다.");
+		
+		// [예외 처리] 이동할 위치가 폴더가 아닐경우
+		if (targetFolder.getType() != DriveItemType.FOLDER) {
+			throw new IllegalArgumentException("부모는 폴더여야 합니다.");
+		}
+
+		// [접근 제어] 이동 대상 아이템 자체에 대해 MANAGER 권한 필요
+		if (!canMove) {
+			throw new PermissionDeniedException("해당 폴더/파일을 이동시킬 권한이 없습니다.");
+		}
+
+		// [접근 제어] 이동할 목적지 폴더에도  MANAGER 권한 필요 (createDriveItem과 동일한 기준)
+		// 이 검사가 없으면, 권한이 전혀 없는 임의의 폴더 안으로 아이템을 옮겨 넣을 수 있게 됨.
+		if (!canMoveIntoDestination) {
+			throw new PermissionDeniedException("이동할 위치에 대한 권한이 없습니다.");
+		}
+
+		driveItem.setParent(targetFolder);
+	}
+	
+	
+	// [편집기] 파일 저장 메서드 (EDITOR 이상)
 	@Transactional
 	public void saveFile(UUID publicId, FileSaveDto request, String username) {
 	    // 현재 로그인 사용자
@@ -328,35 +411,8 @@ public class DriveItemService {
 
 		driveRepository.save(driveItem);
 	}
-	
-	
 
-	// itemName이 요청에 포함된 경우 유효성 검사 후 변경
-	private void updateItemName(DriveItem driveItem, String itemName, boolean canManage) {
-		if (itemName == null) {
-			return;
-		}
-
-		String trimmedItemName = itemName.trim();
-
-		if (trimmedItemName.isEmpty()) {
-			throw new IllegalArgumentException("itemName은 비어 있을 수 없습니다.");
-		}
-		
-		if (trimmedItemName.length() > MAX_ITEM_NAME_LENGTH) {
-			throw new IllegalArgumentException("fileName은 " + MAX_ITEM_NAME_LENGTH + "자 이하여야 합니다.");
-		}
-		
-		// (접근 제어) 폴더/파일명  변경은  MANAGER 권한 필요 (EDITOR는 이름 변경 불가)
-		if (!canManage) {
-			throw new PermissionDeniedException("파일명을 변경할 권한이 없습니다.");
-		}
-
-		driveItem.setItemName(trimmedItemName);
-	}
-
-	// content가 요청에 포함된 경우 유효성 검사후 변경 (파일만 가능)
-	
+	// 파일 내용 변경 헬퍼 함수 (파일만 가능)
 	private void updateContent(DriveItem driveItem, String content, boolean canEdit) {
 		if (content == null) {
 			return;
@@ -373,33 +429,6 @@ public class DriveItemService {
 
 		driveItem.setContent(content);
 		driveItem.setSize((long) content.getBytes(StandardCharsets.UTF_8).length);
-	}
-	
-	// parentId가 요청에 포함된 경우(이동) 유효성 검사 + 권한 검사 후 변경
-	private void updateParent(DriveItem driveItem, UUID parentId, User user, boolean canMove) {
-		if (parentId == null) {
-			return;
-		}
-
-		DriveItem parent = driveRepository.findByPublicId(parentId)
-			.orElseThrow(() -> new IllegalArgumentException("이동할 부모 폴더가 존재하지 않습니다."));
-
-		if (parent.getType() != DriveItemType.FOLDER) {
-			throw new IllegalArgumentException("부모는 폴더여야 합니다.");
-		}
-
-		// [접근 제어] 이동 대상 아이템 자체에 대해 MANAGER 권한 필요
-		if (!canMove) {
-			throw new PermissionDeniedException("부모를 변경할 권한이 없습니다.");
-		}
-
-		// [접근 제어] 이동할 목적지 폴더에도  MANAGER 권한 필요 (createDriveItem과 동일한 기준)
-		// 이 검사가 없으면, 권한이 전혀 없는 임의의 폴더 안으로 아이템을 옮겨 넣을 수 있게 됨.
-		if (!permissionService.isManager(parent, user)) {
-			throw new PermissionDeniedException("이동할 위치에 대한 권한이 없습니다.");
-		}
-
-		driveItem.setParent(parent);
 	}
 
 	// 해당 DriveItem(folder/file)과 모든 자식 요소들을 휴지통으로 보내는 메서드 (MANAGER 권한 필요)
