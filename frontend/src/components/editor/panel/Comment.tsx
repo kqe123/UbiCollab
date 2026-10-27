@@ -27,7 +27,7 @@ function Comment ({
     permission
 } : { 
     fileId : string;
-    setSidePanel : React.Dispatch<React.SetStateAction<"NONE" | "COMMENT" | "ANNOUNCEMENT">>;
+    setSidePanel : React.Dispatch<React.SetStateAction<"NONE" | "COMMENT">>;
     permission : "VIEWER" | "COMMENTOR" | "EDITOR" |"MANAGER" | null;
 }) {
     // 현재 로그인된 User 정보 

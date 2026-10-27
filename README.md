@@ -1,6 +1,6 @@
 # UbiCollab
 
-> 문서 작성부터 폴더 관리, 공유·권한 관리, 댓글과 공지까지 지원하는 **웹 기반 협업 문서 드라이브**
+> 문서 작성부터 폴더 관리, 공유·권한 관리, 댓글까지 지원하는 **웹 기반 협업 문서 드라이브**
 
 <!-- TODO: 대표 스크린샷 또는 시연 GIF -->
 <!-- ![UbiCollab 메인 화면](docs/images/main.png) -->
@@ -58,7 +58,6 @@ flowchart LR
 
 ### 💬 협업
 - 본문 텍스트를 선택해 댓글 작성(Bubble Menu), 답글 · 수정 · 삭제
-- 문서별 공지사항 작성 · 수정 · 삭제 (사이드 패널)
 
 ### 👤 회원
 - 회원가입 · 로그인(JWT), 닉네임 · 비밀번호 변경, 회원 탈퇴
@@ -73,7 +72,7 @@ flowchart LR
 
 **해결**
 - 항목에 직접 부여된 권한이 없으면 부모 폴더를 따라 올라가며 권한을 찾는 **상속 구조** 설계
-- 기능마다 필요한 권한을 정해 검사 (예: 댓글은 `COMMENTOR` 이상, 공지 작성은 `MANAGER`)
+- 기능마다 필요한 권한을 정해 검사 (예: 댓글은 `COMMENTOR` 이상)
 - 프론트엔드 메뉴 제한과 별개로 **모든 API에서 서버 측 권한 검증** 수행
 
 ### 2. 내부 식별자 노출 방지
@@ -115,7 +114,7 @@ flowchart LR
 ## ERD
 
 <!-- TODO: ERD 이미지 -->
-주요 엔티티: `User`, `DriveItem`(파일/폴더, 자기 참조 parent), `Permission`, `Favorite`, `Comment`, `Announcement`
+주요 엔티티: `User`, `DriveItem`(파일/폴더, 자기 참조 parent), `Permission`, `Favorite`, `Comment`
 
 <br>
 
@@ -129,7 +128,6 @@ flowchart LR
 | 권한 | `/api/permission` | 공유, 권한 변경·삭제, 공유받은 항목 조회 |
 | 즐겨찾기 | `/api/favorite` | 추가, 조회, 삭제 |
 | 댓글 | `/api/comment` | 작성, 조회, 수정, 삭제 |
-| 공지 | `/api/announcement` | 작성, 조회, 수정, 삭제 |
 
 <br>
 
@@ -144,7 +142,6 @@ ubicollab
 │       ├── permission/             # 공유·권한
 │       ├── favorite/               # 즐겨찾기
 │       ├── comment/                # 댓글
-│       ├── announcement/           # 공지
 │       ├── common/                 # 전역 예외 처리
 │       └── SecurityConfig.java ... # 보안 설정, 인증 필터, AWS 설정
 └── frontend                        # React + TypeScript

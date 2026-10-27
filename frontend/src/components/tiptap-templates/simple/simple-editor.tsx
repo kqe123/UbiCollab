@@ -76,7 +76,6 @@ import "@/components/tiptap-templates/simple/simple-editor.scss"
 // 사용자 정의 components
 import LoadButton from "@/components/editor/toolbar/LoadButton"
 import Comment from "@/components/editor/panel/Comment"
-import Announcement from "@/components/editor/panel/Announcement"
 import MyBubbleMenu from "@/components/editor/menu/BubbleMenu"
 import LoadDocumentModal from "@/components/modal/LoadDocumentModal";
 import Text from '@mui/material/Typography';
@@ -206,8 +205,8 @@ export function SimpleEditor({
     fileId : string;
     initialContent: string;
     permission : "VIEWER" | "COMMENTOR" | "EDITOR" |"MANAGER" | null;
-    sidePanel : "NONE" | "COMMENT" | "ANNOUNCEMENT";
-    setSidePanel : React.Dispatch<React.SetStateAction<"NONE" | "COMMENT" | "ANNOUNCEMENT">>;
+    sidePanel : "NONE" | "COMMENT";
+    setSidePanel : React.Dispatch<React.SetStateAction<"NONE" | "COMMENT">>;
     setSaveStatus : React.Dispatch<React.SetStateAction<"저장 중" | "저장 완료" | "저장 실패" | null>>;
     setSavedAt : (date : Date) => void;
   }) {
@@ -386,13 +385,6 @@ export function SimpleEditor({
               flexDirection : 'column'
             }}
           >
-            {sidePanel === "ANNOUNCEMENT" && (
-              <Announcement 
-                fileId={fileId}
-                setSidePanel={setSidePanel}
-                permission={permission}
-              />
-            )}
             {sidePanel === "COMMENT" && (
               <Comment 
                 fileId={fileId}
