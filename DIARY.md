@@ -1,5 +1,94 @@
 # 개발 일지 (DIARY)
 
+## 2026-10-28
+
+### 프로젝트 진행
+- issue #30 (회원가입, 프로필 수정 로직 리팩토링) 해결
+- Full request 완료
+
+## 2026-10-27
+
+### 프로젝트 진행
+- issue #29 (파일/폴더 이동) 해결
+- Full request 완료
+
+## 2026-10-19
+
+### 학습 내용
+- 참고 문헌 (Full Stack Development with Spring Boot 3 and React) Chapter 11 학습 완료
+
+## 2026-10-16
+
+### 학습 내용
+- 참고 문헌 (Full Stack Development with Spring Boot 3 and React) Chapter 10 학습 완료
+
+## 2026-10-11
+
+### 프로젝트 진행
+- issue #28 (공지 DELETE, UPDATE 구현) 해결
+- Full request 완료
+
+## 2026-10-09
+
+### 프로젝트 진행
+- issue #27 (편집기 화면의 Load 기능 개편) 해결
+- Full request 완료
+
+## 2026-10-08
+
+### 프로젝트 진행
+- issue #25 (자동 저장) 해결
+- issue #26 (스피너 추가) 해결
+- Full request 완료
+
+## 2026-10-07
+
+### 프로젝트 진행
+- issue #24 (공지(Announcement) 도메인 기초 구현) 해결
+- Full request 완료
+
+## 2026-10-02
+
+### 프로젝트 진행
+- issue #23 (댓글 CRUD 구현) 해결
+- Full request 완료
+
+## 2026-09-29
+
+### 프로젝트 진행
+- issue #22 (댓글 도메인 기초 구현) 해결
+- Full request 완료
+
+## 2026-09-15
+
+### 프로젝트 진행
+- issue #20 (상단 프로필사진 클릭 시 메뉴 출력) 해결
+- Full request 완료
+
+## 2026-09-02
+
+### 프로젝트 진행
+- issue #21 (모달, 메뉴 구분하기) 해결
+- Full request 완료
+
+## 2026-08-31
+
+### 프로젝트 진행
+- issue #18 (권한에 따른 접근 제어 구현) 해결
+- issue #19 (User 프로필 사진 저장 및 가져오기) 해결
+
+## 2026-08-25
+
+### 프로젝트 진행
+- issue #17 (권한 관리 기능 개발) 해결
+- Full request 완료
+
+## 2026-08-16
+
+### 프로젝트 진행
+- issue #15 (공유 추가 기능 개발) 해결
+- Full request 완료
+
 ## 2026-08-15
 
 ### 프로젝트 진행
