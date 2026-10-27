@@ -27,7 +27,7 @@ function Comment ({
     permission
 } : { 
     fileId : string;
-    setSidePanel : React.Dispatch<React.SetStateAction<"NONE" | "COMMENT" | "ANNOUNCEMENT">>;
+    setSidePanel : React.Dispatch<React.SetStateAction<"NONE" | "COMMENT">>;
     permission : "VIEWER" | "COMMENTOR" | "EDITOR" |"MANAGER" | null;
 }) {
     // 현재 로그인된 User 정보 
@@ -641,7 +641,7 @@ function Comment ({
                         value={newContent}
                         onChange={updateNewContent}
                         multiline
-                        maxRows={3}
+                        rows={3}
                         slotProps={{ 
                             htmlInput: { maxLength: 500 }, // 최대 글자 수 500자
                             input: {
@@ -664,6 +664,7 @@ function Comment ({
                         sx={{
                             width : '100%',
                             bgcolor : 'white',
+                            borderRadius : '12px',
                             '& .MuiInputBase-input': { fontSize: '14px'},
                             '& .MuiOutlinedInput-notchedOutline': { borderColor: '#D6E6FA' },
                             '&:hover .MuiOutlinedInput-root:not(.Mui-focused) .MuiOutlinedInput-notchedOutline': 
@@ -674,7 +675,7 @@ function Comment ({
             </Box>
             
             {/* 빈 공간 (댓글 작성 영역이 화면 밖으로 안 나가도록 하기 위한 장치) */}
-            <Box sx={{ width : "100%", height : "10%"}}></Box>
+            
 
             {/* 댓글 메뉴 */}
             {commentMenuOpen && selectedComment && (

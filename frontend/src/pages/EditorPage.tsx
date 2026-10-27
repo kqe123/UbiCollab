@@ -25,8 +25,8 @@ function EditorPage() {
     document.title = `${fileName} - Ubicollab`;
 
     // 사이드 바 열림/닫힘 상태
-    // 공지 버튼을 클릭했을때 ANNOUNCEMENT, 댓글 버튼을 클릭했을때 COMMENT, 열린 사이드 바가 없을때는 NONE
-    const [sidePanel, setSidePanel] = useState<"NONE" | "ANNOUNCEMENT" | "COMMENT" >("NONE");
+    // 댓글 버튼을 클릭했을때 COMMENT, 열린 사이드 바가 없을때는 NONE
+    const [sidePanel, setSidePanel] = useState<"NONE" | "COMMENT">("NONE");
     
     // 이 문서의 저장 요청이 진행 중인 개수 (0이면 진행 중인 저장 없음)
     const pendingSaveCount = useIsMutating({ mutationKey: ["saveFile", fileId] });

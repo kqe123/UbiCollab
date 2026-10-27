@@ -314,6 +314,7 @@ function SharedList() {
             y={driveItemMenu.y}
             driveItem={selectedDriveItem}
             onClose={closeDriveItemMenu}
+            tab={"SHARE"}
             />
         )}
 

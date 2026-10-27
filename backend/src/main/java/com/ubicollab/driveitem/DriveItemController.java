@@ -18,6 +18,7 @@ import com.ubicollab.driveitem.dto.DriveItemCreateDto;
 import com.ubicollab.driveitem.dto.DriveItemResponseDto;
 import com.ubicollab.driveitem.dto.FileSaveDto;
 import com.ubicollab.driveitem.dto.ItemNameChangeDto;
+import com.ubicollab.driveitem.dto.MoveDriveItemDto;
 
 import jakarta.validation.Valid;
 
@@ -98,8 +99,19 @@ public class DriveItemController {
 		Authentication authentication) {
 			
 		String username = authentication.getName(); // 현재 로그인 사용자
-		driveService.updateItemName(publicId, request, username);
+		driveService.changeItemName(publicId, request, username);
 		return ResponseEntity.status(HttpStatus.OK).build();
+	}
+	
+	// [메뉴] 폴더/파일 이동 API (PATCH '/api/driveitem/move/{id}')
+		@PatchMapping("/move/{id}")
+		public ResponseEntity<String> moveDriveItem(@PathVariable("id") UUID publicId,
+			@Valid @RequestBody MoveDriveItemDto request,
+			Authentication authentication) {
+				
+			String username = authentication.getName(); // 현재 로그인 사용자
+			driveService.moveDriveItem(publicId, request, username);
+			return ResponseEntity.status(HttpStatus.OK).build();
 	}
 	
 	// [편집기] 파일 저장 API (PATCH '/api/driveitem/save/{id}')

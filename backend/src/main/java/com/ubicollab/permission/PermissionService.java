@@ -1,6 +1,4 @@
 package com.ubicollab.permission;
-
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,31 +28,27 @@ import com.ubicollab.permission.enums.PermissionType;
 import com.ubicollab.user.User;
 import com.ubicollab.user.UserRepository;
 
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.presigner.S3Presigner;
-import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
-
 @Service
 public class PermissionService {
 	private final DriveItemRepository driveRepository;
 	private final PermissionRepository permissionRepository;
 	private final UserRepository userRepository;
 	private final FavoriteRepository favoriteRepository;
-	private final S3Presigner s3Presigner;
 	private final String bucket;
+	private final String cloudFrontDomain;
 
 	public PermissionService (DriveItemRepository driveRepository,
 			PermissionRepository permissionRepository,
 			UserRepository userRepository,
 			FavoriteRepository favoriteRepository,
-			S3Presigner s3Presigner,
-			@Value("${AWS_S3_BUCKET}") String bucket) {
+			@Value("${AWS_S3_BUCKET}") String bucket,
+			@Value("${CLOUDFRONT_DOMAIN}") String cloudFrontDomain) {
 		this.driveRepository = driveRepository;
 		this.permissionRepository = permissionRepository;
 		this.userRepository = userRepository;
 		this.favoriteRepository = favoriteRepository;
-		this.s3Presigner = s3Presigner;
 		this.bucket = bucket;
+		this.cloudFrontDomain = cloudFrontDomain;
 	}
 
 	// [공유 추가 메뉴] 권한 생성 메서드 (MANAGER 권한 필요)
@@ -138,6 +132,14 @@ public class PermissionService {
 
 		// result에 권한 소유자 추가 (부모로 거슬러 올라가면서 가장 가까운 권한 리스트 반환)
 		while (driveItem != null) {
+			
+			// 소유자는 Permission 행이 없어도 MANAGER로 추가
+		    User owner = driveItem.getUser();
+		    if (userIds.add(owner.getId())) {
+		        result.add(new PermissionResponseDto(owner, getProfileUri(owner.getProfileImageKey()),
+		                driveItem, PermissionType.MANAGER));
+		    }
+			
 			// 해당 DriveItem의 권한들 추출
 			List<Permission> permissionList = permissionRepository.findByItem(driveItem);
 
@@ -202,7 +204,10 @@ public class PermissionService {
 	// 부모로 계속 거슬러 올라가며 권한을 체크하는 함수
 	public PermissionType getPermission(DriveItem driveItem, User user) {
 		while (driveItem != null) {
-			// 현재 사용자가 해당 아이템에 권한(Permission)이 있다면 해당 권한타입 반환
+			// 현재 사용자가 해당 아이템의 소유자라면 MANAGER 권한 반환
+			if (isOwner(driveItem, user)) return PermissionType.MANAGER;
+			
+			// 현재 사용자가 해당 아이템에 권한(Permission)이 있다면 해당 권한 반환
 			Optional<Permission> permission = permissionRepository.findByItemAndUser(driveItem, user);
 			if (permission.isPresent()) {
 				return permission.get().getType();
@@ -223,11 +228,8 @@ public class PermissionService {
 			return path;
 		}
 
-		// 부모 폴더(parent)
-		DriveItem parent = getDriveItemOrThrow(foldId);
-
-		// 현재 유저
-		User user = getUserOrThrow(username);
+		DriveItem parent = getDriveItemOrThrow(foldId); // 부모 폴더(parent)
+		User user = getUserOrThrow(username); // 현재 유저
 
 		// (접근 제어) Viewer이상의  권한 하나 필요
 		if (!hasAccess(parent, user)) {
@@ -317,25 +319,8 @@ public class PermissionService {
 	
 	// 프로필 사진을 로드할 Presigned URI를 반환하는 헬퍼 메서드
 	private String getProfileUri(String key) {
-		String profileUri = null;
-		// 프로필 키가 존재할 경우에만 수행
-		if (key != null) {
-			// 1. "S3의 어느 버킷, 어느 key를 GET할 것인가"를 정의하는 요청 명세 (아직 서명 X)
-			GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-					.bucket(bucket)
-					.key(key)
-					.build();
-				
-			// 2. 위 요청에 "10분간만 유효한 GET"이라는 서명 조건을 씌운 presign 요청 생성
-		    GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
-		            .signatureDuration(Duration.ofMinutes(10)) // URL 유효기간 10분
-		            .getObjectRequest(getObjectRequest)
-		            .build();
-				
-		    // 3. 실제 서명 수행 — AWS 자격증명으로 로컬에서 HMAC 서명 계산 (네트워크 호출 없음, 빠름)
-		    profileUri = s3Presigner.presignGetObject(presignRequest).url().toString();
-		}
-		return profileUri;
+	    if (key == null) return null;
+	    return "https://" + cloudFrontDomain + "/" + key;
 	}
 	
 	// 현재 로그인 사용자(username)를 조회하는 공통 헬퍼 메서드

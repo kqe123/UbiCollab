@@ -1,10 +1,10 @@
 import fileIcon from "../../../assets/file.png";
 import noFilesImg from "../../../assets/empty-files.png";
 import noAuthorizedIcon from "../../../assets/noAuthorized.png";
-import DriveItemMenu from "../../menu/DriveItemMenu"
+import DriveItemMenu from "../../menu/DriveItemMenu.tsx"
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useOutletContext } from "react-router-dom";
-import type { DirectoryOutletContext } from "../Directory";
+import type { DirectoryOutletContext } from "../Directory.tsx";
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Table from '@mui/material/Table';
@@ -16,7 +16,7 @@ import TableRow from '@mui/material/TableRow';
 import { getFiles } from '../../../api/driveitemApi.ts';
 import CircularProgress from '@mui/material/CircularProgress';
 
-function RecentList() {
+function MyFileList() {
     // 상태(state)들
     const {
         selectedDriveItem, 
@@ -145,10 +145,11 @@ function RecentList() {
             y={driveItemMenu.y}
             driveItem={selectedDriveItem}
             onClose={closeDriveItemMenu}
+            tab={"MYFILE"}
             />
         )}
     </>
     );
 }
 
-export default RecentList;
+export default MyFileList;

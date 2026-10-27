@@ -310,6 +310,7 @@ function MyDriveList() {
             y={driveItemMenu.y}
             driveItem={selectedDriveItem}
             onClose={closeDriveItemMenu}
+            tab={"MYDRIVE"}
             />
         )}
 

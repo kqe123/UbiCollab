@@ -6,7 +6,7 @@ import SignupPage from "./pages/SignupPage.tsx";
 import ProfilePage from "./pages/ProfilePage.tsx";
 import { Toaster } from "react-hot-toast";
 import ProtectedRoute from "./routes/ProtectedRoute";
-import RecentList from "./components/driver/lists/RecentList";
+import MyFileList from "./components/driver/lists/MyFileList.tsx";
 import MyDriveList from "./components/driver/lists/MyDriveList";
 import FavoriteList from "./components/driver/lists/FavoriteList";
 import SharedList from "./components/driver/lists/SharedList";
@@ -37,7 +37,7 @@ function App() {
           <Route index element={<Navigate to="my-drive" replace />}/>
           <Route path="my-drive" element={<MyDriveList />} />  {/* folderId : null */}
           <Route path="my-drive/:folderId" element={<MyDriveList />} /> {/* folderId : string */}
-          <Route path="recent" element={<RecentList />} />
+          <Route path="recent" element={<MyFileList />} />
           <Route path="favorite" element={<FavoriteList />} />  {/* folderId : null */}
           <Route path="favorite/:folderId" element={<FavoriteList />} /> {/* folderId : string */}
           <Route path="shared" element={<SharedList />} />            {/* folderId : null */}

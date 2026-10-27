@@ -285,6 +285,7 @@ function FavoriteList() {
             y={driveItemMenu.y}
             driveItem={selectedDriveItem}
             onClose={closeDriveItemMenu}
+            tab={"FAVORITE"}
             />
         )}
     </>
