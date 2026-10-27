@@ -359,8 +359,19 @@ public class DriveItemService {
 	private void updateParent(DriveItem driveItem, DriveItem targetFolder, boolean canMove,
 							boolean canMoveIntoDestination ) {
 		
+		// [접근 제어] 이동 대상 아이템 자체에 대해 MANAGER 권한 필요
+		if (!canMove) {
+			throw new PermissionDeniedException("해당 폴더/파일을 이동시킬 권한이 없습니다.");
+		}
+
+		// [접근 제어] 이동할 목적지 폴더에도  MANAGER 권한 필요 (createDriveItem과 동일한 기준)
+		// 이 검사가 없으면, 권한이 전혀 없는 임의의 폴더 안으로 아이템을 옮겨 넣을 수 있게 됨.
+		if (!canMoveIntoDestination) {
+			throw new PermissionDeniedException("이동할 위치에 대한 권한이 없습니다.");
+		}
+		
 		// [예외 처리] 이동할 위치 = 현재 위치 일때
-		if (targetFolder.getPublicId().equals(driveItem.getParent().getPublicId()) )
+		if (driveItem.getParent() != null && targetFolder.getPublicId().equals(driveItem.getParent().getPublicId()))
 			throw new IllegalArgumentException("같은 위치입니다.");
 		
 		// [예외 처리] 목적지 폴더가 휴지통에 있을때
@@ -371,16 +382,11 @@ public class DriveItemService {
 		if (targetFolder.getType() != DriveItemType.FOLDER) {
 			throw new IllegalArgumentException("부모는 폴더여야 합니다.");
 		}
-
-		// [접근 제어] 이동 대상 아이템 자체에 대해 MANAGER 권한 필요
-		if (!canMove) {
-			throw new PermissionDeniedException("해당 폴더/파일을 이동시킬 권한이 없습니다.");
-		}
-
-		// [접근 제어] 이동할 목적지 폴더에도  MANAGER 권한 필요 (createDriveItem과 동일한 기준)
-		// 이 검사가 없으면, 권한이 전혀 없는 임의의 폴더 안으로 아이템을 옮겨 넣을 수 있게 됨.
-		if (!canMoveIntoDestination) {
-			throw new PermissionDeniedException("이동할 위치에 대한 권한이 없습니다.");
+		
+		// [예외 처리] 자기 자신 또는 하위 폴더로 이동할 때 (순환 방지)
+		for (DriveItem p = targetFolder; p != null; p = p.getParent()) {
+			if (p.getPublicId().equals(driveItem.getPublicId()))
+				throw new IllegalArgumentException("자기 자신이나 하위 폴더로는 이동할 수 없습니다.");
 		}
 
 		driveItem.setParent(targetFolder);

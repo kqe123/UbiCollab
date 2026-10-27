@@ -1,6 +1,4 @@
 package com.ubicollab.permission;
-
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,31 +28,27 @@ import com.ubicollab.permission.enums.PermissionType;
 import com.ubicollab.user.User;
 import com.ubicollab.user.UserRepository;
 
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.presigner.S3Presigner;
-import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
-
 @Service
 public class PermissionService {
 	private final DriveItemRepository driveRepository;
 	private final PermissionRepository permissionRepository;
 	private final UserRepository userRepository;
 	private final FavoriteRepository favoriteRepository;
-	private final S3Presigner s3Presigner;
 	private final String bucket;
+	private final String cloudFrontDomain;
 
 	public PermissionService (DriveItemRepository driveRepository,
 			PermissionRepository permissionRepository,
 			UserRepository userRepository,
 			FavoriteRepository favoriteRepository,
-			S3Presigner s3Presigner,
-			@Value("${AWS_S3_BUCKET}") String bucket) {
+			@Value("${AWS_S3_BUCKET}") String bucket,
+			@Value("${CLOUDFRONT_DOMAIN}") String cloudFrontDomain) {
 		this.driveRepository = driveRepository;
 		this.permissionRepository = permissionRepository;
 		this.userRepository = userRepository;
 		this.favoriteRepository = favoriteRepository;
-		this.s3Presigner = s3Presigner;
 		this.bucket = bucket;
+		this.cloudFrontDomain = cloudFrontDomain;
 	}
 
 	// [공유 추가 메뉴] 권한 생성 메서드 (MANAGER 권한 필요)
@@ -325,25 +319,8 @@ public class PermissionService {
 	
 	// 프로필 사진을 로드할 Presigned URI를 반환하는 헬퍼 메서드
 	private String getProfileUri(String key) {
-		String profileUri = null;
-		// 프로필 키가 존재할 경우에만 수행
-		if (key != null) {
-			// 1. "S3의 어느 버킷, 어느 key를 GET할 것인가"를 정의하는 요청 명세 (아직 서명 X)
-			GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-					.bucket(bucket)
-					.key(key)
-					.build();
-				
-			// 2. 위 요청에 "10분간만 유효한 GET"이라는 서명 조건을 씌운 presign 요청 생성
-		    GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
-		            .signatureDuration(Duration.ofMinutes(10)) // URL 유효기간 10분
-		            .getObjectRequest(getObjectRequest)
-		            .build();
-				
-		    // 3. 실제 서명 수행 — AWS 자격증명으로 로컬에서 HMAC 서명 계산 (네트워크 호출 없음, 빠름)
-		    profileUri = s3Presigner.presignGetObject(presignRequest).url().toString();
-		}
-		return profileUri;
+	    if (key == null) return null;
+	    return "https://" + cloudFrontDomain + "/" + key;
 	}
 	
 	// 현재 로그인 사용자(username)를 조회하는 공통 헬퍼 메서드

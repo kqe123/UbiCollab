@@ -396,7 +396,7 @@ function MoveModal ({
                     variant="contained"
                     onClick={handleSubmit}
                     disabled={source.parentId === currentFolderId || 
-                            (tab === "SHARE" && currentFolderId === null)}
+                            (currentFolderId === null && (tab === "SHARE" || !source.isOwner))}
                     color='primary'
                 >
                     이동
