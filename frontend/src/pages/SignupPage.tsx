@@ -11,7 +11,7 @@ import Avatar from '@mui/material/Avatar';
 import Badge from '@mui/material/Badge';
 import IconButton from  '@mui/material/IconButton';
 import AddIcon from '@mui/icons-material/Add';
-import { checkUsername, signup, uploadProfileImage } from '../api/userApi.ts';
+import { checkUsername, signup } from '../api/userApi.ts';
 
 function SignupPage () {
     const [user, setUser] = useState({
@@ -86,36 +86,12 @@ function SignupPage () {
         mutationFn : () => checkUsername(user.username),
     })
 
-    // 프로필 사진 업로드 (useMutation)
-    // 가입 직후 발급받은 임시 JWT로 업로드한다. (이 JWT는 LocalStorage에 저장되지 않음!)
-    const uploadProfileMutation = useMutation({
-        mutationFn : ({ file, accessToken } : { file : File; accessToken : string }) =>
-            uploadProfileImage(file, accessToken),
-        onSuccess : () => {
-            toast.success("프로필 사진 업데이트에 성공하였습니다!");
-        },
-        onError : (error) => {
-            console.error("아바타 업로드 실패:", error);
-            toast.error(error.message);
-        },
-        onSettled : () => {
-            navigate('/login'); // 업로드 성공/실패와 관계없이 로그인 페이지로 이동
-        }
-    })
-
     // 회원가입 (useMutation)
     const signupMutation = useMutation({
-        mutationFn : () => signup(user.username, user.password, user.nickname),
-        onSuccess : (accessToken) => {
+        mutationFn : () => signup(user.username, user.password, user.nickname, avatarFile),
+        onSuccess : () => {
             console.log("회원가입 성공");
-            toast.success("회원가입에 성공하였습니다!");
-
-            // (선택사항) 프로필 사진이 있다면, 백엔드에게 해당 프로필 사진을
-            // 보내고, S3 버킷에 업로드한 뒤, 해당 유저의 ProfileImageKey를 수정한다.
-            if (avatarFile && accessToken) {
-                uploadProfileMutation.mutate({ file : avatarFile, accessToken });
-                return;
-            }
+            toast.success("회원가입 성공");
             navigate('/login');
         },
         onError : (error) => {

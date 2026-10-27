@@ -10,6 +10,7 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.ubicollab.common.exception.InvalidPasswordException;
@@ -19,7 +20,7 @@ import com.ubicollab.common.exception.S3UploadDeniedException;
 import com.ubicollab.driveitem.DriveItem;
 import com.ubicollab.driveitem.DriveItemRepository;
 import com.ubicollab.permission.PermissionService;
-import com.ubicollab.user.dto.NicknameChangeDto;
+import com.ubicollab.user.dto.ProfileChangeDto;
 import com.ubicollab.user.dto.PasswordChangeDto;
 import com.ubicollab.user.dto.SignupDto;
 import com.ubicollab.user.dto.UserResponse;
@@ -70,23 +71,27 @@ public class UserService {
 	
 	
 	// [회원가입] User를 생성하는 메서드
-	public UUID createUser(SignupDto request) {
+	@Transactional
+	public void createUser(SignupDto request) {
 		String username = request.username();
 		String password = request.password();
 		String nickname = request.nickname();
+		MultipartFile file = request.file();
 		
 		// User 객체 생성 (username, password, nickname, createdDate, role, profileImageKey)
 		// password는 Bean으로 등록된 passwordEncoder를 사용해 암호화한다.
 		User newUser = new User(username, passwordEncoder.encode(password), nickname,
 								LocalDateTime.now(),"USER", null);
 		
-		// User 저장 + User의 PublicId 반환
+		// 1. User 저장 
 		userRepository.save(newUser);
-		return newUser.getPublicId();
+		
+		// 2. (선택사항) 프로필 사진 업로드
+		if (file != null && !file.isEmpty()) 
+			uploadProfileImage(file, username);
 	}
 	
-	// [회원가입, 프로필] 프로필사진을 s3 버킷에 업로드하는  메서드
-	// 대상 유저는 인증된 username으로 조회 — 요청 파라미터로 임의의 userId를 신뢰하지 않는다.
+	// [회원가입, 프로필] 프로필사진을 s3 버킷에 업로드하는 헬퍼  메서드
 	public void uploadProfileImage(MultipartFile file, String username) {
 		
 		// 1. 기본 유효성 검사 — 비어있는지, 크기, Content-Type 화이트리스트
@@ -255,14 +260,21 @@ public class UserService {
 		userRepository.save(user);
 	}
 	
-	// [프로필] 닉네임 변경 메서드
-	public void changeNickname(String username, NicknameChangeDto request) {
-		// 1. 현재 사용자가 맞는지 검증
-		User user = getUserOrThrow(username);
-			
-		// 2. 새 닉네임으로 변경
-		user.setNickname(request.nickname());
-		userRepository.save(user);
+	// [프로필] 프로필 수정 메서드
+	@Transactional
+	public void changeProfile(String username, ProfileChangeDto request) {
+		User user = getUserOrThrow(username); // 현재 로그인 사용자
+		String nickname = request.nickname(); 
+		MultipartFile file = request.file(); 
+		
+		// 1. (선택사항) 새 닉네임으로 변경 (트랜잭션 안이라 save 필요 없음)
+		if (!(user.getNickname().equals(nickname))) 
+			user.setNickname(nickname);
+		
+		
+		// 2. (선택사항) 프로필 사진 업로드
+		if (file != null && !file.isEmpty()) 
+			uploadProfileImage(file, username);
 	}
 	
 	// [프로필] 회원 탈퇴 메서드
