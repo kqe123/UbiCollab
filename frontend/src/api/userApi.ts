@@ -43,21 +43,6 @@ export const signup = async (username : string, password : string,
     return response.data;
 }
 
-// [회원가입/프로필 수정] 프로필 사진 업로드 API 호출 (S3 버킷 업로드)
-// 대상 유저는 JWT에서 백엔드가 직접 알아내므로 userId를 따로 안 보낸다.
-// accessToken을 넘기면 LocalStorage 토큰 대신 해당 토큰을 사용함. (회원가입 직후 임시 토큰)
-export const uploadProfileImage = async (file : File, accessToken? : string) => {
-    const formData = new FormData();
-    formData.append("file", file);
-
-    const response = await client.post("/user/profile-upload", formData, {
-        headers: {
-            "Content-Type": "multipart/form-data",
-            ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
-        }
-    });
-    return response.data;
-}
 
 // [현재 유저] 현재 로그인중인 유저 정보 API 호출
 export const getCurrentUser = async () : Promise<User> => {
@@ -71,9 +56,16 @@ export const searchUsers = async (keyword : string, driveItemId : string) : Prom
     return response.data;
 }
 
-// [프로필 메뉴] 닉네임 변경 API 호출
-export const changeNickname = async (nickname : string) => {
-    const response = await client.patch("/user/change-nickname", { nickname : nickname });
+// [프로필 메뉴] 프로필 수정 API 호출
+export const changeProfile = async (nickname : string, file?: File | null) => {
+
+    // 파일과 텍스트를 동시에 보내야 한다면, FormData가 필요!
+    const formData = new FormData();
+    formData.append("nickname", nickname);
+    if (file) formData.append("file", file);
+
+    // 파일과 텍스트를 동시에 보내야 한다면, FormData가 필요!
+    const response = await client.patch("/user/change-profile", formData);
     return response.data;
 }
 

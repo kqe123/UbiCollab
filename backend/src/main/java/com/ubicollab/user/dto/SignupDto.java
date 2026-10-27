@@ -28,5 +28,5 @@ public record SignupDto(
 	)
 	String nickname,
 	
-	MultipartFile file   // 파일이 없으면 null
+	MultipartFile file   // 프로필 사진이 없으면 null
 ) {}

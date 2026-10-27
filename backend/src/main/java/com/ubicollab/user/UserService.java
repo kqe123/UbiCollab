@@ -20,7 +20,7 @@ import com.ubicollab.common.exception.S3UploadDeniedException;
 import com.ubicollab.driveitem.DriveItem;
 import com.ubicollab.driveitem.DriveItemRepository;
 import com.ubicollab.permission.PermissionService;
-import com.ubicollab.user.dto.NicknameChangeDto;
+import com.ubicollab.user.dto.ProfileChangeDto;
 import com.ubicollab.user.dto.PasswordChangeDto;
 import com.ubicollab.user.dto.SignupDto;
 import com.ubicollab.user.dto.UserResponse;
@@ -87,7 +87,7 @@ public class UserService {
 		userRepository.save(newUser);
 		
 		// 2. (선택사항) 프로필 사진 업로드
-		if (file != null) 
+		if (file != null && !file.isEmpty()) 
 			uploadProfileImage(file, username);
 	}
 	
@@ -260,14 +260,21 @@ public class UserService {
 		userRepository.save(user);
 	}
 	
-	// [프로필] 닉네임 변경 메서드
-	public void changeNickname(String username, NicknameChangeDto request) {
-		// 1. 현재 사용자가 맞는지 검증
-		User user = getUserOrThrow(username);
-			
-		// 2. 새 닉네임으로 변경
-		user.setNickname(request.nickname());
-		userRepository.save(user);
+	// [프로필] 프로필 수정 메서드
+	@Transactional
+	public void changeProfile(String username, ProfileChangeDto request) {
+		User user = getUserOrThrow(username); // 현재 로그인 사용자
+		String nickname = request.nickname(); 
+		MultipartFile file = request.file(); 
+		
+		// 1. (선택사항) 새 닉네임으로 변경 (트랜잭션 안이라 save 필요 없음)
+		if (!(user.getNickname().equals(nickname))) 
+			user.setNickname(nickname);
+		
+		
+		// 2. (선택사항) 프로필 사진 업로드
+		if (file != null && !file.isEmpty()) 
+			uploadProfileImage(file, username);
 	}
 	
 	// [프로필] 회원 탈퇴 메서드

@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.ubicollab.driveitem.dto.DriveItemCreateDto;
-import com.ubicollab.user.dto.NicknameChangeDto;
+import com.ubicollab.user.dto.ProfileChangeDto;
 import com.ubicollab.user.dto.PasswordChangeDto;
 import com.ubicollab.user.dto.SignupDto;
 import com.ubicollab.user.dto.UserResponse;
@@ -55,18 +55,6 @@ public class UserController {
 		return ResponseEntity
 				.status(HttpStatus.CREATED)
 		        .build();
-	}
-
-	// [회원가입, 프로필] 프로필사진을 s3 버킷에 업로드하는 API (POST 'api/user/profile-upload')
-	// 항상 인증 필요 — 대상 유저는 JWT(Authentication)에서 직접 가져온다.
-	@PostMapping("/profile-upload")
-	public ResponseEntity<?> uploadProfileImage(
-			@RequestParam("file") MultipartFile file,
-			Authentication authentication
-	        ) {
-		String username = authentication.getName(); // 현재 로그인중인 유저
-		userService.uploadProfileImage(file, username);
-		return ResponseEntity.ok().build();
 	}
 	
 	// [회원가입] 중복 username 체크 API (GET 'api/user/check-username')
@@ -106,13 +94,13 @@ public class UserController {
 		return ResponseEntity.status(HttpStatus.OK).body("비밀번호 변경 성공");
 	}
 
-	// [프로필 화면] 닉네임 변경 API (PATCH '/api/user/change-nickname')
-	@PatchMapping("change-nickname")
-	public ResponseEntity<?> changeNickname(Authentication authentication,
-			@Valid @RequestBody NicknameChangeDto request) {
+	// [프로필 화면] 프로필 수정 API (PATCH '/api/user/change-profile')
+	@PatchMapping(value="/change-profile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ResponseEntity<?> changeProfile(Authentication authentication,
+			@Valid @ModelAttribute ProfileChangeDto request) {
 		String username = authentication.getName(); // 현재 로그인중인 유저
-		userService.changeNickname(username, request); // 닉네임 변경
-		return ResponseEntity.status(HttpStatus.OK).body("닉네임 변경 성공");
+		userService.changeProfile(username, request); // 프로필 수정
+		return ResponseEntity.status(HttpStatus.OK).body("프로필 수정 성공");
 	}
 	
 	// [프로필 화면] 회원 탈퇴  API (DELETE '/api/user/delete')

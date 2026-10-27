@@ -12,7 +12,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import noAuthorizedIcon from "../../../assets/noAuthorized.png";
 import { useState, useRef, useEffect } from "react";
 import { useCurrentUser } from "../../../hooks/use-current-user";
-import { changeNickname, uploadProfileImage } from '../../../api/userApi.ts';
+import { changeProfile } from '../../../api/userApi.ts';
 import CircularProgress from '@mui/material/CircularProgress';
 
 function ProfileEdit() {
@@ -49,34 +49,24 @@ function ProfileEdit() {
         setNickname(event.target.value)
     }
 
-    // 닉네임 변경 (useMutation)
-    const changeNicknameMutation = useMutation({
-        mutationFn : () => changeNickname(nickname),
-        onSuccess : () => {
-            console.log("닉네임 변경 성공");
-        },
-        onError : (error) => {
-            console.error("닉네임 변경 실패:", error);
-            toast.error(error.message);
-        }
-    })
-
-    // 프로필 사진 업데이트 (useMutation) — S3 버킷에 프로필 사진을 업로드
-    const uploadProfileMutation = useMutation({
-        mutationFn : (file : File) => uploadProfileImage(file),
-        onSuccess : () => {
+    // 프로필 수정 (useMutation)
+    const changeProfileMutation = useMutation({
+        mutationFn : () => changeProfile(nickname, avatarFile),
+        onSuccess : async () => {
             setAvatarFile(null);
-            console.log("프로필 사진 업데이트 성공");
+            console.log("프로필 수정 성공");
+            await queryClient.invalidateQueries({queryKey: ["currentUser"]});
+            toast.success("프로필 수정 완료");
         },
         onError : (error) => {
-            console.error("프로필 사진 업데이트 실패:", error);
+            console.error("프로필 수정 실패:", error);
             toast.error(error.message);
         }
     })
 
 
-    // 프로필 수정 메서드
-    const changeProfile = async (e : React.FormEvent<HTMLFormElement>) => {
+    // 프로필 수정 핸들러
+    const handleSubmit = async (e : React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         
         // 1. 닉네임 유효성 검사
@@ -97,17 +87,8 @@ function ProfileEdit() {
             return;
         } 
 
-        // 4. (선택사항) 현재 닉네임과 다르다면, 닉네임 변경 (실패 토스트는 onError에서 처리)
-        if (nickname !== currentUser.nickname) {
-            await changeNicknameMutation.mutateAsync().catch(() => {});
-        }
-
-        // 5. (선택사항) 업데이트될 프로필 사진이 있다면, 백엔드에게 해당 프로필 사진을 보낸다.
-        if (avatarFile) {
-            await uploadProfileMutation.mutateAsync(avatarFile).catch(() => {});
-        }
-        await queryClient.invalidateQueries({queryKey: ["currentUser"]});
-        toast.success("프로필 수정 완료");
+        // 4. 프로필 수정 
+        changeProfileMutation.mutate();
     } 
 
 
@@ -163,7 +144,7 @@ function ProfileEdit() {
         <Typography variant="h5" sx={{ fontWeight: 800, mt: 1}}>프로필 수정</Typography>
         <Stack 
             component="form"
-            onSubmit={changeProfile}
+            onSubmit={handleSubmit}
             spacing={4} sx={{mt : 6, justifyContent: 'center'}}>
             {/* Profile Image */}
             <Box sx={{display: 'flex', justifyContent: 'center'}}>
