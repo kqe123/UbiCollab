@@ -105,7 +105,7 @@
 - `Favorite` : 사용자별 즐겨찾기 테이블
 - `Permission` : 사용자별 폴더·파일 접근 권한 테이블
 - `Comment` : 댓글·답글 정보 테이블 (댓글·답글 관계는 자기 참조를 통해 구현)
-
+- `Notification`, `DocumentVersion`은 추후 구현 예정
 
 <br>
 
