@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -207,29 +208,33 @@ public class UserService {
 	// [공유 추가] username 검색 엔진 메서드
 	public List<UserResponse> searchUsers(String username, String keyword, UUID publicId) {
 		List<UserResponse> result = new ArrayList<>();
-
-		// 현재 로그인 유저
-		User currentUser = getUserOrThrow(username);
-
-		// 현재 DriveItem
-		DriveItem driveItem = driveRepository.findByPublicId(publicId).orElseThrow(
-				() -> new ResourceNotFoundException("해당 아이템을 찾을 수 없습니다. publicId="+ publicId));
+		User currentUser = getUserOrThrow(username); // 현재 로그인 유저
+		DriveItem driveItem = getDriveItemOrThrow(publicId); // 현재 DriveItem
 
 		// [접근 제어] 공유 대상을 검색하는 API이므로, createPermission과 동일하게 MANAGER 권한 필요
 		if (!permissionService.isManager(driveItem, currentUser)) {
 			throw new PermissionDeniedException("사용자를 검색할 권한이 없습니다.");
 		}
-
-		// 해당 키워드를 기반으로 검색 결과 반환 (소유자(Owner),자기 자신 ,이미 공유중인 사용자들 제외)
-		List<User> users = userRepository.searchByUsername(keyword, driveItem.getUser().getUsername(), publicId);
-		for (User user : users) {
-			// 본인 제외
-			if (username.equals(user.getUsername())) {
-				continue;
+		
+		// 키워드가 비어있는  경우 -> 이전에 공유했던 이력이 있는 사용자들을 자동완성에 추가
+		if (keyword == null || keyword.isBlank()) {
+			List<User> users = userRepository.findSharedUsers(
+					username,                          // 현재 로그인 사용자
+					driveItem.getUser().getUsername(), // 현재 DriveItem 소유자
+					publicId);                         // 현재 DriveItem publicId
+			for (User user : users) {
+				String presignedUri = getProfileUri(user.getProfileImageKey());
+				result.add(new UserResponse(user, presignedUri));
 			}
-			
-			String presignedUri = getProfileUri(user.getProfileImageKey());
-			result.add(new UserResponse(user,presignedUri));
+		}
+		// 키워드가 비어있지 않은 경우 -> 일치 검색으로 탐색 -> 일치한 사용자가 있다면 자동완성에 1건 추가
+		// 단, 검색 결과에 "본인/해당 아이템 소유자/이미 권한이 있는 사용자"는 제외
+		else {
+			Optional<User> user = userRepository.findByUsername(keyword);
+			if (user.isPresent() && !permissionService.hasAccess(driveItem, user.get())) {
+				String presignedUri = getProfileUri(user.get().getProfileImageKey());
+				result.add(new UserResponse(user.get(),presignedUri));
+			}
 		}
 		return result;
 	}
@@ -338,6 +343,12 @@ public class UserService {
 	private User getUserOrThrow(String username) {
 		return userRepository.findByUsername(username).orElseThrow(
 				() -> new ResourceNotFoundException("User를 찾을 수 없습니다. : " + username));
+	}
+	
+	// publicId로 DriveItem을 조회하는 공통 헬퍼 메서드
+	private DriveItem getDriveItemOrThrow(UUID publicId) {
+		return driveRepository.findByPublicId(publicId).orElseThrow(
+				() -> new ResourceNotFoundException("DriveItem을 찾을 수 없습니다. publicId=" + publicId));
 	}
 
 }

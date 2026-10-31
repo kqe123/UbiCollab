@@ -2,7 +2,7 @@ import toast from "react-hot-toast";
 import type {DriveItem} from "../../types/driveitem";
 import type {permission} from "../../types/permission";
 import { useState, useEffect } from "react";
-import { useMutation, useQuery, skipToken, keepPreviousData } from "@tanstack/react-query";
+import { useMutation, useQuery, keepPreviousData } from "@tanstack/react-query";
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
@@ -38,14 +38,13 @@ function  ShareModal ({
         return () => clearTimeout(timer); // cleanup 함수
     }, [text]);
 
-    // 공유할 사용자 검색 (useQuery) — 검색어가 비어있으면 요청하지 않음
+    // 공유할 사용자 검색 (useQuery) 
     const { data: searchedUsers = [] } = useQuery({
         queryKey: ["userSearch", driveItem.publicId, keyword],
-        queryFn: keyword ? () => searchUsers(keyword, driveItem.publicId) : skipToken,
+        queryFn:  () => searchUsers(keyword, driveItem.publicId),
         placeholderData: keepPreviousData, // 새 검색 결과가 오기 전까지 이전 결과 유지
         retry: false,
     });
-    const users = text.trim() ? searchedUsers : []; // 입력값이 비어있으면 검색 결과 없음
 
     // 공유 추가 (useMutation)
     const shareMutation = useMutation({
@@ -102,12 +101,11 @@ function  ShareModal ({
                         onChange = {(e) => {
                             setText(e.target.value);
                             setIsUserListOpen(true);}}
-                        onFocus={() => {
-                            setIsUserListOpen(true);}}
+                        onFocus={() => { setIsUserListOpen(true);}}
                         sx={{ width : '100%'}}
                     />
                     {/* 자동완성 사용자 목록 */}
-                    {isUserListOpen && text !== "" &&  users.length > 0 && (
+                    {isUserListOpen && searchedUsers.length > 0 && (
                         <Box
                             sx={{
                                 position: 'absolute', // fixed
@@ -122,7 +120,7 @@ function  ShareModal ({
                                 overflowY: 'auto',
                             }} 
                         >
-                            {users.map((user) => (
+                            {searchedUsers.map((user) => (
                                 <Box key={user.publicId}
                                     sx={{
                                         height : 'min(60px, 7vh)',
